@@ -15,7 +15,93 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize income summary calculation
     initializeIncomeSummary();
+    
+    // Initialize action buttons
+    initializeActionButtons();
 });
+
+/**
+ * Initialize action buttons
+ * Ensures edit and delete buttons work correctly
+ */
+function initializeActionButtons() {
+    // Handle edit income button click events
+    document.querySelectorAll('.edit-income').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const incomeId = this.getAttribute('data-income-id');
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('editIncomeModal'));
+            modal.show();
+            
+            // Show loading indicator in modal body
+            const modalBody = document.querySelector('#editIncomeModal .modal-body');
+            
+            // Store original content to restore later if needed
+            if (!modalBody.getAttribute('data-original-content')) {
+                modalBody.setAttribute('data-original-content', modalBody.innerHTML);
+            }
+            
+            showSpinner(modalBody);
+            
+            // Fetch income data
+            fetch(`${BASE_PATH}/income?action=get_income&income_id=${incomeId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Restore original content if we're showing a spinner
+                        if (modalBody.querySelector('.spinner-border')) {
+                            const originalContent = modalBody.getAttribute('data-original-content');
+                            if (originalContent) {
+                                modalBody.innerHTML = originalContent;
+                            }
+                        }
+                        
+                        // Populate form fields
+                        document.getElementById('edit_income_id').value = data.income.income_id;
+                        document.getElementById('edit_name').value = data.income.name;
+                        document.getElementById('edit_amount').value = data.income.amount;
+                        document.getElementById('edit_frequency').value = data.income.frequency;
+                        document.getElementById('edit_start_date').value = data.income.start_date;
+                        document.getElementById('edit_end_date').value = data.income.end_date || '';
+                        document.getElementById('edit_is_active').checked = data.income.is_active == 1;
+                        
+                        // Update frequency label and income preview
+                        updateAmountLabel(document.getElementById('edit_frequency'));
+                        updateIncomePreview(document.querySelector('#editIncomeModal form'));
+                    } else {
+                        // Show error
+                        alert('Failed to load income data: ' + data.message);
+                        modal.hide();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching income data:', error);
+                    alert('An error occurred while loading income data.');
+                    modal.hide();
+                });
+        });
+    });
+
+    // Handle delete income button
+    document.querySelectorAll('.delete-income').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const incomeId = this.getAttribute('data-income-id');
+            document.getElementById('delete_income_id').value = incomeId;
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('deleteIncomeModal'));
+            modal.show();
+        });
+    });
+}
 
 /**
  * Initialize frequency based calculation
@@ -103,7 +189,9 @@ function updateIncomePreview(form) {
         previewElement = document.createElement('div');
         previewElement.className = 'income-preview mt-3 alert alert-info';
         const amountInput = form.querySelector('input[name="amount"]');
-        amountInput.parentNode.parentNode.insertAdjacentElement('afterend', previewElement);
+        if (amountInput && amountInput.parentNode && amountInput.parentNode.parentNode) {
+            amountInput.parentNode.parentNode.insertAdjacentElement('afterend', previewElement);
+        }
     }
     
     if (amount > 0) {
@@ -333,6 +421,7 @@ function showSpinner(container) {
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
+        <p class="mt-2">Loading income data...</p>
     `;
     
     // Clear container and add spinner
@@ -350,4 +439,9 @@ function hideSpinner(container) {
     if (spinner) {
         spinner.parentNode.remove();
     }
+}
+
+// Define BASE_PATH if it doesn't exist (will be replaced by PHP in the actual page)
+if (typeof BASE_PATH === 'undefined') {
+    const BASE_PATH = '';
 }
