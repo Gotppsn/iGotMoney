@@ -20,11 +20,11 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     
     <!-- Custom JavaScript -->
-    <script src="/assets/js/main.js"></script>
+    <script src="<?php echo BASE_PATH; ?>/assets/js/main.js"></script>
     
     <?php if (isset($additional_js)): ?>
         <?php foreach ($additional_js as $js): ?>
-            <script src="<?php echo $js; ?>"></script>
+            <script src="<?php echo BASE_PATH . $js; ?>"></script>
         <?php endforeach; ?>
     <?php endif; ?>
     

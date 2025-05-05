@@ -12,6 +12,6 @@ $_SESSION = [];
 session_destroy();
 
 // Redirect to login page
-header('Location: /login');
+header('Location: ' . BASE_PATH . '/login');
 exit();
 ?>

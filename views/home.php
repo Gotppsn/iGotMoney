@@ -14,12 +14,12 @@ require_once 'includes/header.php';
                 <h1 class="display-4 fw-bold mb-4">Take Control of Your Finances</h1>
                 <p class="lead mb-4">iGotMoney helps you manage your finances, track expenses, set budgets, and achieve your financial goals - all in one place.</p>
                 <div class="d-flex gap-3">
-                    <a href="/register" class="btn btn-light btn-lg px-4">Get Started</a>
+                    <a href="<?php echo BASE_PATH; ?>/register" class="btn btn-light btn-lg px-4">Get Started</a>
                     <a href="#features" class="btn btn-outline-light btn-lg px-4">Learn More</a>
                 </div>
             </div>
             <div class="col-lg-6 d-none d-lg-block">
-                <img src="/assets/images/hero-image.svg" alt="Financial Management" class="img-fluid">
+                <img src="<?php echo BASE_PATH; ?>/assets/images/hero-image.svg" alt="Financial Management" class="img-fluid">
             </div>
         </div>
     </div>
@@ -258,7 +258,7 @@ require_once 'includes/header.php';
                 <p class="lead mb-0">Join thousands of users who have improved their financial health with iGotMoney.</p>
             </div>
             <div class="col-lg-4 text-lg-end">
-                <a href="/register" class="btn btn-light btn-lg px-4">Get Started for Free</a>
+                <a href="<?php echo BASE_PATH; ?>/register" class="btn btn-light btn-lg px-4">Get Started for Free</a>
             </div>
         </div>
     </div>

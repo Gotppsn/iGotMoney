@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $success = 'Registration successful! You can now login.';
             
             // Redirect to login page after a delay
-            header('Refresh: 3; URL=/login');
+            header('Refresh: 3; URL=' . BASE_PATH . '/login');
         } else {
             $errors[] = 'Registration failed. Username or email may already exist.';
         }

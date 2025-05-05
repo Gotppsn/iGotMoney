@@ -14,7 +14,7 @@ require_once 'includes/header.php';
                 <h3 class="text-center font-weight-bold my-2">Login</h3>
             </div>
             <div class="card-body">
-                <form action="/login" method="post">
+                <form action="<?php echo BASE_PATH; ?>/login" method="post">
                     <div class="form-floating mb-3">
                         <input class="form-control" id="username" name="username" type="text" placeholder="Username" required />
                         <label for="username">Username</label>
@@ -31,7 +31,7 @@ require_once 'includes/header.php';
             </div>
             <div class="card-footer text-center py-3">
                 <div class="small">
-                    <a href="/register">Need an account? Sign up!</a>
+                    <a href="<?php echo BASE_PATH; ?>/register">Need an account? Sign up!</a>
                 </div>
             </div>
         </div>
