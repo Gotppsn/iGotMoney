@@ -22,7 +22,11 @@ if (strpos($request_uri, $base_path) === 0) {
 }
 
 // Handle query parameters
-$request_uri = parse_url($request_uri, PHP_URL_PATH);
+$query_string = '';
+if (($pos = strpos($request_uri, '?')) !== false) {
+    $query_string = substr($request_uri, $pos);
+    $request_uri = substr($request_uri, 0, $pos);
+}
 
 // Remove trailing slash if it exists
 $request_uri = rtrim($request_uri, '/');
