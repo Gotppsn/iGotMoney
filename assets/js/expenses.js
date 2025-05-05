@@ -15,6 +15,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize form validation
     initializeFormValidation();
+
+    // Initialize button event handlers
+    initializeButtonHandlers();
+
+    // Initialize recurring options toggle
+    initializeRecurringToggle();
 });
 
 /**
@@ -323,7 +329,7 @@ function initializeExpenseAnalytics() {
             
             // Extract expense data
             const expenses = rows.map(row => {
-                const amount = parseFloat(row.querySelector('td:nth-child(3)').textContent.replace(', ', '').replace(',', ''));
+                const amount = parseFloat(row.querySelector('td:nth-child(3)').textContent.replace('$', '').replace(/,/g, ''));
                 const date = new Date(row.querySelector('td:nth-child(4)').textContent);
                 const category = row.querySelector('td:nth-child(2)').textContent;
                 const frequency = row.querySelector('td:nth-child(5)').textContent.toLowerCase();
@@ -385,6 +391,130 @@ function initializeFormValidation() {
             if (!validateExpenseForm(this)) {
                 event.preventDefault();
                 event.stopPropagation();
+            }
+        });
+    });
+}
+
+/**
+ * Initialize recurring options toggle
+ */
+function initializeRecurringToggle() {
+    // Toggle recurring options when checkbox is clicked
+    const isRecurringCheckbox = document.getElementById('is_recurring');
+    if (isRecurringCheckbox) {
+        isRecurringCheckbox.addEventListener('change', function() {
+            document.getElementById('recurring_options').style.display = this.checked ? 'block' : 'none';
+            
+            // Set default frequency for one-time expenses
+            if (!this.checked) {
+                document.getElementById('frequency').value = 'one-time';
+            } else {
+                document.getElementById('frequency').value = 'monthly';
+            }
+        });
+    }
+
+    // Toggle edit recurring options when checkbox is clicked
+    const editIsRecurringCheckbox = document.getElementById('edit_is_recurring');
+    if (editIsRecurringCheckbox) {
+        editIsRecurringCheckbox.addEventListener('change', function() {
+            document.getElementById('edit_recurring_options').style.display = this.checked ? 'block' : 'none';
+            
+            // Set default frequency for one-time expenses
+            if (!this.checked) {
+                document.getElementById('edit_frequency').value = 'one-time';
+            }
+        });
+    }
+}
+
+/**
+ * Initialize button handlers
+ * Sets up event listeners for edit and delete buttons
+ */
+function initializeButtonHandlers() {
+    // Handle edit expense button clicks
+    document.querySelectorAll('.edit-expense').forEach(button => {
+        button.addEventListener('click', function() {
+            const expenseId = this.getAttribute('data-expense-id');
+            
+            // Reset form validation
+            const form = document.getElementById('editExpenseForm');
+            form.classList.remove('was-validated');
+            
+            // Get the base path from a hidden input or compute it
+            const basePath = document.querySelector('meta[name="base-path"]') ? 
+                document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
+            
+            // Show loading spinner
+            const editModal = document.getElementById('editExpenseModal');
+            if (editModal) {
+                try {
+                    const modal = new bootstrap.Modal(editModal);
+                    modal.show();
+                    
+                    // Fetch expense data
+                    fetch(basePath + '/expenses?action=get_expense&expense_id=' + expenseId)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                // Populate form fields
+                                document.getElementById('edit_expense_id').value = data.expense.expense_id;
+                                document.getElementById('edit_category_id').value = data.expense.category_id;
+                                document.getElementById('edit_description').value = data.expense.description;
+                                document.getElementById('edit_amount').value = data.expense.amount;
+                                document.getElementById('edit_expense_date').value = data.expense.expense_date;
+                                document.getElementById('edit_is_recurring').checked = data.expense.is_recurring == 1;
+                                document.getElementById('edit_frequency').value = data.expense.frequency;
+                                
+                                // Show/hide recurring options
+                                document.getElementById('edit_recurring_options').style.display = 
+                                    data.expense.is_recurring == 1 ? 'block' : 'none';
+                            } else {
+                                // Show error
+                                alert('Failed to load expense data: ' + data.message);
+                                modal.hide();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching expense data:', error);
+                            alert('An error occurred while loading expense data.');
+                            modal.hide();
+                        });
+                } catch (e) {
+                    console.error('Error showing modal:', e);
+                    alert('Could not open edit form. Please try again.');
+                }
+            } else {
+                console.error('Edit modal element not found');
+            }
+        });
+    });
+
+    // Handle delete expense button clicks
+    document.querySelectorAll('.delete-expense').forEach(button => {
+        button.addEventListener('click', function() {
+            const expenseId = this.getAttribute('data-expense-id');
+            document.getElementById('delete_expense_id').value = expenseId;
+            
+            // Show modal
+            const deleteModal = document.getElementById('deleteExpenseModal');
+            if (deleteModal) {
+                try {
+                    const modal = new bootstrap.Modal(deleteModal);
+                    modal.show();
+                } catch (e) {
+                    console.error('Error showing delete modal:', e);
+                    alert('Could not open delete confirmation. Please try again.');
+                }
+            } else {
+                console.error('Delete modal element not found');
             }
         });
     });
