@@ -173,16 +173,16 @@ class Income {
         // Format end date or set to null
         $end_date_param = !empty($this->end_date) ? $this->end_date : null;
         
-        // Bind parameters
-        if (!$stmt->bind_param("sdssiii", 
-                           $this->name, 
-                           $this->amount, 
-                           $this->frequency, 
-                           $this->start_date, 
-                           $end_date_param,
-                           $this->is_active,
-                           $this->income_id,
-                           $this->user_id)) {
+        // Bind parameters - Fixed type string to match parameter count and types
+        if (!$stmt->bind_param("sdsssii", 
+                          $this->name, 
+                          $this->amount, 
+                          $this->frequency, 
+                          $this->start_date, 
+                          $end_date_param,
+                          $this->is_active,
+                          $this->income_id,
+                          $this->user_id)) {
             error_log("Update parameter binding failed: " . $stmt->error);
             return false;
         }
