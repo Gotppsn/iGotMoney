@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'Please enter a valid amount greater than zero.';
             }
             
-            if (empty($_POST['category_id'])) {
+            if (empty($_POST['category_id']) || !is_numeric($_POST['category_id'])) {
                 $errors[] = 'Please select a category.';
             }
             
@@ -168,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'Please enter a valid amount greater than zero.';
             }
             
-            if (empty($_POST['category_id'])) {
+            if (empty($_POST['category_id']) || !is_numeric($_POST['category_id'])) {
                 $errors[] = 'Please select a category.';
             }
             
@@ -247,8 +247,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Get all expense categories
 $categories = $expense->getAllCategories();
 
-// Get all expenses
-$expenses = $expense->getAll($user_id);
+// Get all expenses - limiting to the most recent 100 for performance
+$expenses = $expense->getAll($user_id, 100);
 
 // Calculate total monthly and yearly expenses
 $monthly_expenses = $expense->getMonthlyTotal($user_id);
@@ -256,6 +256,19 @@ $yearly_expenses = $expense->getYearlyTotal($user_id);
 
 // Get top expense categories
 $top_expenses = $expense->getTopCategories($user_id, 5);
+
+// Page-specific scripts
+$page_scripts = "
+    // Initialize tooltips and other Bootstrap components
+    document.addEventListener('DOMContentLoaded', function() {
+        // Custom script to ensure Bootstrap is properly loaded
+        if (typeof bootstrap !== 'undefined') {
+            console.log('Bootstrap is loaded successfully');
+        } else {
+            console.error('Bootstrap is not loaded. Some functionality may not work correctly.');
+        }
+    });
+";
 
 // Include view
 require_once 'views/expenses.php';

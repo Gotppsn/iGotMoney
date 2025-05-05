@@ -70,9 +70,9 @@ require_once 'includes/header.php';
                         <i class="fas fa-calendar-alt me-1"></i> This Month
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="chartPeriodDropdown">
-                        <li><a class="dropdown-item chart-period" href="#" data-period="month">This Month</a></li>
+                        <li><a class="dropdown-item chart-period" href="#" data-period="current-month">This Month</a></li>
                         <li><a class="dropdown-item chart-period" href="#" data-period="quarter">This Quarter</a></li>
-                        <li><a class="dropdown-item chart-period" href="#" data-period="year">This Year</a></li>
+                        <li><a class="dropdown-item chart-period" href="#" data-period="current-year">This Year</a></li>
                         <li><a class="dropdown-item chart-period" href="#" data-period="all">All Time</a></li>
                     </ul>
                 </div>
@@ -125,6 +125,52 @@ require_once 'includes/header.php';
                     <?php else: ?>
                         <p>No expense data available.</p>
                     <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analytics Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Expense Analytics</h6>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="calculateAnalytics">
+                    <i class="fas fa-calculator me-1"></i> Calculate
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="analyticsContent" class="row" style="display: none;">
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="card border-left-info shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Avg. Daily Expense</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgDailyExpense">$0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="card border-left-danger shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Highest Expense</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="highestExpense">$0.00</div>
+                                <small class="text-muted" id="highestExpenseCategory"></small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="card border-left-warning shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Projected Monthly</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="projectedMonthly">$0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="analyticsNoData" class="text-center py-3">
+                    <p>Click "Calculate" to analyze your visible expenses.</p>
                 </div>
             </div>
         </div>

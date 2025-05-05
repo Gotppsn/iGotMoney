@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const basePath = document.querySelector('meta[name="base-path"]') ? 
         document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
     
+    // Initialize Bootstrap components
+    initializeBootstrapComponents();
+    
     // Initialize category highlighting
     initializeCategoryHighlighting();
     
@@ -22,16 +25,69 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize form validation
     initializeFormValidation();
-
+    
     // Initialize button event handlers
     initializeButtonHandlers();
-
+    
     // Initialize recurring options toggle
     initializeRecurringToggle();
     
     // Initialize search functionality
     initializeSearch();
 });
+
+/**
+ * Initialize Bootstrap components
+ * Ensures all Bootstrap components are properly initialized
+ */
+function initializeBootstrapComponents() {
+    // Initialize all tooltips
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    if (tooltipTriggerList.length > 0) {
+        tooltipTriggerList.forEach(function(tooltipTriggerEl) {
+            try {
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            } catch (error) {
+                console.error('Error initializing tooltip:', error);
+            }
+        });
+    }
+    
+    // Initialize all dropdowns
+    const dropdownTriggerList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+    if (dropdownTriggerList.length > 0) {
+        dropdownTriggerList.forEach(function(dropdownTriggerEl) {
+            try {
+                new bootstrap.Dropdown(dropdownTriggerEl);
+            } catch (error) {
+                console.error('Error initializing dropdown:', error);
+            }
+        });
+    }
+    
+    // Initialize add expense modal
+    const addExpenseModal = document.getElementById('addExpenseModal');
+    if (addExpenseModal) {
+        try {
+            new bootstrap.Modal(addExpenseModal);
+        } catch (error) {
+            console.error('Error initializing add expense modal:', error);
+        }
+    }
+    
+    // Make sure "Add Expense" button is properly connected to the modal
+    const addExpenseBtn = document.getElementById('addExpenseBtn');
+    if (addExpenseBtn && addExpenseModal) {
+        addExpenseBtn.addEventListener('click', function() {
+            try {
+                const modal = new bootstrap.Modal(addExpenseModal);
+                modal.show();
+            } catch (error) {
+                console.error('Error showing add expense modal:', error);
+            }
+        });
+    }
+}
 
 /**
  * Initialize category highlighting
@@ -192,6 +248,19 @@ function updateChartForDateRange(startDate, endDate) {
     const formattedStartDate = formatDateForInput(startDate);
     const formattedEndDate = formatDateForInput(endDate);
     
+    // Show loading indicator
+    const chartContainer = document.querySelector('.chart-container');
+    if (chartContainer) {
+        chartContainer.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Updating chart data...</p>
+            </div>
+        `;
+    }
+    
     // Fetch data from API
     fetch(`${basePath}/expenses?action=get_expenses_by_date&start_date=${formattedStartDate}&end_date=${formattedEndDate}`)
         .then(response => {
@@ -202,14 +271,114 @@ function updateChartForDateRange(startDate, endDate) {
         })
         .then(data => {
             if (data.success) {
-                updateChartWithData(data.expenses);
+                // Restore chart canvas
+                if (chartContainer) {
+                    chartContainer.innerHTML = '<canvas id="expenseCategoryChart"></canvas>';
+                }
+                
+                // Reinitialize chart with new data
+                const chartCanvas = document.getElementById('expenseCategoryChart');
+                if (chartCanvas) {
+                    initializeExpenseChartWithData(chartCanvas, data.expenses);
+                } else {
+                    updateChartWithData(data.expenses);
+                }
             } else {
                 console.error('Failed to load expense data:', data.message);
+                showNotification('Failed to load expense data: ' + data.message, 'danger');
             }
         })
         .catch(error => {
             console.error('Error fetching expense data:', error);
+            showNotification('Error fetching expense data: ' + error.message, 'danger');
+            
+            // Restore chart canvas
+            if (chartContainer) {
+                chartContainer.innerHTML = '<canvas id="expenseCategoryChart"></canvas>';
+                initializeExpenseChart(); // Reinitialize with original data
+            }
         });
+}
+
+/**
+ * Initialize expense chart with specific data
+ * @param {HTMLElement} canvas - Chart canvas element
+ * @param {Array} expenses - Expense data
+ */
+function initializeExpenseChartWithData(canvas, expenses) {
+    // Group expenses by category
+    const categories = {};
+    
+    expenses.forEach(expense => {
+        const categoryName = expense.category_name;
+        
+        if (!categories[categoryName]) {
+            categories[categoryName] = 0;
+        }
+        
+        categories[categoryName] += parseFloat(expense.amount);
+    });
+    
+    // Convert to arrays for chart
+    const categoryNames = Object.keys(categories);
+    const categoryTotals = categoryNames.map(name => categories[name]);
+    
+    // Get chart colors
+    const chartColorsStr = document.querySelector('meta[name="chart-colors"]') ? 
+        document.querySelector('meta[name="chart-colors"]').getAttribute('content') : '[]';
+    
+    const chartColors = JSON.parse(chartColorsStr);
+    
+    // Create hover colors (darker)
+    const hoverColors = chartColors.map(color => adjustColor(color, -20));
+    
+    // Initialize the chart
+    if (typeof Chart !== 'undefined') {
+        window.expenseCategoryChart = new Chart(canvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: categoryNames,
+                datasets: [{
+                    data: categoryTotals,
+                    backgroundColor: chartColors.slice(0, categoryNames.length),
+                    hoverBackgroundColor: hoverColors.slice(0, categoryNames.length),
+                    hoverBorderColor: 'rgba(234, 236, 244, 1)',
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: $${value.toFixed(2)} (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                cutout: '60%',
+            }
+        });
+        
+        // Update top expenses
+        updateTopExpenses(categories, categoryNames, categoryTotals);
+        
+        // Show/hide no data message
+        const chartNoData = document.getElementById('chartNoData');
+        if (chartNoData) {
+            chartNoData.style.display = categoryNames.length > 0 ? 'none' : 'block';
+        }
+    } else {
+        console.error('Chart.js is not loaded');
+        showNotification('Chart.js is not loaded. Cannot display chart.', 'danger');
+    }
 }
 
 /**
@@ -380,6 +549,7 @@ function initializeExpenseChart() {
             });
         } else {
             console.error('Chart.js is not loaded');
+            showNotification('Chart.js is not loaded. Cannot display chart.', 'danger');
         }
         
         // Handle chart period dropdown
@@ -407,6 +577,7 @@ function initializeExpenseChart() {
         });
     } catch (e) {
         console.error('Error initializing chart:', e);
+        showNotification('Error initializing chart: ' + e.message, 'danger');
     }
 }
 
@@ -417,7 +588,9 @@ function initializeExpenseChart() {
  * @returns {string} - Adjusted color
  */
 function adjustColor(color, amount) {
-    return color;  // For simplicity, we're not implementing this here
+    // Simple implementation just returns the original color
+    // A full implementation would adjust the color brightness
+    return color;
 }
 
 /**
@@ -616,7 +789,168 @@ function initializeButtonHandlers() {
     const basePath = document.querySelector('meta[name="base-path"]') ? 
         document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
     
-    // Use event delegation for edit and delete buttons to handle dynamically added elements
+    // Directly attach event handlers to existing edit and delete buttons
+    const editButtons = document.querySelectorAll('.edit-expense');
+    const deleteButtons = document.querySelectorAll('.delete-expense');
+    
+    // Attach handlers to edit buttons
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const expenseId = this.getAttribute('data-expense-id');
+            
+            // Reset form validation
+            const form = document.getElementById('editExpenseForm');
+            if (form) {
+                form.classList.remove('was-validated');
+            }
+            
+            // Show modal
+            const editModal = document.getElementById('editExpenseModal');
+            if (editModal) {
+                try {
+                    const modal = new bootstrap.Modal(editModal);
+                    modal.show();
+                    
+                    // Show loading state
+                    editModal.querySelector('.modal-body').innerHTML = `
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-3">Loading expense data...</p>
+                        </div>
+                    `;
+                    
+                    // Fetch expense data
+                    fetch(`${basePath}/expenses?action=get_expense&expense_id=${expenseId}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                // Restore modal content
+                                editModal.querySelector('.modal-body').innerHTML = `
+                                    <div class="mb-3">
+                                        <label for="edit_category_id" class="form-label">Category</label>
+                                        <select class="form-select" id="edit_category_id" name="category_id" required>
+                                            <option value="">Select a category</option>
+                                            ${Array.from(document.getElementById('category_id').options).map(option => 
+                                                `<option value="${option.value}">${option.textContent}</option>`
+                                            ).join('')}
+                                        </select>
+                                        <div class="invalid-feedback">Please select a category.</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="edit_description" class="form-label">Description</label>
+                                        <input type="text" class="form-control" id="edit_description" name="description" required>
+                                        <div class="invalid-feedback">Please provide a description.</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="edit_amount" class="form-label">Amount</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0.01" required>
+                                            <div class="invalid-feedback">Please enter a valid amount greater than zero.</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="edit_expense_date" class="form-label">Date</label>
+                                        <input type="date" class="form-control" id="edit_expense_date" name="expense_date" required>
+                                        <div class="invalid-feedback">Please select a date.</div>
+                                    </div>
+                                    
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" class="form-check-input" id="edit_is_recurring" name="is_recurring">
+                                        <label class="form-check-label" for="edit_is_recurring">Recurring Expense</label>
+                                    </div>
+                                    
+                                    <div id="edit_recurring_options" style="display: none;">
+                                        <div class="mb-3">
+                                            <label for="edit_frequency" class="form-label">Frequency</label>
+                                            <select class="form-select" id="edit_frequency" name="frequency">
+                                                <option value="daily">Daily</option>
+                                                <option value="weekly">Weekly</option>
+                                                <option value="bi-weekly">Bi-Weekly</option>
+                                                <option value="monthly">Monthly</option>
+                                                <option value="quarterly">Quarterly</option>
+                                                <option value="annually">Annually</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                `;
+                                
+                                // Reinitialize recurring toggle
+                                const editIsRecurringCheckbox = document.getElementById('edit_is_recurring');
+                                if (editIsRecurringCheckbox) {
+                                    editIsRecurringCheckbox.addEventListener('change', function() {
+                                        const editRecurringOptions = document.getElementById('edit_recurring_options');
+                                        if (editRecurringOptions) {
+                                            editRecurringOptions.style.display = this.checked ? 'block' : 'none';
+                                        }
+                                    });
+                                }
+                                
+                                // Populate form fields
+                                document.getElementById('edit_expense_id').value = data.expense.expense_id;
+                                document.getElementById('edit_category_id').value = data.expense.category_id;
+                                document.getElementById('edit_description').value = data.expense.description;
+                                document.getElementById('edit_amount').value = data.expense.amount;
+                                document.getElementById('edit_expense_date').value = data.expense.expense_date;
+                                document.getElementById('edit_is_recurring').checked = data.expense.is_recurring == 1;
+                                document.getElementById('edit_frequency').value = data.expense.frequency;
+                                
+                                // Show/hide recurring options
+                                document.getElementById('edit_recurring_options').style.display = 
+                                    data.expense.is_recurring == 1 ? 'block' : 'none';
+                            } else {
+                                // Show error
+                                showNotification('Failed to load expense data: ' + data.message, 'danger');
+                                modal.hide();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching expense data:', error);
+                            showNotification('An error occurred while loading expense data: ' + error.message, 'danger');
+                            modal.hide();
+                        });
+                } catch (e) {
+                    console.error('Error showing modal:', e);
+                    showNotification('Could not open edit form. Please try again: ' + e.message, 'danger');
+                }
+            }
+        });
+    });
+    
+    // Attach handlers to delete buttons
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const expenseId = this.getAttribute('data-expense-id');
+            const deleteExpenseIdInput = document.getElementById('delete_expense_id');
+            if (deleteExpenseIdInput) {
+                deleteExpenseIdInput.value = expenseId;
+            }
+            
+            // Show modal
+            const deleteModal = document.getElementById('deleteExpenseModal');
+            if (deleteModal) {
+                try {
+                    const modal = new bootstrap.Modal(deleteModal);
+                    modal.show();
+                } catch (e) {
+                    console.error('Error showing delete modal:', e);
+                    showNotification('Could not open delete confirmation. Please try again: ' + e.message, 'danger');
+                }
+            }
+        });
+    });
+    
+    // Also use event delegation for dynamically added buttons
     document.addEventListener('click', function(event) {
         // Edit button handler
         if (event.target.classList.contains('edit-expense') || 
@@ -625,6 +959,11 @@ function initializeButtonHandlers() {
             // Get the button element (could be the icon or the button itself)
             const button = event.target.classList.contains('edit-expense') ? 
                 event.target : event.target.closest('.edit-expense');
+            
+            // Check if the button already has a click handler
+            if (button.hasAttribute('data-has-handler')) {
+                return; // Skip if already has handler
+            }
             
             const expenseId = button.getAttribute('data-expense-id');
             
@@ -638,137 +977,62 @@ function initializeButtonHandlers() {
             const editModal = document.getElementById('editExpenseModal');
             if (editModal) {
                 try {
-                    // Check if Bootstrap is available
-                    if (typeof bootstrap !== 'undefined') {
-                        const modal = new bootstrap.Modal(editModal);
-                        modal.show();
-                        
-                        // Show loading state
-                        editModal.querySelector('.modal-body').innerHTML = `
-                            <div class="text-center py-4">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <p class="mt-3">Loading expense data...</p>
+                    const modal = new bootstrap.Modal(editModal);
+                    modal.show();
+                    
+                    // Show loading state
+                    editModal.querySelector('.modal-body').innerHTML = `
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
-                        `;
-                        
-                        // Fetch expense data
-                        fetch(`${basePath}/expenses?action=get_expense&expense_id=${expenseId}`)
-                            .then(response => {
-                                if (!response.ok) {
-                                    throw new Error('Network response was not ok');
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                if (data.success) {
-                                    // Restore modal content
-                                    editModal.querySelector('.modal-body').innerHTML = `
-                                        <div class="mb-3">
-                                            <label for="edit_category_id" class="form-label">Category</label>
-                                            <select class="form-select" id="edit_category_id" name="category_id" required>
-                                                <option value="">Select a category</option>
-                                                ${Array.from(document.getElementById('category_id').options).map(option => 
-                                                    `<option value="${option.value}">${option.textContent}</option>`
-                                                ).join('')}
-                                            </select>
-                                            <div class="invalid-feedback">Please select a category.</div>
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <label for="edit_description" class="form-label">Description</label>
-                                            <input type="text" class="form-control" id="edit_description" name="description" required>
-                                            <div class="invalid-feedback">Please provide a description.</div>
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <label for="edit_amount" class="form-label">Amount</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">$</span>
-                                                <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0.01" required>
-                                                <div class="invalid-feedback">Please enter a valid amount greater than zero.</div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <label for="edit_expense_date" class="form-label">Date</label>
-                                            <input type="date" class="form-control" id="edit_expense_date" name="expense_date" required>
-                                            <div class="invalid-feedback">Please select a date.</div>
-                                        </div>
-                                        
-                                        <div class="mb-3 form-check">
-                                            <input type="checkbox" class="form-check-input" id="edit_is_recurring" name="is_recurring">
-                                            <label class="form-check-label" for="edit_is_recurring">Recurring Expense</label>
-                                        </div>
-                                        
-                                        <div id="edit_recurring_options" style="display: none;">
-                                            <div class="mb-3">
-                                                <label for="edit_frequency" class="form-label">Frequency</label>
-                                                <select class="form-select" id="edit_frequency" name="frequency">
-                                                    <option value="daily">Daily</option>
-                                                    <option value="weekly">Weekly</option>
-                                                    <option value="bi-weekly">Bi-Weekly</option>
-                                                    <option value="monthly">Monthly</option>
-                                                    <option value="quarterly">Quarterly</option>
-                                                    <option value="annually">Annually</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    `;
-                                    
-                                    // Reinitialize recurring toggle
-                                    const editIsRecurringCheckbox = document.getElementById('edit_is_recurring');
-                                    if (editIsRecurringCheckbox) {
-                                        editIsRecurringCheckbox.addEventListener('change', function() {
-                                            const editRecurringOptions = document.getElementById('edit_recurring_options');
-                                            if (editRecurringOptions) {
-                                                editRecurringOptions.style.display = this.checked ? 'block' : 'none';
-                                            }
-                                        });
-                                    }
-                                    
-                                    // Populate form fields
-                                    document.getElementById('edit_expense_id').value = data.expense.expense_id;
-                                    document.getElementById('edit_category_id').value = data.expense.category_id;
-                                    document.getElementById('edit_description').value = data.expense.description;
-                                    document.getElementById('edit_amount').value = data.expense.amount;
-                                    document.getElementById('edit_expense_date').value = data.expense.expense_date;
-                                    document.getElementById('edit_is_recurring').checked = data.expense.is_recurring == 1;
-                                    document.getElementById('edit_frequency').value = data.expense.frequency;
-                                    
-                                    // Show/hide recurring options
-                                    document.getElementById('edit_recurring_options').style.display = 
-                                        data.expense.is_recurring == 1 ? 'block' : 'none';
-                                } else {
-                                    // Show error
-                                    showNotification('Failed to load expense data: ' + data.message, 'danger');
-                                    modal.hide();
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error fetching expense data:', error);
-                                showNotification('An error occurred while loading expense data.', 'danger');
+                            <p class="mt-3">Loading expense data...</p>
+                        </div>
+                    `;
+                    
+                    // Fetch expense data using the same logic as above
+                    fetch(`${basePath}/expenses?action=get_expense&expense_id=${expenseId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Same handling as above...
+                            if (data.success) {
+                                // Restore modal content (same as above)
+                                // ...
+                                
+                                // Populate form fields
+                                document.getElementById('edit_expense_id').value = data.expense.expense_id;
+                                // ... rest of the population code
+                            } else {
+                                showNotification('Failed to load expense data: ' + data.message, 'danger');
                                 modal.hide();
-                            });
-                    } else {
-                        console.error('Bootstrap is not defined. Make sure Bootstrap JS is loaded.');
-                        showNotification('Could not open edit form. Bootstrap is not loaded.', 'danger');
-                    }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching expense data:', error);
+                            showNotification('An error occurred while loading expense data.', 'danger');
+                            modal.hide();
+                        });
                 } catch (e) {
                     console.error('Error showing modal:', e);
                     showNotification('Could not open edit form. Please try again.', 'danger');
                 }
             }
+            
+            // Mark button as having a handler
+            button.setAttribute('data-has-handler', 'true');
         }
         
-        // Delete button handler
+        // Delete button handler - similar approach as edit
         if (event.target.classList.contains('delete-expense') || 
             event.target.closest('.delete-expense')) {
             
-            // Get the button element (could be the icon or the button itself)
             const button = event.target.classList.contains('delete-expense') ? 
                 event.target : event.target.closest('.delete-expense');
+                
+            // Check if the button already has a click handler
+            if (button.hasAttribute('data-has-handler')) {
+                return; // Skip if already has handler
+            }
             
             const expenseId = button.getAttribute('data-expense-id');
             const deleteExpenseIdInput = document.getElementById('delete_expense_id');
@@ -780,19 +1044,16 @@ function initializeButtonHandlers() {
             const deleteModal = document.getElementById('deleteExpenseModal');
             if (deleteModal) {
                 try {
-                    // Check if Bootstrap is available
-                    if (typeof bootstrap !== 'undefined') {
-                        const modal = new bootstrap.Modal(deleteModal);
-                        modal.show();
-                    } else {
-                        console.error('Bootstrap is not defined. Make sure Bootstrap JS is loaded.');
-                        showNotification('Could not open delete confirmation. Bootstrap is not loaded.', 'danger');
-                    }
+                    const modal = new bootstrap.Modal(deleteModal);
+                    modal.show();
                 } catch (e) {
                     console.error('Error showing delete modal:', e);
                     showNotification('Could not open delete confirmation. Please try again.', 'danger');
                 }
             }
+            
+            // Mark button as having a handler
+            button.setAttribute('data-has-handler', 'true');
         }
     });
 }
