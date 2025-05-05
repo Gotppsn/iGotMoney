@@ -22,6 +22,12 @@ require_once 'includes/header.php';
     </div>
 </div>
 
+<!-- Error container for JavaScript errors -->
+<div id="errorContainer" class="alert alert-danger" style="display: none;">
+    <i class="fas fa-exclamation-circle me-2"></i>
+    <span id="errorMessage"></span>
+</div>
+
 <!-- Summary Cards -->
 <div class="row mb-4">
     <div class="col-md-6 col-xl-3 mb-4">
@@ -78,7 +84,7 @@ require_once 'includes/header.php';
                 </div>
             </div>
             <div class="card-body">
-                <div class="chart-container">
+                <div class="chart-container" style="position: relative; height:300px;">
                     <canvas id="expenseCategoryChart"></canvas>
                 </div>
                 <div id="chartNoData" class="text-center py-4" style="display: <?php echo (isset($top_expenses) && $top_expenses->num_rows > 0) ? 'none' : 'block'; ?>">
@@ -256,10 +262,10 @@ require_once 'includes/header.php';
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-info edit-expense" data-expense-id="<?php echo $expense['expense_id']; ?>">
+                                    <button type="button" class="btn btn-sm btn-info edit-expense" data-expense-id="<?php echo $expense['expense_id']; ?>" data-bs-toggle="tooltip" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-danger delete-expense" data-expense-id="<?php echo $expense['expense_id']; ?>">
+                                    <button type="button" class="btn btn-sm btn-danger delete-expense" data-expense-id="<?php echo $expense['expense_id']; ?>" data-bs-toggle="tooltip" title="Delete">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </td>
@@ -354,7 +360,9 @@ require_once 'includes/header.php';
                 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Expense</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> Add Expense
+                    </button>
                 </div>
             </form>
         </div>
@@ -438,7 +446,9 @@ require_once 'includes/header.php';
                 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Save Changes
+                    </button>
                 </div>
             </form>
         </div>
@@ -454,18 +464,29 @@ require_once 'includes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete this expense? This action cannot be undone.</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Are you sure you want to delete this expense? This action cannot be undone.
+                </div>
+                <p>Deleting this expense will permanently remove it from your records and financial calculations.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form action="<?php echo BASE_PATH; ?>/expenses" method="post" id="deleteExpenseForm">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="expense_id" id="delete_expense_id">
-                    <button type="submit" class="btn btn-danger">Delete</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> Delete
+                    </button>
                 </form>
             </div>
         </div>
     </div>
+</div>
+
+<!-- Add toast container for notifications -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    <!-- Toasts will be dynamically added here -->
 </div>
 
 <!-- Add chart data as meta tags for JavaScript -->
