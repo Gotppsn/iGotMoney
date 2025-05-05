@@ -60,12 +60,26 @@ require_once 'includes/header.php';
 <div class="row mb-4">
     <div class="col-lg-6">
         <div class="card shadow mb-4">
-            <div class="card-header py-3">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
                 <h6 class="m-0 font-weight-bold text-primary">Expenses by Category</h6>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="chartPeriodDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-calendar-alt me-1"></i> This Month
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="chartPeriodDropdown">
+                        <li><a class="dropdown-item chart-period" href="#" data-period="month">This Month</a></li>
+                        <li><a class="dropdown-item chart-period" href="#" data-period="quarter">This Quarter</a></li>
+                        <li><a class="dropdown-item chart-period" href="#" data-period="year">This Year</a></li>
+                        <li><a class="dropdown-item chart-period" href="#" data-period="all">All Time</a></li>
+                    </ul>
+                </div>
             </div>
             <div class="card-body">
                 <div class="chart-container">
                     <canvas id="expenseCategoryChart"></canvas>
+                </div>
+                <div id="chartNoData" class="text-center py-4" style="display: none;">
+                    <p>No expense data available for the selected period.</p>
                 </div>
             </div>
         </div>
@@ -77,35 +91,37 @@ require_once 'includes/header.php';
                 <h6 class="m-0 font-weight-bold text-primary">Top Expenses</h6>
             </div>
             <div class="card-body">
-                <?php if (isset($top_expenses) && $top_expenses->num_rows > 0): ?>
-                    <?php while ($category = $top_expenses->fetch_assoc()): ?>
-                        <h4 class="small font-weight-bold">
-                            <?php echo htmlspecialchars($category['category_name']); ?>
-                            <span class="float-end">$<?php echo number_format($category['total'], 2); ?></span>
-                        </h4>
-                        <div class="progress mb-4">
-                            <?php 
-                            $percentage = ($category['total'] / $monthly_expenses) * 100;
-                            $color_class = 'bg-info';
-                            
-                            if ($percentage > 30) {
-                                $color_class = 'bg-danger';
-                            } else if ($percentage > 20) {
-                                $color_class = 'bg-warning';
-                            } else if ($percentage > 10) {
-                                $color_class = 'bg-primary';
-                            }
-                            ?>
-                            <div class="progress-bar <?php echo $color_class; ?>" role="progressbar" 
-                                style="width: <?php echo min(100, $percentage); ?>%" 
-                                aria-valuenow="<?php echo $percentage; ?>" 
-                                aria-valuemin="0" aria-valuemax="100">
+                <div id="topExpensesContent">
+                    <?php if (isset($top_expenses) && $top_expenses->num_rows > 0): ?>
+                        <?php while ($category = $top_expenses->fetch_assoc()): ?>
+                            <h4 class="small font-weight-bold">
+                                <?php echo htmlspecialchars($category['category_name']); ?>
+                                <span class="float-end">$<?php echo number_format($category['total'], 2); ?></span>
+                            </h4>
+                            <div class="progress mb-4">
+                                <?php 
+                                $percentage = ($category['total'] / $monthly_expenses) * 100;
+                                $color_class = 'bg-info';
+                                
+                                if ($percentage > 30) {
+                                    $color_class = 'bg-danger';
+                                } else if ($percentage > 20) {
+                                    $color_class = 'bg-warning';
+                                } else if ($percentage > 10) {
+                                    $color_class = 'bg-primary';
+                                }
+                                ?>
+                                <div class="progress-bar <?php echo $color_class; ?>" role="progressbar" 
+                                    style="width: <?php echo min(100, $percentage); ?>%" 
+                                    aria-valuenow="<?php echo $percentage; ?>" 
+                                    aria-valuemin="0" aria-valuemax="100">
+                                </div>
                             </div>
-                        </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <p>No expense data available.</p>
-                <?php endif; ?>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <p>No expense data available.</p>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
@@ -113,29 +129,63 @@ require_once 'includes/header.php';
 
 <!-- Expenses Table -->
 <div class="card shadow mb-4">
-    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">Your Expenses</h6>
-        <div class="input-group input-group-sm" style="width: 250px;">
-            <input type="text" class="form-control" placeholder="Search expenses..." id="expenseSearch" data-table-search="expenseTable">
-            <span class="input-group-text"><i class="fas fa-search"></i></span>
+        <div class="d-flex">
+            <div class="input-group input-group-sm me-2" style="width: 250px;">
+                <input type="text" class="form-control" placeholder="Search expenses..." id="expenseSearch" data-table-search="expenseTable">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dateFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-calendar me-1"></i> Filter
+                </button>
+                <div class="dropdown-menu p-3" style="width: 300px;">
+                    <h6 class="dropdown-header">Date Range</h6>
+                    <div class="mb-2">
+                        <select class="form-select form-select-sm" id="dateRangeSelect">
+                            <option value="all">All Time</option>
+                            <option value="current-month" selected>Current Month</option>
+                            <option value="last-month">Last Month</option>
+                            <option value="last-3-months">Last 3 Months</option>
+                            <option value="last-6-months">Last 6 Months</option>
+                            <option value="current-year">Current Year</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    <div id="customDateRange" style="display: none;">
+                        <div class="mb-2">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-control form-control-sm" id="startDate">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-control form-control-sm" id="endDate">
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button class="btn btn-sm btn-primary" id="applyDateFilter">Apply</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="card-body">
-        <?php if (isset($expenses) && $expenses->num_rows > 0): ?>
-            <div class="table-responsive">
-                <table class="table table-bordered data-table" id="expenseTable" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th>Description</th>
-                            <th>Category</th>
-                            <th>Amount</th>
-                            <th>Date</th>
-                            <th>Frequency</th>
-                            <th>Recurring</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+        <div class="table-responsive">
+            <table class="table table-bordered data-table" id="expenseTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Frequency</th>
+                        <th>Recurring</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (isset($expenses) && $expenses->num_rows > 0): ?>
                         <?php while ($expense = $expenses->fetch_assoc()): ?>
                             <tr>
                                 <td><?php echo htmlspecialchars($expense['description']); ?></td>
@@ -165,17 +215,79 @@ require_once 'includes/header.php';
                                 </td>
                             </tr>
                         <?php endwhile; ?>
-                    </tbody>
-                </table>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <div id="tableNoData" class="text-center py-4" style="display: <?php echo (isset($expenses) && $expenses->num_rows > 0) ? 'none' : 'block'; ?>">
+            <p>No expenses recorded yet.</p>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+                <i class="fas fa-plus"></i> Add Your First Expense
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Expense Analytics -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Expense Analytics</h6>
+        <button class="btn btn-sm btn-outline-primary" id="calculateAnalytics">
+            <i class="fas fa-calculator me-1"></i> Calculate
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="row" id="analyticsContent" style="display: none;">
+            <div class="col-md-4">
+                <div class="card border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    Average Daily Expense</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgDailyExpense">$0.00</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        <?php else: ?>
-            <div class="text-center py-4">
-                <p>No expenses recorded yet.</p>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
-                    <i class="fas fa-plus"></i> Add Your First Expense
-                </button>
+            <div class="col-md-4">
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Highest Expense</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="highestExpense">$0.00</div>
+                                <div class="small" id="highestExpenseCategory"></div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-arrow-up fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        <?php endif; ?>
+            <div class="col-md-4">
+                <div class="card border-left-danger shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                    Projected Monthly Total</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="projectedMonthly">$0.00</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -242,7 +354,6 @@ require_once 'includes/header.php';
                         <div class="mb-3">
                             <label for="frequency" class="form-label">Frequency</label>
                             <select class="form-select" id="frequency" name="frequency">
-                                <option value="one-time">One Time</option>
                                 <option value="daily">Daily</option>
                                 <option value="weekly">Weekly</option>
                                 <option value="bi-weekly">Bi-Weekly</option>
@@ -327,7 +438,6 @@ require_once 'includes/header.php';
                         <div class="mb-3">
                             <label for="edit_frequency" class="form-label">Frequency</label>
                             <select class="form-select" id="edit_frequency" name="frequency">
-                                <option value="one-time">One Time</option>
                                 <option value="daily">Daily</option>
                                 <option value="weekly">Weekly</option>
                                 <option value="bi-weekly">Bi-Weekly</option>
@@ -388,167 +498,13 @@ if (isset($top_expenses) && $top_expenses->num_rows > 0) {
     }
 }
 
-// JavaScript for expense page
-$page_scripts = "
-// Initialize the pie chart for expense categories
-var ctx = document.getElementById('expenseCategoryChart').getContext('2d');
-var expenseCategoryChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-        labels: " . json_encode($chart_labels) . ",
-        datasets: [{
-            data: " . json_encode($chart_data) . ",
-            backgroundColor: " . json_encode(array_slice($chart_colors, 0, count($chart_data))) . ",
-            hoverBackgroundColor: " . json_encode(array_map(function($color) {
-                return adjustColor($color, -20);
-            }, array_slice($chart_colors, 0, count($chart_data)))) . ",
-            hoverBorderColor: 'rgba(234, 236, 244, 1)',
-        }]
-    },
-    options: {
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom',
-            },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        var label = context.label || '';
-                        var value = context.raw || 0;
-                        var total = context.dataset.data.reduce((a, b) => a + b, 0);
-                        var percentage = Math.round((value / total) * 100);
-                        return label + ': $' + value.toFixed(2) + ' (' + percentage + '%)';
-                    }
-                }
-            }
-        },
-        cutout: '60%',
-    }
-});
+// Add meta tag for base path
+echo '<meta name="base-path" content="' . BASE_PATH . '">';
 
-// Initialize form validation
-(function() {
-    'use strict';
-    
-    // Fetch all forms we want to apply validation to
-    var forms = document.querySelectorAll('.needs-validation');
-    
-    // Loop over them and prevent submission
-    Array.prototype.slice.call(forms).forEach(function(form) {
-        form.addEventListener('submit', function(event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            
-            form.classList.add('was-validated');
-        }, false);
-    });
-})();
-
-// Toggle recurring options when checkbox is clicked
-document.getElementById('is_recurring').addEventListener('change', function() {
-    document.getElementById('recurring_options').style.display = this.checked ? 'block' : 'none';
-    
-    // Set default frequency for one-time expenses
-    if (!this.checked) {
-        document.getElementById('frequency').value = 'one-time';
-    } else {
-        document.getElementById('frequency').value = 'monthly';
-    }
-});
-
-// Toggle edit recurring options when checkbox is clicked
-document.getElementById('edit_is_recurring').addEventListener('change', function() {
-    document.getElementById('edit_recurring_options').style.display = this.checked ? 'block' : 'none';
-    
-    // Set default frequency for one-time expenses
-    if (!this.checked) {
-        document.getElementById('edit_frequency').value = 'one-time';
-    }
-});
-
-// Handle edit expense button
-document.querySelectorAll('.edit-expense').forEach(button => {
-    button.addEventListener('click', function() {
-        const expenseId = this.getAttribute('data-expense-id');
-        
-        // Reset form validation
-        const form = document.getElementById('editExpenseForm');
-        form.classList.remove('was-validated');
-        
-        // Show loading spinner
-        const modal = new bootstrap.Modal(document.getElementById('editExpenseModal'));
-        modal.show();
-        
-        // Fetch expense data
-        fetch('" . BASE_PATH . "/expenses?action=get_expense&expense_id=' + expenseId)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Populate form fields
-                    document.getElementById('edit_expense_id').value = data.expense.expense_id;
-                    document.getElementById('edit_category_id').value = data.expense.category_id;
-                    document.getElementById('edit_description').value = data.expense.description;
-                    document.getElementById('edit_amount').value = data.expense.amount;
-                    document.getElementById('edit_expense_date').value = data.expense.expense_date;
-                    document.getElementById('edit_is_recurring').checked = data.expense.is_recurring == 1;
-                    document.getElementById('edit_frequency').value = data.expense.frequency;
-                    
-                    // Show/hide recurring options
-                    document.getElementById('edit_recurring_options').style.display = 
-                        data.expense.is_recurring == 1 ? 'block' : 'none';
-                } else {
-                    // Show error
-                    alert('Failed to load expense data: ' + data.message);
-                    modal.hide();
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching expense data:', error);
-                alert('An error occurred while loading expense data.');
-                modal.hide();
-            });
-    });
-});
-
-// Handle delete expense button
-document.querySelectorAll('.delete-expense').forEach(button => {
-    button.addEventListener('click', function() {
-        const expenseId = this.getAttribute('data-expense-id');
-        document.getElementById('delete_expense_id').value = expenseId;
-        
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('deleteExpenseModal'));
-        modal.show();
-    });
-});
-
-// Search functionality for expense table
-document.getElementById('expenseSearch').addEventListener('input', function() {
-    const searchTerm = this.value.toLowerCase();
-    const table = document.getElementById('expenseTable');
-    const rows = table.querySelectorAll('tbody tr');
-    
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(searchTerm) ? '' : 'none';
-    });
-});
-
-// Reset form when modal is closed
-document.getElementById('addExpenseModal').addEventListener('hidden.bs.modal', function() {
-    document.getElementById('addExpenseForm').reset();
-    document.getElementById('addExpenseForm').classList.remove('was-validated');
-    document.getElementById('recurring_options').style.display = 'none';
-});
-
-// Auto-focus description field when add modal opens
-document.getElementById('addExpenseModal').addEventListener('shown.bs.modal', function() {
-    document.getElementById('description').focus();
-});
-";
+// Add hidden meta tags for passing chart data
+echo '<meta name="chart-labels" content="' . htmlspecialchars(json_encode($chart_labels)) . '">';
+echo '<meta name="chart-data" content="' . htmlspecialchars(json_encode($chart_data)) . '">';
+echo '<meta name="chart-colors" content="' . htmlspecialchars(json_encode(array_slice($chart_colors, 0, count($chart_data)))) . '">';
 
 // Function to adjust color brightness
 function adjustColor($hex, $steps) {
