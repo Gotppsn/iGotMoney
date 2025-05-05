@@ -110,34 +110,83 @@ if (isset($_GET['action'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = isset($_POST['action']) ? $_POST['action'] : '';
     
-    try {
-        switch ($action) {
-            case 'add':
-                // Validate input
-                $errors = [];
+    switch ($action) {
+        case 'add':
+            // Validate input
+            $errors = [];
+            
+            if (empty($_POST['description'])) {
+                $errors[] = 'Description is required.';
+            }
+            
+            if (!isset($_POST['amount']) || !is_numeric($_POST['amount']) || $_POST['amount'] <= 0) {
+                $errors[] = 'Please enter a valid amount greater than zero.';
+            }
+            
+            if (empty($_POST['category_id'])) {
+                $errors[] = 'Please select a category.';
+            }
+            
+            if (empty($_POST['expense_date'])) {
+                $errors[] = 'Please select a date.';
+            }
+            
+            // If there are validation errors
+            if (!empty($errors)) {
+                $error = implode(' ', $errors);
+            } else {
+                // Set expense properties
+                $expense->user_id = $user_id;
+                $expense->category_id = $_POST['category_id'];
+                $expense->amount = $_POST['amount'];
+                $expense->description = $_POST['description'];
+                $expense->expense_date = $_POST['expense_date'];
+                $expense->frequency = isset($_POST['frequency']) ? $_POST['frequency'] : 'one-time';
+                $expense->is_recurring = isset($_POST['is_recurring']) ? 1 : 0;
                 
-                if (empty($_POST['description'])) {
-                    $errors[] = 'Description is required.';
-                }
-                
-                if (!isset($_POST['amount']) || !is_numeric($_POST['amount']) || $_POST['amount'] <= 0) {
-                    $errors[] = 'Please enter a valid amount greater than zero.';
-                }
-                
-                if (empty($_POST['category_id']) || !is_numeric($_POST['category_id'])) {
-                    $errors[] = 'Please select a category.';
-                }
-                
-                if (empty($_POST['expense_date'])) {
-                    $errors[] = 'Please select a date.';
-                }
-                
-                // If there are validation errors
-                if (!empty($errors)) {
-                    $error = implode(' ', $errors);
+                // Create new expense
+                if ($expense->create()) {
+                    $success = 'Expense added successfully!';
                 } else {
-                    // Set expense properties
-                    $expense->user_id = $user_id;
+                    $error = 'Failed to add expense. Please try again.';
+                }
+            }
+            break;
+            
+        case 'edit':
+            // Get expense ID
+            $expense_id = isset($_POST['expense_id']) ? intval($_POST['expense_id']) : 0;
+            
+            // Validate input
+            $errors = [];
+            
+            if (empty($_POST['description'])) {
+                $errors[] = 'Description is required.';
+            }
+            
+            if (!isset($_POST['amount']) || !is_numeric($_POST['amount']) || $_POST['amount'] <= 0) {
+                $errors[] = 'Please enter a valid amount greater than zero.';
+            }
+            
+            if (empty($_POST['category_id'])) {
+                $errors[] = 'Please select a category.';
+            }
+            
+            if (empty($_POST['expense_date'])) {
+                $errors[] = 'Please select a date.';
+            }
+            
+            if (!$expense_id) {
+                $errors[] = 'Invalid expense.';
+            }
+            
+            // If there are validation errors
+            if (!empty($errors)) {
+                $error = implode(' ', $errors);
+            } else {
+                // Get expense data
+                if ($expense->getById($expense_id, $user_id)) {
+                    // Update expense properties
                     $expense->category_id = $_POST['category_id'];
                     $expense->amount = $_POST['amount'];
                     $expense->description = $_POST['description'];
@@ -145,92 +194,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $expense->frequency = isset($_POST['frequency']) ? $_POST['frequency'] : 'one-time';
                     $expense->is_recurring = isset($_POST['is_recurring']) ? 1 : 0;
                     
-                    // Create new expense
-                    if ($expense->create()) {
-                        $success = 'Expense added successfully!';
+                    // Update expense
+                    if ($expense->update()) {
+                        $success = 'Expense updated successfully!';
                     } else {
-                        $error = 'Failed to add expense. Please try again.';
+                        $error = 'Failed to update expense. Please try again.';
                     }
-                }
-                break;
-                
-            case 'edit':
-                // Get expense ID
-                $expense_id = isset($_POST['expense_id']) ? intval($_POST['expense_id']) : 0;
-                
-                // Validate input
-                $errors = [];
-                
-                if (empty($_POST['description'])) {
-                    $errors[] = 'Description is required.';
-                }
-                
-                if (!isset($_POST['amount']) || !is_numeric($_POST['amount']) || $_POST['amount'] <= 0) {
-                    $errors[] = 'Please enter a valid amount greater than zero.';
-                }
-                
-                if (empty($_POST['category_id']) || !is_numeric($_POST['category_id'])) {
-                    $errors[] = 'Please select a category.';
-                }
-                
-                if (empty($_POST['expense_date'])) {
-                    $errors[] = 'Please select a date.';
-                }
-                
-                if (!$expense_id) {
-                    $errors[] = 'Invalid expense.';
-                }
-                
-                // If there are validation errors
-                if (!empty($errors)) {
-                    $error = implode(' ', $errors);
                 } else {
-                    // Get expense data
-                    if ($expense->getById($expense_id, $user_id)) {
-                        // Update expense properties
-                        $expense->category_id = $_POST['category_id'];
-                        $expense->amount = $_POST['amount'];
-                        $expense->description = $_POST['description'];
-                        $expense->expense_date = $_POST['expense_date'];
-                        $expense->frequency = isset($_POST['frequency']) ? $_POST['frequency'] : 'one-time';
-                        $expense->is_recurring = isset($_POST['is_recurring']) ? 1 : 0;
-                        
-                        // Update expense
-                        if ($expense->update()) {
-                            $success = 'Expense updated successfully!';
-                        } else {
-                            $error = 'Failed to update expense. Please try again.';
-                        }
-                    } else {
-                        $error = 'Expense not found.';
-                    }
+                    $error = 'Expense not found.';
                 }
-                break;
-                
-            case 'delete':
-                // Get expense ID
-                $expense_id = isset($_POST['expense_id']) ? intval($_POST['expense_id']) : 0;
-                
-                // Validate input
-                if (!$expense_id) {
-                    $error = 'Invalid expense.';
+            }
+            break;
+            
+        case 'delete':
+            // Get expense ID
+            $expense_id = isset($_POST['expense_id']) ? intval($_POST['expense_id']) : 0;
+            
+            // Validate input
+            if (!$expense_id) {
+                $error = 'Invalid expense.';
+            } else {
+                // Delete expense
+                if ($expense->delete($expense_id, $user_id)) {
+                    $success = 'Expense deleted successfully!';
                 } else {
-                    // Delete expense
-                    if ($expense->delete($expense_id, $user_id)) {
-                        $success = 'Expense deleted successfully!';
-                    } else {
-                        $error = 'Failed to delete expense. Please try again.';
-                    }
+                    $error = 'Failed to delete expense. Please try again.';
                 }
-                break;
-                
-            default:
-                $error = 'Invalid action.';
-                break;
-        }
-    } catch (Exception $e) {
-        $error = 'An unexpected error occurred: ' . $e->getMessage();
-        error_log('Expense controller error: ' . $e->getMessage());
+            }
+            break;
     }
     
     // Handle AJAX form submissions
@@ -256,8 +247,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Get all expense categories
 $categories = $expense->getAllCategories();
 
-// Get all expenses - limiting to the most recent 100 for performance
-$expenses = $expense->getAll($user_id, 100);
+// Get all expenses
+$expenses = $expense->getAll($user_id);
 
 // Calculate total monthly and yearly expenses
 $monthly_expenses = $expense->getMonthlyTotal($user_id);
@@ -265,25 +256,6 @@ $yearly_expenses = $expense->getYearlyTotal($user_id);
 
 // Get top expense categories
 $top_expenses = $expense->getTopCategories($user_id, 5);
-
-// Page-specific scripts
-$page_scripts = "
-    // Initialize tooltips and other Bootstrap components
-    document.addEventListener('DOMContentLoaded', function() {
-        // Custom script to ensure Bootstrap is properly loaded
-        if (typeof bootstrap !== 'undefined') {
-            console.log('Bootstrap is loaded successfully');
-            
-            // Initialize all tooltips
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle=\"tooltip\"]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-        } else {
-            console.error('Bootstrap is not loaded. Some functionality may not work correctly.');
-        }
-    });
-";
 
 // Include view
 require_once 'views/expenses.php';

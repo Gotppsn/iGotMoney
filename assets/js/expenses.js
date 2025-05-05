@@ -8,9 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const basePath = document.querySelector('meta[name="base-path"]') ? 
         document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
     
-    // Initialize Bootstrap components
-    initializeBootstrapComponents();
-    
     // Initialize category highlighting
     initializeCategoryHighlighting();
     
@@ -25,91 +22,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize form validation
     initializeFormValidation();
-    
+
     // Initialize button event handlers
     initializeButtonHandlers();
-    
+
     // Initialize recurring options toggle
     initializeRecurringToggle();
     
     // Initialize search functionality
     initializeSearch();
-    
-    // Set up error handling
-    setupErrorHandling();
 });
-
-/**
- * Set up global error handling
- */
-function setupErrorHandling() {
-    // Add global error handler
-    window.addEventListener('error', function(event) {
-        console.error('JavaScript Error:', event.message, 'at', event.filename, ':', event.lineno);
-        showNotification('An error occurred: ' + event.message, 'danger', 5000);
-        return false; // Don't prevent default error handling
-    });
-    
-    // Add unhandled promise rejection handler
-    window.addEventListener('unhandledrejection', function(event) {
-        console.error('Unhandled Promise Rejection:', event.reason);
-        showNotification('An error occurred in background processing', 'danger', 5000);
-        return false; // Don't prevent default error handling
-    });
-}
-
-/**
- * Initialize Bootstrap components
- * Ensures all Bootstrap components are properly initialized
- */
-function initializeBootstrapComponents() {
-    // Initialize all tooltips
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    if (tooltipTriggerList.length > 0) {
-        tooltipTriggerList.forEach(function(tooltipTriggerEl) {
-            try {
-                new bootstrap.Tooltip(tooltipTriggerEl);
-            } catch (error) {
-                console.error('Error initializing tooltip:', error);
-            }
-        });
-    }
-    
-    // Initialize all dropdowns
-    const dropdownTriggerList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
-    if (dropdownTriggerList.length > 0) {
-        dropdownTriggerList.forEach(function(dropdownTriggerEl) {
-            try {
-                new bootstrap.Dropdown(dropdownTriggerEl);
-            } catch (error) {
-                console.error('Error initializing dropdown:', error);
-            }
-        });
-    }
-    
-    // Initialize add expense modal
-    const addExpenseModal = document.getElementById('addExpenseModal');
-    if (addExpenseModal) {
-        try {
-            new bootstrap.Modal(addExpenseModal);
-        } catch (error) {
-            console.error('Error initializing add expense modal:', error);
-        }
-    }
-    
-    // Make sure "Add Expense" button is properly connected to the modal
-    const addExpenseBtn = document.getElementById('addExpenseBtn');
-    if (addExpenseBtn && addExpenseModal) {
-        addExpenseBtn.addEventListener('click', function() {
-            try {
-                const modal = new bootstrap.Modal(addExpenseModal);
-                modal.show();
-            } catch (error) {
-                console.error('Error showing add expense modal:', error);
-            }
-        });
-    }
-}
 
 /**
  * Initialize category highlighting
@@ -196,12 +118,12 @@ function initializeDateRangeFilter() {
         const endDate = endDateInput.value ? new Date(endDateInput.value) : null;
         
         if (!startDate || !endDate) {
-            showNotification('Please select both start and end dates.', 'warning');
+            alert('Please select both start and end dates.');
             return;
         }
         
         if (startDate > endDate) {
-            showNotification('Start date must be before end date.', 'warning');
+            alert('Start date must be before end date.');
             return;
         }
         
@@ -255,9 +177,6 @@ function filterTableByDateRange(startDate, endDate) {
     if (tableNoData) {
         tableNoData.style.display = visibleRows > 0 ? 'none' : 'block';
     }
-    
-    // Show notification
-    showNotification(`Showing ${visibleRows} expense(s) for the selected period.`, 'info', 3000);
 }
 
 /**
@@ -273,191 +192,24 @@ function updateChartForDateRange(startDate, endDate) {
     const formattedStartDate = formatDateForInput(startDate);
     const formattedEndDate = formatDateForInput(endDate);
     
-    // Show loading indicator
-    const chartContainer = document.querySelector('.chart-container');
-    if (chartContainer) {
-        chartContainer.innerHTML = `
-            <div class="text-center py-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-2">Updating chart data...</p>
-            </div>
-        `;
-    }
-    
-    // Fetch data from API with retry logic
-    const fetchWithRetry = (url, retries = 2, timeout = 10000) => {
-        return new Promise((resolve, reject) => {
-            // Set timeout
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeout);
-            
-            const attemptFetch = (attemptsLeft) => {
-                fetch(url, { signal: controller.signal })
-                    .then(response => {
-                        clearTimeout(timeoutId);
-                        if (!response.ok) {
-                            throw new Error(`Server responded with ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(resolve)
-                    .catch(error => {
-                        if (attemptsLeft > 0 && error.name !== 'AbortError') {
-                            // Retry with exponential backoff
-                            setTimeout(() => attemptFetch(attemptsLeft - 1), 1000 * (3 - attemptsLeft));
-                        } else {
-                            reject(error);
-                        }
-                    });
-            };
-            
-            attemptFetch(retries);
-        });
-    };
-    
-    fetchWithRetry(`${basePath}/expenses?action=get_expenses_by_date&start_date=${formattedStartDate}&end_date=${formattedEndDate}`)
+    // Fetch data from API
+    fetch(`${basePath}/expenses?action=get_expenses_by_date&start_date=${formattedStartDate}&end_date=${formattedEndDate}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
-                // Restore chart canvas
-                if (chartContainer) {
-                    chartContainer.innerHTML = '<canvas id="expenseCategoryChart"></canvas>';
-                }
-                
-                // Check if we have actual data
-                if (data.expenses && data.expenses.length > 0) {
-                    // Reinitialize chart with new data
-                    const chartCanvas = document.getElementById('expenseCategoryChart');
-                    if (chartCanvas) {
-                        initializeExpenseChartWithData(chartCanvas, data.expenses);
-                    } else {
-                        updateChartWithData(data.expenses);
-                    }
-                } else {
-                    // No data for this period
-                    if (chartContainer) {
-                        chartContainer.innerHTML = `
-                            <div class="alert alert-info text-center">
-                                <i class="fas fa-info-circle me-2"></i>
-                                No expense data available for the selected period.
-                            </div>
-                        `;
-                    }
-                    
-                    // Clear top expenses
-                    const topExpensesContent = document.getElementById('topExpensesContent');
-                    if (topExpensesContent) {
-                        topExpensesContent.innerHTML = '<p>No expense data available for the selected period.</p>';
-                    }
-                }
+                updateChartWithData(data.expenses);
             } else {
                 console.error('Failed to load expense data:', data.message);
-                showNotification('Failed to load expense data: ' + data.message, 'danger');
-                
-                // Restore chart canvas
-                if (chartContainer) {
-                    chartContainer.innerHTML = '<canvas id="expenseCategoryChart"></canvas>';
-                    initializeExpenseChart(); // Reinitialize with original data
-                }
             }
         })
         .catch(error => {
             console.error('Error fetching expense data:', error);
-            showNotification('Error fetching expense data: ' + error.message, 'danger');
-            
-            // Restore chart canvas
-            if (chartContainer) {
-                chartContainer.innerHTML = '<canvas id="expenseCategoryChart"></canvas>';
-                initializeExpenseChart(); // Reinitialize with original data
-            }
         });
-}
-
-/**
- * Initialize expense chart with specific data
- * @param {HTMLElement} canvas - Chart canvas element
- * @param {Array} expenses - Expense data
- */
-function initializeExpenseChartWithData(canvas, expenses) {
-    // Group expenses by category
-    const categories = {};
-    
-    expenses.forEach(expense => {
-        const categoryName = expense.category_name;
-        
-        if (!categories[categoryName]) {
-            categories[categoryName] = 0;
-        }
-        
-        categories[categoryName] += parseFloat(expense.amount);
-    });
-    
-    // Convert to arrays for chart
-    const categoryNames = Object.keys(categories);
-    const categoryTotals = categoryNames.map(name => categories[name]);
-    
-    // Get chart colors
-    const chartColorsStr = document.querySelector('meta[name="chart-colors"]') ? 
-        document.querySelector('meta[name="chart-colors"]').getAttribute('content') : '[]';
-    
-    const chartColors = JSON.parse(chartColorsStr);
-    
-    // Create hover colors (darker)
-    const hoverColors = chartColors.map(color => adjustColor(color, -20));
-    
-    // Initialize the chart
-    if (typeof Chart !== 'undefined') {
-        // Destroy existing chart if it exists
-        if (window.expenseCategoryChart) {
-            window.expenseCategoryChart.destroy();
-        }
-        
-        window.expenseCategoryChart = new Chart(canvas.getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: categoryNames,
-                datasets: [{
-                    data: categoryTotals,
-                    backgroundColor: chartColors.slice(0, categoryNames.length),
-                    hoverBackgroundColor: hoverColors.slice(0, categoryNames.length),
-                    hoverBorderColor: 'rgba(234, 236, 244, 1)',
-                }]
-            },
-            options: {
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = context.raw || 0;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = Math.round((value / total) * 100);
-                                return `${label}: $${value.toFixed(2)} (${percentage}%)`;
-                            }
-                        }
-                    }
-                },
-                cutout: '60%',
-            }
-        });
-        
-        // Update top expenses
-        updateTopExpenses(categories, categoryNames, categoryTotals);
-        
-        // Show/hide no data message
-        const chartNoData = document.getElementById('chartNoData');
-        if (chartNoData) {
-            chartNoData.style.display = categoryNames.length > 0 ? 'none' : 'block';
-        }
-    } else {
-        console.error('Chart.js is not loaded');
-        showNotification('Chart.js is not loaded. Cannot display chart.', 'danger');
-    }
 }
 
 /**
@@ -582,87 +334,72 @@ function initializeExpenseChart() {
     const colorsStr = document.querySelector('meta[name="chart-colors"]') ? 
         document.querySelector('meta[name="chart-colors"]').getAttribute('content') : '[]';
     
-    try {
-        const labels = JSON.parse(labelsStr);
-        const data = JSON.parse(dataStr);
-        const colors = JSON.parse(colorsStr);
-        
-        // Create hover colors (darker)
-        const hoverColors = colors.map(color => {
-            return adjustColor(color, -20);
-        });
-        
-        // Initialize the chart
-        if (typeof Chart !== 'undefined') {
-            // Destroy existing chart if it exists
-            if (window.expenseCategoryChart) {
-                window.expenseCategoryChart.destroy();
+    const labels = JSON.parse(labelsStr);
+    const data = JSON.parse(dataStr);
+    const colors = JSON.parse(colorsStr);
+    
+    // Create hover colors (darker)
+    const hoverColors = colors.map(color => {
+        return adjustColor(color, -20);
+    });
+    
+    // Initialize the chart
+    window.expenseCategoryChart = new Chart(chartCanvas.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors,
+                hoverBackgroundColor: hoverColors,
+                hoverBorderColor: 'rgba(234, 236, 244, 1)',
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${label}: $${value.toFixed(2)} (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            cutout: '60%',
+        }
+    });
+    
+    // Handle chart period dropdown
+    const chartPeriodLinks = document.querySelectorAll('.chart-period');
+    chartPeriodLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Update dropdown button text
+            const periodText = this.textContent;
+            const dropdownButton = document.getElementById('chartPeriodDropdown');
+            if (dropdownButton) {
+                dropdownButton.innerHTML = `<i class="fas fa-calendar-alt me-1"></i> ${periodText}`;
             }
             
-            window.expenseCategoryChart = new Chart(chartCanvas.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: colors,
-                        hoverBackgroundColor: hoverColors,
-                        hoverBorderColor: 'rgba(234, 236, 244, 1)',
-                    }]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.raw || 0;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = Math.round((value / total) * 100);
-                                    return `${label}: $${value.toFixed(2)} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    },
-                    cutout: '60%',
-                }
-            });
-        } else {
-            console.error('Chart.js is not loaded');
-            showNotification('Chart.js is not loaded. Cannot display chart.', 'danger');
-        }
-        
-        // Handle chart period dropdown
-        const chartPeriodLinks = document.querySelectorAll('.chart-period');
-        chartPeriodLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Update dropdown button text
-                const periodText = this.textContent;
-                const dropdownButton = document.getElementById('chartPeriodDropdown');
-                if (dropdownButton) {
-                    dropdownButton.innerHTML = `<i class="fas fa-calendar-alt me-1"></i> ${periodText}`;
-                }
-                
-                // Get date range based on period
-                const period = this.getAttribute('data-period');
-                const { startDate, endDate } = getDateRangeFromOption(period);
-                
-                // Update chart for date range
-                if (startDate && endDate) {
-                    updateChartForDateRange(startDate, endDate);
-                }
-            });
+            // Get date range based on period
+            const period = this.getAttribute('data-period');
+            const { startDate, endDate } = getDateRangeFromOption(period);
+            
+            // Update chart for date range
+            if (startDate && endDate) {
+                updateChartForDateRange(startDate, endDate);
+            }
         });
-    } catch (e) {
-        console.error('Error initializing chart:', e);
-        showNotification('Error initializing chart: ' + e.message, 'danger');
-    }
+    });
 }
 
 /**
@@ -672,28 +409,7 @@ function initializeExpenseChart() {
  * @returns {string} - Adjusted color
  */
 function adjustColor(color, amount) {
-    // Convert hex to RGB
-    let hex = color;
-    if (hex.startsWith('#')) {
-        hex = hex.slice(1);
-    }
-    
-    // Parse the RGB components
-    let r = parseInt(hex.substring(0, 2), 16);
-    let g = parseInt(hex.substring(2, 4), 16);
-    let b = parseInt(hex.substring(4, 6), 16);
-    
-    // Adjust each component
-    r = Math.max(0, Math.min(255, r + amount));
-    g = Math.max(0, Math.min(255, g + amount));
-    b = Math.max(0, Math.min(255, b + amount));
-    
-    // Convert back to hex
-    const rHex = Math.round(r).toString(16).padStart(2, '0');
-    const gHex = Math.round(g).toString(16).padStart(2, '0');
-    const bHex = Math.round(b).toString(16).padStart(2, '0');
-    
-    return `#${rHex}${gHex}${bHex}`;
+    return color;  // For simplicity, we're not implementing this here
 }
 
 /**
@@ -710,16 +426,6 @@ function initializeExpenseAnalytics() {
         
         analyticsContent.style.display = 'flex';
         
-        // Show loading spinner
-        analyticsContent.innerHTML = `
-            <div class="col-12 text-center py-3">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-2">Calculating analytics...</p>
-            </div>
-        `;
-        
         // Get all visible expense rows
         const expenseTable = document.getElementById('expenseTable');
         if (!expenseTable) return;
@@ -728,14 +434,10 @@ function initializeExpenseAnalytics() {
             .filter(row => row.style.display !== 'none');
         
         if (rows.length === 0) {
-            analyticsContent.innerHTML = `
-                <div class="col-12">
-                    <div class="alert alert-info text-center">
-                        <i class="fas fa-info-circle me-2"></i>
-                        No expense data available for analysis.
-                    </div>
-                </div>
-            `;
+            document.getElementById('avgDailyExpense').textContent = '$0.00';
+            document.getElementById('highestExpense').textContent = '$0.00';
+            document.getElementById('highestExpenseCategory').textContent = '';
+            document.getElementById('projectedMonthly').textContent = '$0.00';
             return;
         }
         
@@ -751,9 +453,7 @@ function initializeExpenseAnalytics() {
         });
         
         // Calculate analytics
-        setTimeout(() => {
-            calculateExpenseAnalytics(expenses);
-        }, 500); // Small delay to show loading spinner
+        calculateExpenseAnalytics(expenses);
     });
 }
 
@@ -762,9 +462,6 @@ function initializeExpenseAnalytics() {
  * @param {Array} expenses - Array of expense objects
  */
 function calculateExpenseAnalytics(expenses) {
-    const analyticsContent = document.getElementById('analyticsContent');
-    if (!analyticsContent) return;
-    
     // Calculate total expense amount
     const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
     
@@ -787,60 +484,11 @@ function calculateExpenseAnalytics(expenses) {
     const daysInMonth = 30;
     const projectedMonthly = avgDaily * daysInMonth;
     
-    // Calculate category breakdown
-    const categoryTotals = {};
-    expenses.forEach(expense => {
-        if (!categoryTotals[expense.category]) {
-            categoryTotals[expense.category] = 0;
-        }
-        categoryTotals[expense.category] += expense.amount;
-    });
-    
-    // Sort categories by total
-    const sortedCategories = Object.entries(categoryTotals)
-        .map(([category, total]) => ({ category, total }))
-        .sort((a, b) => b.total - a.total);
-    
     // Update analytics display
-    analyticsContent.innerHTML = `
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Avg. Daily Expense</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgDailyExpense">$${avgDaily.toFixed(2)}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card border-left-danger shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Highest Expense</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="highestExpense">$${highestExpense.amount.toFixed(2)}</div>
-                    <small class="text-muted" id="highestExpenseCategory">${highestExpense.category}</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Projected Monthly</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="projectedMonthly">$${projectedMonthly.toFixed(2)}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Expenses</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800">$${totalAmount.toFixed(2)}</div>
-                    <small class="text-muted">${expenses.length} expenses</small>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Show notification
-    showNotification('Analytics calculated successfully!', 'success', 2000);
+    document.getElementById('avgDailyExpense').textContent = '$' + avgDaily.toFixed(2);
+    document.getElementById('highestExpense').textContent = '$' + highestExpense.amount.toFixed(2);
+    document.getElementById('highestExpenseCategory').textContent = highestExpense.category;
+    document.getElementById('projectedMonthly').textContent = '$' + projectedMonthly.toFixed(2);
 }
 
 /**
@@ -854,19 +502,23 @@ function initializeFormValidation() {
     
     if (addForm) {
         addForm.addEventListener('submit', function(event) {
-            if (!validateExpenseForm(this)) {
+            if (!this.checkValidity()) {
                 event.preventDefault();
                 event.stopPropagation();
             }
+            
+            this.classList.add('was-validated');
         });
     }
     
     if (editForm) {
         editForm.addEventListener('submit', function(event) {
-            if (!validateExpenseForm(this)) {
+            if (!this.checkValidity()) {
                 event.preventDefault();
                 event.stopPropagation();
             }
+            
+            this.classList.add('was-validated');
         });
     }
     
@@ -877,10 +529,6 @@ function initializeFormValidation() {
             if (addForm) {
                 addForm.reset();
                 addForm.classList.remove('was-validated');
-                // Clear any custom validation styles
-                addForm.querySelectorAll('.is-invalid, .is-valid').forEach(el => {
-                    el.classList.remove('is-invalid', 'is-valid');
-                });
             }
             
             const recurringOptions = document.getElementById('recurring_options');
@@ -896,10 +544,6 @@ function initializeFormValidation() {
             if (editForm) {
                 editForm.reset();
                 editForm.classList.remove('was-validated');
-                // Clear any custom validation styles
-                editForm.querySelectorAll('.is-invalid, .is-valid').forEach(el => {
-                    el.classList.remove('is-invalid', 'is-valid');
-                });
             }
             
             const editRecurringOptions = document.getElementById('edit_recurring_options');
@@ -908,78 +552,6 @@ function initializeFormValidation() {
             }
         });
     }
-}
-
-/**
- * Validate expense form
- * @param {HTMLElement} form - The form to validate
- * @returns {boolean} - True if valid, false otherwise
- */
-function validateExpenseForm(form) {
-    let isValid = true;
-    
-    // Get form elements
-    const descriptionInput = form.querySelector('[name="description"]');
-    const amountInput = form.querySelector('[name="amount"]');
-    const categorySelect = form.querySelector('[name="category_id"]');
-    const dateInput = form.querySelector('[name="expense_date"]');
-    
-    // Reset validation state
-    form.classList.remove('was-validated');
-    
-    // Validate description
-    if (!descriptionInput || !descriptionInput.value.trim()) {
-        isValid = false;
-        if (descriptionInput) {
-            descriptionInput.classList.add('is-invalid');
-            descriptionInput.classList.remove('is-valid');
-        }
-    } else if (descriptionInput) {
-        descriptionInput.classList.remove('is-invalid');
-        descriptionInput.classList.add('is-valid');
-    }
-    
-    // Validate amount
-    if (!amountInput || !amountInput.value || parseFloat(amountInput.value) <= 0) {
-        isValid = false;
-        if (amountInput) {
-            amountInput.classList.add('is-invalid');
-            amountInput.classList.remove('is-valid');
-        }
-    } else if (amountInput) {
-        amountInput.classList.remove('is-invalid');
-        amountInput.classList.add('is-valid');
-    }
-    
-    // Validate category
-    if (!categorySelect || !categorySelect.value) {
-        isValid = false;
-        if (categorySelect) {
-            categorySelect.classList.add('is-invalid');
-            categorySelect.classList.remove('is-valid');
-        }
-    } else if (categorySelect) {
-        categorySelect.classList.remove('is-invalid');
-        categorySelect.classList.add('is-valid');
-    }
-    
-    // Validate date
-    if (!dateInput || !dateInput.value) {
-        isValid = false;
-        if (dateInput) {
-            dateInput.classList.add('is-invalid');
-            dateInput.classList.remove('is-valid');
-        }
-    } else if (dateInput) {
-        dateInput.classList.remove('is-invalid');
-        dateInput.classList.add('is-valid');
-    }
-    
-    if (!isValid) {
-        showNotification('Please fill in all required fields correctly.', 'warning');
-    }
-    
-    return isValid;
 }
 
 /**
@@ -1036,26 +608,15 @@ function initializeButtonHandlers() {
     const basePath = document.querySelector('meta[name="base-path"]') ? 
         document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
     
-    // Use event delegation for edit and delete buttons
-    document.addEventListener('click', function(event) {
-        // Edit button handler
-        if (event.target.classList.contains('edit-expense') || 
-            event.target.closest('.edit-expense')) {
-            
-            // Get the button element (could be the icon or the button itself)
-            const button = event.target.classList.contains('edit-expense') ? 
-                event.target : event.target.closest('.edit-expense');
-            
-            const expenseId = button.getAttribute('data-expense-id');
+    // Handle edit expense button clicks
+    document.querySelectorAll('.edit-expense').forEach(button => {
+        button.addEventListener('click', function() {
+            const expenseId = this.getAttribute('data-expense-id');
             
             // Reset form validation
             const form = document.getElementById('editExpenseForm');
             if (form) {
-                form.reset();
                 form.classList.remove('was-validated');
-                form.querySelectorAll('.is-invalid, .is-valid').forEach(el => {
-                    el.classList.remove('is-invalid', 'is-valid');
-                });
             }
             
             // Show modal
@@ -1066,30 +627,27 @@ function initializeButtonHandlers() {
                     modal.show();
                     
                     // Show loading state
-                    const modalBody = editModal.querySelector('.modal-body');
-                    if (modalBody) {
-                        modalBody.innerHTML = `
-                            <div class="text-center py-4">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <p class="mt-3">Loading expense data...</p>
+                    editModal.querySelector('.modal-body').innerHTML = `
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
-                        `;
-                    }
+                            <p class="mt-3">Loading expense data...</p>
+                        </div>
+                    `;
                     
                     // Fetch expense data
                     fetch(`${basePath}/expenses?action=get_expense&expense_id=${expenseId}`)
                         .then(response => {
                             if (!response.ok) {
-                                throw new Error(`Server responded with ${response.status}`);
+                                throw new Error('Network response was not ok');
                             }
                             return response.json();
                         })
                         .then(data => {
                             if (data.success) {
                                 // Restore modal content
-                                modalBody.innerHTML = `
+                                editModal.querySelector('.modal-body').innerHTML = `
                                     <div class="mb-3">
                                         <label for="edit_category_id" class="form-label">Category</label>
                                         <select class="form-select" id="edit_category_id" name="category_id" required>
@@ -1142,12 +700,6 @@ function initializeButtonHandlers() {
                                     </div>
                                 `;
                                 
-                                // Get hidden expense ID field
-                                const expenseIdInput = document.getElementById('edit_expense_id');
-                                if (expenseIdInput) {
-                                    expenseIdInput.value = data.expense.expense_id;
-                                }
-                                
                                 // Reinitialize recurring toggle
                                 const editIsRecurringCheckbox = document.getElementById('edit_is_recurring');
                                 if (editIsRecurringCheckbox) {
@@ -1156,34 +708,21 @@ function initializeButtonHandlers() {
                                         if (editRecurringOptions) {
                                             editRecurringOptions.style.display = this.checked ? 'block' : 'none';
                                         }
-                                        
-                                        // Set frequency value
-                                        const editFrequencySelect = document.getElementById('edit_frequency');
-                                        if (editFrequencySelect) {
-                                            if (!this.checked) {
-                                                editFrequencySelect.value = 'one-time';
-                                            }
-                                        }
                                     });
                                 }
                                 
                                 // Populate form fields
+                                document.getElementById('edit_expense_id').value = data.expense.expense_id;
                                 document.getElementById('edit_category_id').value = data.expense.category_id;
                                 document.getElementById('edit_description').value = data.expense.description;
                                 document.getElementById('edit_amount').value = data.expense.amount;
                                 document.getElementById('edit_expense_date').value = data.expense.expense_date;
                                 document.getElementById('edit_is_recurring').checked = data.expense.is_recurring == 1;
-                                
-                                const editFrequencySelect = document.getElementById('edit_frequency');
-                                if (editFrequencySelect) {
-                                    editFrequencySelect.value = data.expense.frequency;
-                                }
+                                document.getElementById('edit_frequency').value = data.expense.frequency;
                                 
                                 // Show/hide recurring options
-                                const editRecurringOptions = document.getElementById('edit_recurring_options');
-                                if (editRecurringOptions) {
-                                    editRecurringOptions.style.display = data.expense.is_recurring == 1 ? 'block' : 'none';
-                                }
+                                document.getElementById('edit_recurring_options').style.display = 
+                                    data.expense.is_recurring == 1 ? 'block' : 'none';
                             } else {
                                 // Show error
                                 showNotification('Failed to load expense data: ' + data.message, 'danger');
@@ -1192,24 +731,21 @@ function initializeButtonHandlers() {
                         })
                         .catch(error => {
                             console.error('Error fetching expense data:', error);
-                            showNotification('An error occurred while loading expense data: ' + error.message, 'danger');
+                            showNotification('An error occurred while loading expense data.', 'danger');
                             modal.hide();
                         });
                 } catch (e) {
                     console.error('Error showing modal:', e);
-                    showNotification('Could not open edit form. Please try again: ' + e.message, 'danger');
+                    showNotification('Could not open edit form. Please try again.', 'danger');
                 }
             }
-        }
-        
-        // Delete button handler
-        if (event.target.classList.contains('delete-expense') || 
-            event.target.closest('.delete-expense')) {
-            
-            const button = event.target.classList.contains('delete-expense') ? 
-                event.target : event.target.closest('.delete-expense');
-                
-            const expenseId = button.getAttribute('data-expense-id');
+        });
+    });
+
+    // Handle delete expense button clicks
+    document.querySelectorAll('.delete-expense').forEach(button => {
+        button.addEventListener('click', function() {
+            const expenseId = this.getAttribute('data-expense-id');
             const deleteExpenseIdInput = document.getElementById('delete_expense_id');
             if (deleteExpenseIdInput) {
                 deleteExpenseIdInput.value = expenseId;
@@ -1223,10 +759,10 @@ function initializeButtonHandlers() {
                     modal.show();
                 } catch (e) {
                     console.error('Error showing delete modal:', e);
-                    showNotification('Could not open delete confirmation. Please try again: ' + e.message, 'danger');
+                    showNotification('Could not open delete confirmation. Please try again.', 'danger');
                 }
             }
-        }
+        });
     });
 }
 
@@ -1338,35 +874,25 @@ function formatDateForInput(date) {
  * @param {number} duration - Duration in milliseconds
  */
 function showNotification(message, type = 'info', duration = 3000) {
-    // Create notification element if it doesn't exist
-    let notification = document.getElementById('notificationToast');
-    if (!notification) {
-        notification = document.createElement('div');
-        notification.id = 'notificationToast';
-        notification.className = 'toast position-fixed top-0 end-0 m-3';
-        notification.setAttribute('role', 'alert');
-        notification.setAttribute('aria-live', 'assertive');
-        notification.setAttribute('aria-atomic', 'true');
-        
-        document.body.appendChild(notification);
-    }
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.zIndex = '9999';
+    notification.style.maxWidth = '300px';
     
-    // Set notification content
     notification.innerHTML = `
-        <div class="toast-header bg-${type} text-white">
-            <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">
-            ${message}
-        </div>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
     
-    // Show notification
-    const toast = new bootstrap.Toast(notification, {
-        delay: duration,
-        autohide: true
-    });
+    // Add to document
+    document.body.appendChild(notification);
     
-    toast.show();
+    // Remove after duration
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300); // Wait for fade out
+    }, duration);
 }
