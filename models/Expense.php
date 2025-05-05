@@ -45,6 +45,10 @@ class Expense {
         
         // Prepare statement
         $stmt = $this->conn->prepare($query);
+        if (!$stmt) {
+            error_log("Query preparation failed: " . $this->conn->error);
+            return false;
+        }
         
         // Sanitize input
         $this->user_id = htmlspecialchars(strip_tags($this->user_id));
@@ -87,7 +91,7 @@ class Expense {
         $this->next_due_date = $next_due_date;
         
         // Bind parameters
-        $stmt->bind_param("iidssiss", 
+        if (!$stmt->bind_param("iidssiss", 
                           $this->user_id, 
                           $this->category_id, 
                           $this->amount, 
@@ -95,7 +99,10 @@ class Expense {
                           $this->expense_date, 
                           $this->frequency, 
                           $this->is_recurring, 
-                          $this->next_due_date);
+                          $this->next_due_date)) {
+            error_log("Parameter binding failed: " . $stmt->error);
+            return false;
+        }
         
         // Execute query
         if ($stmt->execute()) {
@@ -107,8 +114,8 @@ class Expense {
             return true;
         }
         
-        // Print error if something goes wrong
-        printf("Error: %s.\n", $stmt->error);
+        // Log error if something goes wrong
+        error_log("Query execution failed: " . $stmt->error);
         return false;
     }
     
@@ -205,6 +212,10 @@ class Expense {
         
         // Prepare statement
         $stmt = $this->conn->prepare($query);
+        if (!$stmt) {
+            error_log("Update query preparation failed: " . $this->conn->error);
+            return false;
+        }
         
         // Sanitize input
         $this->category_id = htmlspecialchars(strip_tags($this->category_id));
@@ -246,7 +257,7 @@ class Expense {
         $this->next_due_date = $next_due_date;
         
         // Bind parameters
-        $stmt->bind_param("idsssissi", 
+        if (!$stmt->bind_param("idsssissi", 
                           $this->category_id, 
                           $this->amount, 
                           $this->description, 
@@ -255,26 +266,43 @@ class Expense {
                           $this->is_recurring, 
                           $this->next_due_date, 
                           $this->expense_id, 
-                          $this->user_id);
+                          $this->user_id)) {
+            error_log("Update parameter binding failed: " . $stmt->error);
+            return false;
+        }
         
         // Execute query
         if ($stmt->execute()) {
             return true;
         }
         
-        // Print error if something goes wrong
-        printf("Error: %s.\n", $stmt->error);
+        // Log error if something goes wrong
+        error_log("Update execution failed: " . $stmt->error);
         return false;
     }
     
     // Delete expense
     public function delete($expense_id, $user_id) {
-        // SQL query
+        // First, delete related transactions
+        $query = "DELETE FROM " . $this->transactions_table . " 
+                  WHERE expense_id = ? AND user_id = ?";
+        
+        $stmt = $this->conn->prepare($query);
+        if ($stmt) {
+            $stmt->bind_param("ii", $expense_id, $user_id);
+            $stmt->execute();
+        }
+        
+        // Now delete the expense
         $query = "DELETE FROM " . $this->table . " 
                   WHERE expense_id = ? AND user_id = ?";
         
         // Prepare statement
         $stmt = $this->conn->prepare($query);
+        if (!$stmt) {
+            error_log("Delete query preparation failed: " . $this->conn->error);
+            return false;
+        }
         
         // Bind parameters
         $stmt->bind_param("ii", $expense_id, $user_id);
@@ -284,8 +312,8 @@ class Expense {
             return true;
         }
         
-        // Print error if something goes wrong
-        printf("Error: %s.\n", $stmt->error);
+        // Log error if something goes wrong
+        error_log("Delete execution failed: " . $stmt->error);
         return false;
     }
     
@@ -458,30 +486,46 @@ class Expense {
         
         // Prepare statement
         $stmt = $this->conn->prepare($query);
+        if (!$stmt) {
+            error_log("Transaction record preparation failed: " . $this->conn->error);
+            return false;
+        }
         
         // Get category name
         $category_query = "SELECT name FROM " . $this->categories_table . " WHERE category_id = ?";
         $category_stmt = $this->conn->prepare($category_query);
+        if (!$category_stmt) {
+            error_log("Category query preparation failed: " . $this->conn->error);
+            return false;
+        }
+        
         $category_stmt->bind_param("i", $this->category_id);
         $category_stmt->execute();
         $category_result = $category_stmt->get_result();
         $category_row = $category_result->fetch_assoc();
-        $category_name = $category_row['name'];
+        $category_name = $category_row['name'] ?? 'Unknown Category';
         
         // Set description
         $full_description = "Expense: " . $this->description . " (Category: " . $category_name . ")";
         
         // Bind parameters
-        $stmt->bind_param("idssii", 
+        if (!$stmt->bind_param("idssii", 
                           $this->user_id, 
                           $this->amount, 
                           $full_description, 
                           $this->expense_date, 
                           $this->category_id, 
-                          $this->expense_id);
+                          $this->expense_id)) {
+            error_log("Transaction parameter binding failed: " . $stmt->error);
+            return false;
+        }
         
         // Execute query
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            error_log("Transaction record execution failed: " . $stmt->error);
+            return false;
+        }
+        
+        return true;
     }
 }
-?>

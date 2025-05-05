@@ -187,18 +187,26 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="addExpenseModalLabel">Add Expense</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/expenses" method="post">
+            <form action="<?php echo BASE_PATH; ?>/expenses" method="post">
                 <input type="hidden" name="action" value="add">
                 
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="category_id" class="form-label">Category</label>
                         <select class="form-select" id="category_id" name="category_id" required>
-                            <?php while ($category = $categories->fetch_assoc()): ?>
+                            <?php 
+                            // Reset the categories result pointer
+                            if ($categories->num_rows > 0) {
+                                $categories->data_seek(0);
+                                while ($category = $categories->fetch_assoc()): 
+                            ?>
                                 <option value="<?php echo $category['category_id']; ?>">
                                     <?php echo htmlspecialchars($category['name']); ?>
                                 </option>
-                            <?php endwhile; ?>
+                            <?php 
+                                endwhile;
+                            }
+                            ?>
                         </select>
                     </div>
                     
@@ -258,7 +266,7 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="editExpenseModalLabel">Edit Expense</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/expenses" method="post">
+            <form action="<?php echo BASE_PATH; ?>/expenses" method="post">
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="expense_id" id="edit_expense_id">
                 
@@ -268,13 +276,17 @@ require_once 'includes/header.php';
                         <select class="form-select" id="edit_category_id" name="category_id" required>
                             <?php 
                             // Reset the categories result pointer
-                            $categories->data_seek(0);
-                            while ($category = $categories->fetch_assoc()): 
+                            if ($categories->num_rows > 0) {
+                                $categories->data_seek(0);
+                                while ($category = $categories->fetch_assoc()): 
                             ?>
                                 <option value="<?php echo $category['category_id']; ?>">
                                     <?php echo htmlspecialchars($category['name']); ?>
                                 </option>
-                            <?php endwhile; ?>
+                            <?php 
+                                endwhile;
+                            }
+                            ?>
                         </select>
                     </div>
                     
@@ -339,7 +351,7 @@ require_once 'includes/header.php';
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="/expenses" method="post">
+                <form action="<?php echo BASE_PATH; ?>/expenses" method="post">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="expense_id" id="delete_expense_id">
                     <button type="submit" class="btn btn-danger">Delete</button>
@@ -433,9 +445,6 @@ document.querySelectorAll('.edit-expense').forEach(button => {
         const expenseId = this.getAttribute('data-expense-id');
         
         // Show loading spinner
-        showSpinner(document.querySelector('#editExpenseModal .modal-body'));
-        
-        // Show modal
         const modal = new bootstrap.Modal(document.getElementById('editExpenseModal'));
         modal.show();
         
@@ -456,9 +465,6 @@ document.querySelectorAll('.edit-expense').forEach(button => {
                     // Show/hide recurring options
                     document.getElementById('edit_recurring_options').style.display = 
                         data.expense.is_recurring == 1 ? 'block' : 'none';
-                    
-                    // Remove spinner
-                    hideSpinner(document.querySelector('#editExpenseModal .modal-body'));
                 } else {
                     // Show error
                     alert('Failed to load expense data: ' + data.message);
@@ -482,6 +488,18 @@ document.querySelectorAll('.delete-expense').forEach(button => {
         // Show modal
         const modal = new bootstrap.Modal(document.getElementById('deleteExpenseModal'));
         modal.show();
+    });
+});
+
+// Search functionality for expense table
+document.getElementById('expenseSearch').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const table = document.getElementById('expenseTable');
+    const rows = table.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
     });
 });
 ";

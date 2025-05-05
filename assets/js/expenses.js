@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize expense analytics
     initializeExpenseAnalytics();
+    
+    // Initialize form validation
+    initializeFormValidation();
 });
 
 /**
@@ -320,7 +323,7 @@ function initializeExpenseAnalytics() {
             
             // Extract expense data
             const expenses = rows.map(row => {
-                const amount = parseFloat(row.querySelector('td:nth-child(3)').textContent.replace('$', '').replace(',', ''));
+                const amount = parseFloat(row.querySelector('td:nth-child(3)').textContent.replace(', ', '').replace(',', ''));
                 const date = new Date(row.querySelector('td:nth-child(4)').textContent);
                 const category = row.querySelector('td:nth-child(2)').textContent;
                 const frequency = row.querySelector('td:nth-child(5)').textContent.toLowerCase();
@@ -367,4 +370,107 @@ function calculateExpenseAnalytics(expenses) {
     document.getElementById('highestExpense').textContent = '$' + highestExpense.amount.toFixed(2);
     document.getElementById('highestExpenseCategory').textContent = highestExpense.category;
     document.getElementById('projectedMonthly').textContent = '$' + projectedMonthly.toFixed(2);
+}
+
+/**
+ * Initialize form validation
+ * Validates expense forms before submission
+ */
+function initializeFormValidation() {
+    // Add form validation
+    const forms = document.querySelectorAll('#addExpenseModal form, #editExpenseModal form');
+    
+    forms.forEach(form => {
+        form.addEventListener('submit', function(event) {
+            if (!validateExpenseForm(this)) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        });
+    });
+}
+
+/**
+ * Validate expense form
+ * @param {HTMLFormElement} form - Form to validate
+ * @returns {boolean} - True if valid, false otherwise
+ */
+function validateExpenseForm(form) {
+    let isValid = true;
+    
+    // Get form fields
+    const categoryId = form.querySelector('[name="category_id"]');
+    const description = form.querySelector('[name="description"]');
+    const amount = form.querySelector('[name="amount"]');
+    const expenseDate = form.querySelector('[name="expense_date"]');
+    const isRecurring = form.querySelector('[name="is_recurring"]');
+    const frequency = form.querySelector('[name="frequency"]');
+    
+    // Reset previous errors
+    form.querySelectorAll('.is-invalid').forEach(el => {
+        el.classList.remove('is-invalid');
+    });
+    
+    // Validate category
+    if (!categoryId.value) {
+        categoryId.classList.add('is-invalid');
+        isValid = false;
+    }
+    
+    // Validate description
+    if (!description.value.trim()) {
+        description.classList.add('is-invalid');
+        isValid = false;
+    }
+    
+    // Validate amount
+    if (!amount.value || parseFloat(amount.value) <= 0) {
+        amount.classList.add('is-invalid');
+        isValid = false;
+    }
+    
+    // Validate date
+    if (!expenseDate.value) {
+        expenseDate.classList.add('is-invalid');
+        isValid = false;
+    }
+    
+    // Validate frequency if recurring
+    if (isRecurring.checked && (!frequency.value || frequency.value === 'one-time')) {
+        frequency.classList.add('is-invalid');
+        isValid = false;
+    }
+    
+    return isValid;
+}
+
+/**
+ * Show notification
+ * Displays a temporary notification message
+ * @param {string} message - The message to display
+ * @param {string} type - The notification type (success, info, warning, danger)
+ * @param {number} duration - The duration in milliseconds
+ */
+function showNotification(message, type = 'info', duration = 3000) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.zIndex = '9999';
+    notification.style.maxWidth = '300px';
+    
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    // Add to document
+    document.body.appendChild(notification);
+    
+    // Remove after duration
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300); // Wait for fade out
+    }, duration);
 }
