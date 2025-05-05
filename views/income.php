@@ -13,8 +13,8 @@ require_once 'includes/header.php';
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Income Management</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <button type="button" class="btn btn-sm btn-primary" id="addIncomeBtn">
-            <i class="fas fa-plus"></i> Add Income
+        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
+            <i class="fa fa-plus"></i> Add Income
         </button>
     </div>
 </div>
@@ -31,7 +31,7 @@ require_once 'includes/header.php';
                         <div class="h5 mb-0 font-weight-bold text-gray-800">$<?php echo number_format($monthly_income, 2); ?></div>
                     </div>
                     <div class="col-auto">
-                        <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        <i class="fa fa-calendar fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
@@ -48,7 +48,7 @@ require_once 'includes/header.php';
                         <div class="h5 mb-0 font-weight-bold text-gray-800">$<?php echo number_format($yearly_income, 2); ?></div>
                     </div>
                     <div class="col-auto">
-                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        <i class="fa fa-dollar-sign fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
@@ -62,7 +62,7 @@ require_once 'includes/header.php';
         <h6 class="m-0 font-weight-bold text-primary">Income Sources</h6>
         <div class="input-group input-group-sm" style="width: 250px;">
             <input type="text" class="form-control" placeholder="Search income sources..." id="incomeSearch" data-table-search="incomeTable">
-            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <span class="input-group-text"><i class="fa fa-search"></i></span>
         </div>
     </div>
     <div class="card-body">
@@ -109,14 +109,12 @@ require_once 'includes/header.php';
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <div class="btn-group">
-                                        <button type="button" class="btn btn-sm btn-info edit-income-btn" data-income-id="<?php echo $income['income_id']; ?>">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-danger delete-income-btn" data-income-id="<?php echo $income['income_id']; ?>">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
+                                    <button type="button" class="btn btn-sm btn-info edit-income" data-income-id="<?php echo $income['income_id']; ?>">
+                                        <i class="fa fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger delete-income" data-income-id="<?php echo $income['income_id']; ?>">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -126,8 +124,8 @@ require_once 'includes/header.php';
         <?php else: ?>
             <div class="text-center py-4">
                 <p>No income sources found.</p>
-                <button type="button" class="btn btn-primary" id="addIncomeEmptyBtn">
-                    <i class="fas fa-plus"></i> Add Your First Income Source
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
+                    <i class="fa fa-plus"></i> Add Your First Income Source
                 </button>
             </div>
         <?php endif; ?>
@@ -283,7 +281,7 @@ require_once 'includes/header.php';
             <div class="modal-body">
                 <p>Are you sure you want to delete this income source? This action cannot be undone.</p>
                 <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <i class="fa fa-exclamation-triangle me-2"></i>
                     Deleting this income source will also remove it from your financial calculations.
                 </div>
             </div>
@@ -300,107 +298,41 @@ require_once 'includes/header.php';
 </div>
 
 <?php
-// JavaScript for the income page - define BASE_PATH for JS
+// JavaScript for income page
 $page_scripts = "
-// Define BASE_PATH for JavaScript
-var BASE_PATH = '" . BASE_PATH . "';
-
-// Initialize modals
-var addIncomeModal = new bootstrap.Modal(document.getElementById('addIncomeModal'), {
-    keyboard: false
-});
-
-var editIncomeModal = new bootstrap.Modal(document.getElementById('editIncomeModal'), {
-    keyboard: false
-});
-
-var deleteIncomeModal = new bootstrap.Modal(document.getElementById('deleteIncomeModal'), {
-    keyboard: false
-});
-
-// Add Income button handlers
-document.getElementById('addIncomeBtn').addEventListener('click', function() {
-    addIncomeModal.show();
-});
-
-var addIncomeEmptyBtn = document.getElementById('addIncomeEmptyBtn');
-if (addIncomeEmptyBtn) {
-    addIncomeEmptyBtn.addEventListener('click', function() {
-        addIncomeModal.show();
+// Handle search functionality
+document.getElementById('incomeSearch').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const table = document.getElementById('incomeTable');
+    const rows = table.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
     });
-}
+});
 
-// Edit Income button handlers
-document.querySelectorAll('.edit-income-btn').forEach(function(button) {
+// Handle edit income button
+document.querySelectorAll('.edit-income').forEach(button => {
     button.addEventListener('click', function() {
-        var incomeId = this.getAttribute('data-income-id');
+        const incomeId = this.getAttribute('data-income-id');
         document.getElementById('edit_income_id').value = incomeId;
         
-        // Show the modal
-        editIncomeModal.show();
-        
-        // Show loading state
-        var modalBody = document.querySelector('#editIncomeModal .modal-body');
-        modalBody.innerHTML = '<div class=\"text-center py-3\"><div class=\"spinner-border text-primary\" role=\"status\"><span class=\"visually-hidden\">Loading...</span></div><p class=\"mt-2\">Loading income data...</p></div>';
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('editIncomeModal'));
+        modal.show();
         
         // Fetch income data
-        fetch(BASE_PATH + '/income?action=get_income&income_id=' + incomeId)
-            .then(function(response) {
+        fetch('".BASE_PATH."/income?action=get_income&income_id=' + incomeId)
+            .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
                 return response.json();
             })
-            .then(function(data) {
+            .then(data => {
                 if (data.success) {
-                    // Restore form content
-                    modalBody.innerHTML = `
-                        <div class=\"mb-3\">
-                            <label for=\"edit_name\" class=\"form-label\">Income Name</label>
-                            <input type=\"text\" class=\"form-control\" id=\"edit_name\" name=\"name\" required>
-                            <div class=\"invalid-feedback\">Please provide an income name.</div>
-                        </div>
-                        
-                        <div class=\"mb-3\">
-                            <label for=\"edit_amount\" class=\"form-label\">Amount</label>
-                            <div class=\"input-group\">
-                                <span class=\"input-group-text\">$</span>
-                                <input type=\"number\" class=\"form-control\" id=\"edit_amount\" name=\"amount\" step=\"0.01\" min=\"0.01\" required>
-                                <div class=\"invalid-feedback\">Please enter a valid amount greater than zero.</div>
-                            </div>
-                        </div>
-                        
-                        <div class=\"mb-3\">
-                            <label for=\"edit_frequency\" class=\"form-label\">Frequency</label>
-                            <select class=\"form-select\" id=\"edit_frequency\" name=\"frequency\" required>
-                                <option value=\"one-time\">One Time</option>
-                                <option value=\"daily\">Daily</option>
-                                <option value=\"weekly\">Weekly</option>
-                                <option value=\"bi-weekly\">Bi-Weekly</option>
-                                <option value=\"monthly\">Monthly</option>
-                                <option value=\"quarterly\">Quarterly</option>
-                                <option value=\"annually\">Annually</option>
-                            </select>
-                        </div>
-                        
-                        <div class=\"mb-3\">
-                            <label for=\"edit_start_date\" class=\"form-label\">Start Date</label>
-                            <input type=\"date\" class=\"form-control\" id=\"edit_start_date\" name=\"start_date\" required>
-                            <div class=\"invalid-feedback\">Please provide a start date.</div>
-                        </div>
-                        
-                        <div class=\"mb-3\">
-                            <label for=\"edit_end_date\" class=\"form-label\">End Date (Optional)</label>
-                            <input type=\"date\" class=\"form-control\" id=\"edit_end_date\" name=\"end_date\">
-                            <div class=\"form-text\">Leave blank for ongoing income sources</div>
-                        </div>
-                        
-                        <div class=\"mb-3 form-check\">
-                            <input type=\"checkbox\" class=\"form-check-input\" id=\"edit_is_active\" name=\"is_active\">
-                            <label class=\"form-check-label\" for=\"edit_is_active\">Active</label>
-                            <div class=\"form-text\">Inactive income sources won't be included in your income calculations</div>
-                        </div>
-                    `;
+                    console.log('Loaded income data:', data.income);
                     
                     // Populate form fields
                     document.getElementById('edit_income_id').value = data.income.income_id;
@@ -411,226 +343,43 @@ document.querySelectorAll('.edit-income-btn').forEach(function(button) {
                     document.getElementById('edit_end_date').value = data.income.end_date || '';
                     document.getElementById('edit_is_active').checked = data.income.is_active == 1;
                     
-                    // Reinitialize frequency calculation
-                    updateAmountLabel(document.getElementById('edit_frequency'));
-                    
-                    // Create preview
-                    updateIncomePreview(document.querySelector('#editIncomeModal form'));
+                    // Update frequency label
+                    const frequencySelect = document.getElementById('edit_frequency');
+                    if (frequencySelect) {
+                        const event = new Event('change');
+                        frequencySelect.dispatchEvent(event);
+                    }
                 } else {
-                    // Show error message
+                    // Show error
                     alert('Failed to load income data: ' + data.message);
-                    editIncomeModal.hide();
+                    modal.hide();
                 }
             })
-            .catch(function(error) {
-                console.error('Error:', error);
-                alert('An error occurred while fetching income data. Please try again.');
-                editIncomeModal.hide();
+            .catch(error => {
+                console.error('Error fetching income data:', error);
+                alert('An error occurred while loading income data.');
+                modal.hide();
             });
     });
 });
 
-// Delete Income button handlers
-document.querySelectorAll('.delete-income-btn').forEach(function(button) {
+// Handle delete income button
+document.querySelectorAll('.delete-income').forEach(button => {
     button.addEventListener('click', function() {
-        var incomeId = this.getAttribute('data-income-id');
+        const incomeId = this.getAttribute('data-income-id');
         document.getElementById('delete_income_id').value = incomeId;
-        deleteIncomeModal.show();
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('deleteIncomeModal'));
+        modal.show();
     });
 });
 
-// Search functionality
-var searchInput = document.getElementById('incomeSearch');
-if (searchInput) {
-    searchInput.addEventListener('input', function() {
-        var searchTerm = this.value.toLowerCase();
-        var table = document.getElementById('incomeTable');
-        if (table) {
-            var rows = table.querySelectorAll('tbody tr');
-            
-            rows.forEach(function(row) {
-                var text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
-        }
-    });
-}
-
-// Update amount label based on frequency
-function updateAmountLabel(frequencySelect) {
-    if (!frequencySelect) return;
-    
-    var frequency = frequencySelect.value;
-    var isAddForm = frequencySelect.id === 'frequency';
-    var amountLabel = document.querySelector('label[for=\"' + (isAddForm ? 'amount' : 'edit_amount') + '\"]');
-    
-    if (!amountLabel) return;
-    
-    var labelText = 'Amount';
-    
-    switch (frequency) {
-        case 'daily': labelText = 'Daily Amount'; break;
-        case 'weekly': labelText = 'Weekly Amount'; break;
-        case 'bi-weekly': labelText = 'Bi-Weekly Amount'; break;
-        case 'monthly': labelText = 'Monthly Amount'; break;
-        case 'quarterly': labelText = 'Quarterly Amount'; break;
-        case 'annually': labelText = 'Annual Amount'; break;
-        case 'one-time': labelText = 'One-Time Amount'; break;
-    }
-    
-    amountLabel.textContent = labelText;
-}
-
-// Update income preview
-function updateIncomePreview(form) {
-    if (!form) return;
-    
-    var amountInput = form.querySelector('input[name=\"amount\"]');
-    var frequencySelect = form.querySelector('select[name=\"frequency\"]');
-    
-    if (!amountInput || !frequencySelect) return;
-    
-    var amount = parseFloat(amountInput.value) || 0;
-    var frequency = frequencySelect.value;
-    
-    // Calculate monthly and annual equivalents
-    var monthlyEquivalent = 0;
-    var annualEquivalent = 0;
-    
-    switch (frequency) {
-        case 'daily':
-            monthlyEquivalent = amount * 30;
-            annualEquivalent = amount * 365;
-            break;
-        case 'weekly':
-            monthlyEquivalent = amount * 4.33;
-            annualEquivalent = amount * 52;
-            break;
-        case 'bi-weekly':
-            monthlyEquivalent = amount * 2.17;
-            annualEquivalent = amount * 26;
-            break;
-        case 'monthly':
-            monthlyEquivalent = amount;
-            annualEquivalent = amount * 12;
-            break;
-        case 'quarterly':
-            monthlyEquivalent = amount / 3;
-            annualEquivalent = amount * 4;
-            break;
-        case 'annually':
-            monthlyEquivalent = amount / 12;
-            annualEquivalent = amount;
-            break;
-        case 'one-time':
-            monthlyEquivalent = amount;
-            annualEquivalent = amount;
-            break;
-    }
-    
-    // Create or update preview element
-    var previewElement = form.querySelector('.income-preview');
-    if (!previewElement) {
-        previewElement = document.createElement('div');
-        previewElement.className = 'income-preview mt-3 alert alert-info';
-        
-        // Find a good place to insert it
-        var amountGroup = amountInput.closest('.mb-3');
-        if (amountGroup) {
-            amountGroup.insertAdjacentElement('afterend', previewElement);
-        }
-    }
-    
-    if (amount > 0) {
-        previewElement.innerHTML = `
-            <div class=\"d-flex justify-content-between\">
-                <span>Monthly equivalent:</span>
-                <strong>$${monthlyEquivalent.toFixed(2)}</strong>
-            </div>
-            <div class=\"d-flex justify-content-between\">
-                <span>Annual equivalent:</span>
-                <strong>$${annualEquivalent.toFixed(2)}</strong>
-            </div>
-        `;
-        previewElement.style.display = 'block';
-    } else {
-        previewElement.style.display = 'none';
-    }
-}
-
-// Initialize frequency calculation for add form
-var frequencySelect = document.getElementById('frequency');
-if (frequencySelect) {
-    frequencySelect.addEventListener('change', function() {
-        updateAmountLabel(this);
-        updateIncomePreview(this.closest('form'));
-    });
-    
-    // Initialize with current value
-    updateAmountLabel(frequencySelect);
-}
-
-// Add event listener to amount input
-var amountInput = document.getElementById('amount');
-if (amountInput) {
-    amountInput.addEventListener('input', function() {
-        updateIncomePreview(this.closest('form'));
-    });
-    
-    // Create initial preview
-    updateIncomePreview(amountInput.closest('form'));
-}
-
-// Form validation
-document.querySelectorAll('form.needs-validation').forEach(function(form) {
-    form.addEventListener('submit', function(event) {
-        if (!form.checkValidity()) {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-        
-        form.classList.add('was-validated');
-    });
+// Add form submit handler for edit form
+document.querySelector('#editIncomeModal form').addEventListener('submit', function(e) {
+    // Form validation is handled by the initializeFormValidation function in income.js
+    console.log('Edit form submitted with ID:', document.getElementById('edit_income_id').value);
 });
-
-// Date validation
-document.querySelectorAll('#start_date, #edit_start_date').forEach(function(startDate) {
-    startDate.addEventListener('change', function() {
-        var form = this.closest('form');
-        var endDate = form.querySelector('#end_date, #edit_end_date');
-        
-        if (endDate && endDate.value) {
-            var startValue = new Date(this.value);
-            var endValue = new Date(endDate.value);
-            
-            if (endValue < startValue) {
-                alert('End date must be after start date');
-                endDate.value = '';
-            }
-        }
-    });
-});
-
-document.querySelectorAll('#end_date, #edit_end_date').forEach(function(endDate) {
-    endDate.addEventListener('change', function() {
-        var form = this.closest('form');
-        var startDate = form.querySelector('#start_date, #edit_start_date');
-        
-        if (startDate && this.value) {
-            var startValue = new Date(startDate.value);
-            var endValue = new Date(this.value);
-            
-            if (endValue < startValue) {
-                alert('End date must be after start date');
-                this.value = '';
-            }
-        }
-    });
-});
-
-// Debug info - uncomment if needed
-console.log('Income management JS loaded');
-console.log('BASE_PATH:', BASE_PATH);
 ";
 
 // Include footer

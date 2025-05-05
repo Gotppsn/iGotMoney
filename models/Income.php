@@ -158,6 +158,10 @@ class Income {
         
         // Prepare statement
         $stmt = $this->conn->prepare($query);
+        if (!$stmt) {
+            error_log("Update query preparation failed: " . $this->conn->error);
+            return false;
+        }
         
         // Sanitize input
         $this->name = htmlspecialchars(strip_tags($this->name));
@@ -170,15 +174,18 @@ class Income {
         $end_date_param = !empty($this->end_date) ? $this->end_date : null;
         
         // Bind parameters
-        $stmt->bind_param("sdssiii", 
-                          $this->name, 
-                          $this->amount, 
-                          $this->frequency, 
-                          $this->start_date, 
-                          $end_date_param,
-                          $this->is_active,
-                          $this->income_id,
-                          $this->user_id);
+        if (!$stmt->bind_param("sdssiii", 
+                           $this->name, 
+                           $this->amount, 
+                           $this->frequency, 
+                           $this->start_date, 
+                           $end_date_param,
+                           $this->is_active,
+                           $this->income_id,
+                           $this->user_id)) {
+            error_log("Update parameter binding failed: " . $stmt->error);
+            return false;
+        }
         
         // Execute query
         if ($stmt->execute()) {
@@ -186,7 +193,7 @@ class Income {
         }
         
         // Print error if something goes wrong
-        error_log("Update failed: " . $stmt->error);
+        error_log("Update execution failed: " . $stmt->error);
         return false;
     }
     

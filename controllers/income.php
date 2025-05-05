@@ -57,6 +57,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Get income data
             if ($income->getById($income_id, $user_id)) {
+                // Debug log to see what's happening
+                error_log("Editing income ID: " . $income_id);
+                error_log("POST data: " . print_r($_POST, true));
+                
                 // Update income properties
                 $income->name = $_POST['name'] ?? $income->name;
                 $income->amount = $_POST['amount'] ?? $income->amount;
@@ -65,11 +69,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $income->end_date = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
                 $income->is_active = isset($_POST['is_active']) ? 1 : 0;
                 
+                // Debug log of properties before update
+                error_log("Income object before update: " . print_r([
+                    'income_id' => $income->income_id,
+                    'user_id' => $income->user_id,
+                    'name' => $income->name,
+                    'amount' => $income->amount,
+                    'frequency' => $income->frequency,
+                    'start_date' => $income->start_date,
+                    'end_date' => $income->end_date,
+                    'is_active' => $income->is_active
+                ], true));
+                
                 // Update income
                 if ($income->update()) {
                     $success = 'Income source updated successfully!';
                 } else {
-                    $error = 'Failed to update income source.';
+                    $error = 'Failed to update income source. Please try again.';
+                    // Log the error for debugging
+                    error_log("Failed to update income source ID: " . $income_id);
                 }
             } else {
                 $error = 'Income source not found.';
