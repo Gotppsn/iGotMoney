@@ -17,7 +17,7 @@ $request_uri = $_SERVER['REQUEST_URI'];
 
 // Remove base path from request URI
 $base_path = BASE_PATH;
-if (strpos($request_uri, $base_path) === 0) {
+if (!empty($base_path) && strpos($request_uri, $base_path) === 0) {
     $request_uri = substr($request_uri, strlen($base_path));
 }
 

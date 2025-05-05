@@ -140,7 +140,7 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="addIncomeModalLabel">Add Income Source</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/income" method="post">
+            <form action="<?php echo BASE_PATH; ?>/income" method="post" class="needs-validation" novalidate>
                 <input type="hidden" name="action" value="add">
                 
                 <div class="modal-body">
@@ -148,13 +148,15 @@ require_once 'includes/header.php';
                         <label for="name" class="form-label">Income Name</label>
                         <input type="text" class="form-control" id="name" name="name" required>
                         <div class="form-text">Example: Salary, Freelance Work, Rental Income</div>
+                        <div class="invalid-feedback">Please provide an income name.</div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="amount" class="form-label">Amount</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0" required>
+                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" required>
+                            <div class="invalid-feedback">Please enter a valid amount greater than zero.</div>
                         </div>
                     </div>
                     
@@ -174,6 +176,7 @@ require_once 'includes/header.php';
                     <div class="mb-3">
                         <label for="start_date" class="form-label">Start Date</label>
                         <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
+                        <div class="invalid-feedback">Please provide a start date.</div>
                     </div>
                     
                     <div class="mb-3">
@@ -185,6 +188,7 @@ require_once 'includes/header.php';
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="is_active" name="is_active" checked>
                         <label class="form-check-label" for="is_active">Active</label>
+                        <div class="form-text">Inactive income sources won't be included in your income calculations</div>
                     </div>
                 </div>
                 
@@ -205,7 +209,7 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="editIncomeModalLabel">Edit Income Source</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/income" method="post">
+            <form action="<?php echo BASE_PATH; ?>/income" method="post" class="needs-validation" novalidate>
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="income_id" id="edit_income_id">
                 
@@ -213,13 +217,15 @@ require_once 'includes/header.php';
                     <div class="mb-3">
                         <label for="edit_name" class="form-label">Income Name</label>
                         <input type="text" class="form-control" id="edit_name" name="name" required>
+                        <div class="invalid-feedback">Please provide an income name.</div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="edit_amount" class="form-label">Amount</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0" required>
+                            <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0.01" required>
+                            <div class="invalid-feedback">Please enter a valid amount greater than zero.</div>
                         </div>
                     </div>
                     
@@ -239,6 +245,7 @@ require_once 'includes/header.php';
                     <div class="mb-3">
                         <label for="edit_start_date" class="form-label">Start Date</label>
                         <input type="date" class="form-control" id="edit_start_date" name="start_date" required>
+                        <div class="invalid-feedback">Please provide a start date.</div>
                     </div>
                     
                     <div class="mb-3">
@@ -250,6 +257,7 @@ require_once 'includes/header.php';
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="edit_is_active" name="is_active">
                         <label class="form-check-label" for="edit_is_active">Active</label>
+                        <div class="form-text">Inactive income sources won't be included in your income calculations</div>
                     </div>
                 </div>
                 
@@ -272,10 +280,14 @@ require_once 'includes/header.php';
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to delete this income source? This action cannot be undone.</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Deleting this income source will also remove it from your financial calculations.
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="/income" method="post">
+                <form action="<?php echo BASE_PATH; ?>/income" method="post">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="income_id" id="delete_income_id">
                     <button type="submit" class="btn btn-danger">Delete</button>
@@ -288,20 +300,31 @@ require_once 'includes/header.php';
 <?php
 // JavaScript for income page
 $page_scripts = "
+// Handle search functionality
+document.getElementById('incomeSearch').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const table = document.getElementById('incomeTable');
+    const rows = table.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+});
+
 // Handle edit income button
 document.querySelectorAll('.edit-income').forEach(button => {
     button.addEventListener('click', function() {
         const incomeId = this.getAttribute('data-income-id');
         
         // Show loading spinner
-        showSpinner(document.querySelector('#editIncomeModal .modal-body'));
-        
-        // Show modal
         const modal = new bootstrap.Modal(document.getElementById('editIncomeModal'));
         modal.show();
         
+        showSpinner(document.querySelector('#editIncomeModal .modal-body'));
+        
         // Fetch income data
-        fetch('/income?action=get_income&income_id=' + incomeId)
+        fetch('".BASE_PATH."/income?action=get_income&income_id=' + incomeId)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -316,6 +339,10 @@ document.querySelectorAll('.edit-income').forEach(button => {
                     
                     // Remove spinner
                     hideSpinner(document.querySelector('#editIncomeModal .modal-body'));
+                    
+                    // Update frequency label and income preview
+                    updateAmountLabel(document.getElementById('edit_frequency'));
+                    updateIncomePreview(document.querySelector('#editIncomeModal form'));
                 } else {
                     // Show error
                     alert('Failed to load income data: ' + data.message);
@@ -340,6 +367,12 @@ document.querySelectorAll('.delete-income').forEach(button => {
         const modal = new bootstrap.Modal(document.getElementById('deleteIncomeModal'));
         modal.show();
     });
+});
+
+// Initialize tooltips
+const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle=\"tooltip\"]'));
+tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
 });
 ";
 

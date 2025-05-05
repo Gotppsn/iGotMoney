@@ -43,6 +43,10 @@ class Income {
         
         // Prepare statement
         $stmt = $this->conn->prepare($query);
+        if (!$stmt) {
+            error_log("Query preparation failed: " . $this->conn->error);
+            return false;
+        }
         
         // Sanitize input
         $this->user_id = htmlspecialchars(strip_tags($this->user_id));
@@ -56,14 +60,17 @@ class Income {
         $end_date_param = !empty($this->end_date) ? $this->end_date : null;
         
         // Bind parameters
-        $stmt->bind_param("isdssis", 
+        if (!$stmt->bind_param("isdssis", 
                           $this->user_id, 
                           $this->name, 
                           $this->amount, 
                           $this->frequency, 
                           $this->start_date, 
                           $end_date_param,
-                          $this->is_active);
+                          $this->is_active)) {
+            error_log("Parameter binding failed: " . $stmt->error);
+            return false;
+        }
         
         // Execute query
         if ($stmt->execute()) {
@@ -76,7 +83,7 @@ class Income {
         }
         
         // Print error if something goes wrong
-        printf("Error: %s.\n", $stmt->error);
+        error_log("Query execution failed: " . $stmt->error);
         return false;
     }
     
@@ -179,13 +186,21 @@ class Income {
         }
         
         // Print error if something goes wrong
-        printf("Error: %s.\n", $stmt->error);
+        error_log("Update failed: " . $stmt->error);
         return false;
     }
     
     // Delete income source
     public function delete($income_id, $user_id) {
-        // SQL query
+        // First, delete related transactions
+        $query = "DELETE FROM " . $this->transactions_table . " 
+                  WHERE income_id = ? AND user_id = ?";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("ii", $income_id, $user_id);
+        $stmt->execute();
+        
+        // Now delete the income source
         $query = "DELETE FROM " . $this->table . " 
                   WHERE income_id = ? AND user_id = ?";
         
@@ -201,7 +216,7 @@ class Income {
         }
         
         // Print error if something goes wrong
-        printf("Error: %s.\n", $stmt->error);
+        error_log("Delete failed: " . $stmt->error);
         return false;
     }
     
@@ -226,6 +241,15 @@ class Income {
         $result = $stmt->get_result();
         
         while ($row = $result->fetch_assoc()) {
+            // Check if income has expired
+            if (!empty($row['end_date'])) {
+                $end_date = new DateTime($row['end_date']);
+                $now = new DateTime();
+                if ($end_date < $now) {
+                    continue; // Skip expired income
+                }
+            }
+            
             // Calculate monthly equivalent based on frequency
             switch ($row['frequency']) {
                 case 'daily':
@@ -281,6 +305,15 @@ class Income {
         $result = $stmt->get_result();
         
         while ($row = $result->fetch_assoc()) {
+            // Check if income has expired
+            if (!empty($row['end_date'])) {
+                $end_date = new DateTime($row['end_date']);
+                $now = new DateTime();
+                if ($end_date < $now) {
+                    continue; // Skip expired income
+                }
+            }
+            
             // Calculate yearly equivalent based on frequency
             switch ($row['frequency']) {
                 case 'daily':
@@ -340,4 +373,3 @@ class Income {
         $stmt->execute();
     }
 }
-?>
