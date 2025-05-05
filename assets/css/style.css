@@ -1,231 +1,168 @@
 /* iGotMoney Main Stylesheet */
 
 :root {
-    --primary-color: #4e73df;
-    --secondary-color: #1cc88a;
-    --warning-color: #f6c23e;
-    --danger-color: #e74a3b;
-    --info-color: #36b9cc;
-    --light-color: #f8f9fc;
-    --dark-color: #5a5c69;
-  }
-  
-  body {
-    font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-  
-  main {
-    flex: 1;
-  }
-  
-  /* Sidebar Styles */
+  --primary-color: #4e73df;
+  --secondary-color: #1cc88a;
+  --warning-color: #f6c23e;
+  --danger-color: #e74a3b;
+  --info-color: #36b9cc;
+  --light-color: #f8f9fc;
+  --dark-color: #5a5c69;
+}
+
+body {
+  font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  box-shadow: 0 .15rem 1.75rem 0 rgba(58,59,69,.15);
+  z-index: 0;
+}
+
+.sidebar .nav-link {
+  color: var(--dark-color);
+  padding: 0.75rem 1rem;
+  border-radius: 0.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.sidebar .nav-link:hover {
+  background-color: rgba(78, 115, 223, 0.1);
+  color: var(--primary-color);
+}
+
+.sidebar .nav-link.active {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* Card Styles */
+.card {
+  border: none;
+  border-radius: 0.5rem;
+  box-shadow: 0 .15rem 1.75rem 0 rgba(58,59,69,.1);
+  margin-bottom: 1.5rem;
+}
+
+.card-header {
+  background-color: #f8f9fc;
+  border-bottom: 1px solid #e3e6f0;
+  padding: 1rem 1.25rem;
+}
+
+/* Dashboard Cards */
+.dashboard-card {
+  border-left: 0.25rem solid;
+  border-radius: 0.35rem;
+}
+
+.dashboard-card.income {
+  border-left-color: var(--primary-color);
+}
+
+.dashboard-card.expenses {
+  border-left-color: var(--danger-color);
+}
+
+.dashboard-card.savings {
+  border-left-color: var(--secondary-color);
+}
+
+.dashboard-card.investments {
+  border-left-color: var(--info-color);
+}
+
+/* Progress Styles */
+.progress {
+  height: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Budget Progress Bars */
+.progress-bar-budget-safe {
+  background-color: var(--secondary-color);
+}
+
+.progress-bar-budget-warning {
+  background-color: var(--warning-color);
+}
+
+.progress-bar-budget-danger {
+  background-color: var(--danger-color);
+}
+
+/* Table Styles */
+.table-responsive {
+  overflow-x: auto;
+}
+
+/* Form Styles */
+.form-label {
+  font-weight: 500;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+  background-color: #2e59d9;
+  border-color: #2e59d9;
+}
+
+.btn-success {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+}
+
+.btn-success:hover {
+  background-color: #17a673;
+  border-color: #17a673;
+}
+
+/* Login/Register Forms */
+.auth-card {
+  max-width: 500px;
+  margin: 2rem auto;
+}
+
+/* Error Page */
+.error-page {
+  text-align: center;
+  padding: 5rem 1rem;
+}
+
+.error-page h1 {
+  font-size: 6rem;
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+}
+
+.error-page p {
+  font-size: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
   .sidebar {
-    box-shadow: 0 .15rem 1.75rem 0 rgba(58,59,69,.15);
-    z-index: 0;
-  }
-  
-  .sidebar .nav-link {
-    color: var(--dark-color);
-    padding: 0.75rem 1rem;
-    border-radius: 0.35rem;
-    margin-bottom: 0.25rem;
-  }
-  
-  .sidebar .nav-link:hover {
-    background-color: rgba(78, 115, 223, 0.1);
-    color: var(--primary-color);
-  }
-  
-  .sidebar .nav-link.active {
-    background-color: var(--primary-color);
-    color: white;
-  }
-  
-  /* Card Styles */
-  .card {
-    border: none;
-    border-radius: 0.5rem;
-    box-shadow: 0 .15rem 1.75rem 0 rgba(58,59,69,.1);
-    margin-bottom: 1.5rem;
-  }
-  
-  .card-header {
-    background-color: #f8f9fc;
-    border-bottom: 1px solid #e3e6f0;
-    padding: 1rem 1.25rem;
-  }
-  
-  /* Dashboard Cards */
-  .dashboard-card {
-    border-left: 0.25rem solid;
-    border-radius: 0.35rem;
-  }
-  
-  .dashboard-card.income {
-    border-left-color: var(--primary-color);
-  }
-  
-  .dashboard-card.expenses {
-    border-left-color: var(--danger-color);
-  }
-  
-  .dashboard-card.savings {
-    border-left-color: var(--success-color);
-  }
-  
-  .dashboard-card.investments {
-    border-left-color: var(--info-color);
-  }
-  
-  /* Progress Styles */
-  .progress {
-    height: 1rem;
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
-  }
-  
-  /* Budget Progress Bars */
-  .progress-bar-budget-safe {
-    background-color: var(--secondary-color);
-  }
-  
-  .progress-bar-budget-warning {
-    background-color: var(--warning-color);
-  }
-  
-  .progress-bar-budget-danger {
-    background-color: var(--danger-color);
-  }
-  
-  /* Table Styles */
-  .table-responsive {
-    overflow-x: auto;
-  }
-  
-  /* Form Styles */
-  .form-label {
-    font-weight: 500;
-  }
-  
-  .btn-primary {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-  }
-  
-  .btn-primary:hover {
-    background-color: #2e59d9;
-    border-color: #2e59d9;
-  }
-  
-  .btn-success {
-    background-color: var(--secondary-color);
-    border-color: var(--secondary-color);
-  }
-  
-  .btn-success:hover {
-    background-color: #17a673;
-    border-color: #17a673;
-  }
-  
-  /* Login/Register Forms */
-  .auth-card {
-    max-width: 500px;
-    margin: 2rem auto;
-  }
-  
-  /* Dashboard Charts */
-  .chart-container {
-    position: relative;
-    height: 300px;
-    width: 100%;
-  }
-  
-  /* Investment Cards */
-  .investment-card {
-    transition: transform 0.3s ease;
-  }
-  
-  .investment-card:hover {
-    transform: translateY(-5px);
-  }
-  
-  /* Stock Analysis */
-  .stock-chart {
-    height: 400px;
-    width: 100%;
-  }
-  
-  /* Financial Goal Progress */
-  .goal-progress-container {
-    position: relative;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
-    background-color: #f8f9fc;
-  }
-  
-  .goal-icon {
-    font-size: 2rem;
-    margin-right: 1rem;
-  }
-  
-  /* Media Queries */
-  @media (max-width: 768px) {
-    .sidebar {
       position: static;
       height: auto;
       padding-bottom: 0;
-    }
-    
-    .sidebar .nav-link {
+  }
+  
+  .sidebar .nav-link {
       padding: 0.5rem;
       margin-bottom: 0.15rem;
-    }
   }
-  
-  /* Alert Animations */
-  .alert {
-    animation: fadeIn 0.5s;
-  }
-  
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* Custom Tooltips */
-  .custom-tooltip {
-    position: relative;
-    display: inline-block;
-  }
-  
-  .custom-tooltip .tooltip-text {
-    visibility: hidden;
-    width: 200px;
-    background-color: #555;
-    color: #fff;
-    text-align: center;
-    border-radius: 6px;
-    padding: 5px;
-    position: absolute;
-    z-index: 1;
-    bottom: 125%;
-    left: 50%;
-    margin-left: -100px;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  
-  .custom-tooltip:hover .tooltip-text {
-    visibility: visible;
-    opacity: 1;
-  }
+}
