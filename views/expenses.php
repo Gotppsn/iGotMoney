@@ -56,10 +56,65 @@ require_once 'includes/header.php';
     </div>
 </div>
 
+<!-- Expense Categories Chart -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Expenses by Category</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="expenseCategoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Top Expenses</h6>
+            </div>
+            <div class="card-body">
+                <?php if (isset($top_expenses) && $top_expenses->num_rows > 0): ?>
+                    <?php while ($category = $top_expenses->fetch_assoc()): ?>
+                        <h4 class="small font-weight-bold">
+                            <?php echo htmlspecialchars($category['category_name']); ?>
+                            <span class="float-end">$<?php echo number_format($category['total'], 2); ?></span>
+                        </h4>
+                        <div class="progress mb-4">
+                            <?php 
+                            $percentage = ($category['total'] / $monthly_expenses) * 100;
+                            $color_class = 'bg-info';
+                            
+                            if ($percentage > 30) {
+                                $color_class = 'bg-danger';
+                            } else if ($percentage > 20) {
+                                $color_class = 'bg-warning';
+                            } else if ($percentage > 10) {
+                                $color_class = 'bg-primary';
+                            }
+                            ?>
+                            <div class="progress-bar <?php echo $color_class; ?>" role="progressbar" 
+                                style="width: <?php echo min(100, $percentage); ?>%" 
+                                aria-valuenow="<?php echo $percentage; ?>" 
+                                aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <p>No expense data available.</p>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Expenses Table -->
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-primary">Expenses</h6>
+        <h6 class="m-0 font-weight-bold text-primary">Your Expenses</h6>
         <div class="input-group input-group-sm" style="width: 250px;">
             <input type="text" class="form-control" placeholder="Search expenses..." id="expenseSearch" data-table-search="expenseTable">
             <span class="input-group-text"><i class="fas fa-search"></i></span>
@@ -75,6 +130,7 @@ require_once 'includes/header.php';
                             <th>Category</th>
                             <th>Amount</th>
                             <th>Date</th>
+                            <th>Frequency</th>
                             <th>Recurring</th>
                             <th>Actions</th>
                         </tr>
@@ -87,15 +143,16 @@ require_once 'includes/header.php';
                                 <td>$<?php echo number_format($expense['amount'], 2); ?></td>
                                 <td><?php echo date('M j, Y', strtotime($expense['expense_date'])); ?></td>
                                 <td>
+                                    <?php 
+                                    $frequency = ucfirst(str_replace('-', ' ', $expense['frequency']));
+                                    echo $frequency; 
+                                    ?>
+                                </td>
+                                <td>
                                     <?php if ($expense['is_recurring']): ?>
-                                        <span class="badge bg-info">
-                                            <?php 
-                                            $frequency = ucfirst(str_replace('-', ' ', $expense['frequency']));
-                                            echo $frequency; 
-                                            ?>
-                                        </span>
+                                        <span class="badge bg-info">Yes</span>
                                     <?php else: ?>
-                                        <span class="badge bg-secondary">One-time</span>
+                                        <span class="badge bg-secondary">No</span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -113,71 +170,12 @@ require_once 'includes/header.php';
             </div>
         <?php else: ?>
             <div class="text-center py-4">
-                <p>No expenses found.</p>
+                <p>No expenses recorded yet.</p>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
                     <i class="fas fa-plus"></i> Add Your First Expense
                 </button>
             </div>
         <?php endif; ?>
-    </div>
-</div>
-
-<!-- Expense by Category Chart -->
-<div class="row">
-    <div class="col-xl-8 col-lg-7">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Expenses by Category</h6>
-                <div class="dropdown no-arrow">
-                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
-                        <div class="dropdown-header">View Options:</div>
-                        <a class="dropdown-item" href="#" data-period="month">This Month</a>
-                        <a class="dropdown-item" href="#" data-period="quarter">This Quarter</a>
-                        <a class="dropdown-item" href="#" data-period="year">This Year</a>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="expenseCategoryChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-xl-4 col-lg-5">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Top Expense Categories</h6>
-            </div>
-            <div class="card-body">
-                <?php 
-                // Display top expense categories
-                if (isset($top_expenses) && $top_expenses->num_rows > 0):
-                    $top_expenses->data_seek(0); // Reset pointer
-                    while ($expense = $top_expenses->fetch_assoc()):
-                ?>
-                <h4 class="small font-weight-bold">
-                    <?php echo htmlspecialchars($expense['category_name']); ?>
-                    <span class="float-end">$<?php echo number_format($expense['total'], 2); ?></span>
-                </h4>
-                <div class="progress mb-4">
-                    <div class="progress-bar bg-<?php echo getProgressColor($expense['total'], $monthly_expenses); ?>" role="progressbar" 
-                        style="width: <?php echo min(100, ($expense['total'] / $monthly_expenses) * 100); ?>%" 
-                        aria-valuenow="<?php echo ($expense['total'] / $monthly_expenses) * 100; ?>" aria-valuemin="0" aria-valuemax="100">
-                    </div>
-                </div>
-                <?php 
-                    endwhile;
-                else:
-                ?>
-                <p>No expense data available.</p>
-                <?php endif; ?>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -194,25 +192,19 @@ require_once 'includes/header.php';
                 
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <input type="text" class="form-control" id="description" name="description" required>
-                    </div>
-                    
-                    <div class="mb-3">
                         <label for="category_id" class="form-label">Category</label>
                         <select class="form-select" id="category_id" name="category_id" required>
-                            <?php 
-                            if (isset($categories) && $categories->num_rows > 0):
-                                while ($category = $categories->fetch_assoc()):
-                            ?>
+                            <?php while ($category = $categories->fetch_assoc()): ?>
                                 <option value="<?php echo $category['category_id']; ?>">
                                     <?php echo htmlspecialchars($category['name']); ?>
                                 </option>
-                            <?php 
-                                endwhile;
-                            endif;
-                            ?>
+                            <?php endwhile; ?>
                         </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="description" name="description" required>
                     </div>
                     
                     <div class="mb-3">
@@ -237,6 +229,7 @@ require_once 'includes/header.php';
                         <div class="mb-3">
                             <label for="frequency" class="form-label">Frequency</label>
                             <select class="form-select" id="frequency" name="frequency">
+                                <option value="one-time">One Time</option>
                                 <option value="daily">Daily</option>
                                 <option value="weekly">Weekly</option>
                                 <option value="bi-weekly">Bi-Weekly</option>
@@ -271,26 +264,23 @@ require_once 'includes/header.php';
                 
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="edit_description" class="form-label">Description</label>
-                        <input type="text" class="form-control" id="edit_description" name="description" required>
-                    </div>
-                    
-                    <div class="mb-3">
                         <label for="edit_category_id" class="form-label">Category</label>
                         <select class="form-select" id="edit_category_id" name="category_id" required>
                             <?php 
-                            if (isset($categories) && $categories->num_rows > 0):
-                                $categories->data_seek(0); // Reset pointer
-                                while ($category = $categories->fetch_assoc()):
+                            // Reset the categories result pointer
+                            $categories->data_seek(0);
+                            while ($category = $categories->fetch_assoc()): 
                             ?>
                                 <option value="<?php echo $category['category_id']; ?>">
                                     <?php echo htmlspecialchars($category['name']); ?>
                                 </option>
-                            <?php 
-                                endwhile;
-                            endif;
-                            ?>
+                            <?php endwhile; ?>
                         </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="edit_description" name="description" required>
                     </div>
                     
                     <div class="mb-3">
@@ -315,6 +305,7 @@ require_once 'includes/header.php';
                         <div class="mb-3">
                             <label for="edit_frequency" class="form-label">Frequency</label>
                             <select class="form-select" id="edit_frequency" name="frequency">
+                                <option value="one-time">One Time</option>
                                 <option value="daily">Daily</option>
                                 <option value="weekly">Weekly</option>
                                 <option value="bi-weekly">Bi-Weekly</option>
@@ -359,50 +350,38 @@ require_once 'includes/header.php';
 </div>
 
 <?php
-// Helper function to get progress bar color
-function getProgressColor($amount, $total) {
-    $percentage = ($amount / $total) * 100;
-    if ($percentage < 25) {
-        return 'info';
-    } elseif ($percentage < 50) {
-        return 'success';
-    } elseif ($percentage < 75) {
-        return 'warning';
-    } else {
-        return 'danger';
+// Chart data
+$chart_labels = [];
+$chart_data = [];
+$chart_colors = [
+    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+    '#6f42c1', '#fd7e14', '#20c9a6', '#5a5c69', '#858796'
+];
+
+if (isset($top_expenses) && $top_expenses->num_rows > 0) {
+    $top_expenses->data_seek(0);
+    while ($category = $top_expenses->fetch_assoc()) {
+        $chart_labels[] = $category['category_name'];
+        $chart_data[] = $category['total'];
     }
 }
 
-// JavaScript for expenses page
+// JavaScript for expense page
 $page_scripts = "
-// Initialize Chart
+// Initialize the pie chart for expense categories
 var ctx = document.getElementById('expenseCategoryChart').getContext('2d');
 var expenseCategoryChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
-        labels: [" . (isset($top_expenses) && $top_expenses->num_rows > 0 ? 
-                    $top_expenses->data_seek(0) && 
-                    implode(',', array_map(function($row) { 
-                        return \"'\" . addslashes($row['category_name']) . \"'\"; 
-                    }, iterator_to_array($top_expenses)))
-                    : '') . "],
+        labels: " . json_encode($chart_labels) . ",
         datasets: [{
-            data: [" . (isset($top_expenses) && $top_expenses->num_rows > 0 ? 
-                    $top_expenses->data_seek(0) && 
-                    implode(',', array_map(function($row) { 
-                        return $row['total']; 
-                    }, iterator_to_array($top_expenses)))
-                    : '') . "],
-            backgroundColor: [
-                '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
-                '#6f42c1', '#fd7e14', '#20c9a6', '#5a5c69', '#858796'
-            ],
-            hoverBackgroundColor: [
-                '#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617',
-                '#5a32a3', '#db6a02', '#169b7f', '#3a3b45', '#60616f'
-            ],
+            data: " . json_encode($chart_data) . ",
+            backgroundColor: " . json_encode(array_slice($chart_colors, 0, count($chart_data))) . ",
+            hoverBackgroundColor: " . json_encode(array_map(function($color) {
+                return adjustColor($color, -20);
+            }, array_slice($chart_colors, 0, count($chart_data)))) . ",
             hoverBorderColor: 'rgba(234, 236, 244, 1)',
-        }],
+        }]
     },
     options: {
         maintainAspectRatio: false,
@@ -422,17 +401,30 @@ var expenseCategoryChart = new Chart(ctx, {
                 }
             }
         },
-        cutout: '70%',
-    },
+        cutout: '60%',
+    }
 });
 
-// Toggle recurring options
+// Toggle recurring options when checkbox is clicked
 document.getElementById('is_recurring').addEventListener('change', function() {
     document.getElementById('recurring_options').style.display = this.checked ? 'block' : 'none';
+    
+    // Set default frequency for one-time expenses
+    if (!this.checked) {
+        document.getElementById('frequency').value = 'one-time';
+    } else {
+        document.getElementById('frequency').value = 'monthly';
+    }
 });
 
+// Toggle edit recurring options when checkbox is clicked
 document.getElementById('edit_is_recurring').addEventListener('change', function() {
     document.getElementById('edit_recurring_options').style.display = this.checked ? 'block' : 'none';
+    
+    // Set default frequency for one-time expenses
+    if (!this.checked) {
+        document.getElementById('edit_frequency').value = 'one-time';
+    }
 });
 
 // Handle edit expense button
@@ -454,18 +446,16 @@ document.querySelectorAll('.edit-expense').forEach(button => {
                 if (data.success) {
                     // Populate form fields
                     document.getElementById('edit_expense_id').value = data.expense.expense_id;
-                    document.getElementById('edit_description').value = data.expense.description;
                     document.getElementById('edit_category_id').value = data.expense.category_id;
+                    document.getElementById('edit_description').value = data.expense.description;
                     document.getElementById('edit_amount').value = data.expense.amount;
                     document.getElementById('edit_expense_date').value = data.expense.expense_date;
                     document.getElementById('edit_is_recurring').checked = data.expense.is_recurring == 1;
+                    document.getElementById('edit_frequency').value = data.expense.frequency;
                     
                     // Show/hide recurring options
-                    document.getElementById('edit_recurring_options').style.display = data.expense.is_recurring == 1 ? 'block' : 'none';
-                    
-                    if (data.expense.is_recurring == 1) {
-                        document.getElementById('edit_frequency').value = data.expense.frequency;
-                    }
+                    document.getElementById('edit_recurring_options').style.display = 
+                        data.expense.is_recurring == 1 ? 'block' : 'none';
                     
                     // Remove spinner
                     hideSpinner(document.querySelector('#editExpenseModal .modal-body'));
@@ -494,19 +484,24 @@ document.querySelectorAll('.delete-expense').forEach(button => {
         modal.show();
     });
 });
-
-// Handle period selection for chart
-document.querySelectorAll('.dropdown-item[data-period]').forEach(item => {
-    item.addEventListener('click', function(e) {
-        e.preventDefault();
-        const period = this.getAttribute('data-period');
-        
-        // In a real app, this would fetch data for the selected period
-        // For now, we'll just show a message
-        alert('Chart would be updated to show ' + period + ' data');
-    });
-});
 ";
+
+// Function to adjust color brightness
+function adjustColor($hex, $steps) {
+    // Extract RGB values
+    $hex = str_replace('#', '', $hex);
+    $r = hexdec(substr($hex, 0, 2));
+    $g = hexdec(substr($hex, 2, 2));
+    $b = hexdec(substr($hex, 4, 2));
+    
+    // Adjust brightness
+    $r = max(0, min(255, $r + $steps));
+    $g = max(0, min(255, $g + $steps));
+    $b = max(0, min(255, $b + $steps));
+    
+    // Convert back to hex
+    return sprintf('#%02x%02x%02x', $r, $g, $b);
+}
 
 // Include footer
 require_once 'includes/footer.php';
