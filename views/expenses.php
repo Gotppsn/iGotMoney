@@ -6,6 +6,9 @@ $current_page = 'expenses';
 // Additional JS
 $additional_js = ['/assets/js/expenses.js'];
 
+// Additional CSS
+$additional_css = [];
+
 // Include header
 require_once 'includes/header.php';
 ?>
@@ -13,7 +16,7 @@ require_once 'includes/header.php';
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Expense Management</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+        <button type="button" class="btn btn-sm btn-primary" id="addExpenseBtn" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
             <i class="fas fa-plus"></i> Add Expense
         </button>
     </div>
@@ -27,8 +30,8 @@ require_once 'includes/header.php';
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                            Monthly Expenses</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">$<?php echo number_format($monthly_expenses, 2); ?></div>
+                            MONTHLY EXPENSES</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">$<?php echo number_format($monthly_expenses ?? 0, 2); ?></div>
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-calendar fa-2x text-gray-300"></i>
@@ -44,8 +47,8 @@ require_once 'includes/header.php';
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                            Annual Expenses</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">$<?php echo number_format($yearly_expenses, 2); ?></div>
+                            ANNUAL EXPENSES</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">$<?php echo number_format($yearly_expenses ?? 0, 2); ?></div>
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
@@ -56,9 +59,9 @@ require_once 'includes/header.php';
     </div>
 </div>
 
-<!-- Expense Categories Chart -->
-<div class="row mb-4">
-    <div class="col-lg-6">
+<div class="row">
+    <!-- Expense Categories Chart -->
+    <div class="col-lg-7 mb-4">
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                 <h6 class="m-0 font-weight-bold text-primary">Expenses by Category</h6>
@@ -78,14 +81,15 @@ require_once 'includes/header.php';
                 <div class="chart-container">
                     <canvas id="expenseCategoryChart"></canvas>
                 </div>
-                <div id="chartNoData" class="text-center py-4" style="display: none;">
+                <div id="chartNoData" class="text-center py-4" style="display: <?php echo (isset($top_expenses) && $top_expenses->num_rows > 0) ? 'none' : 'block'; ?>">
                     <p>No expense data available for the selected period.</p>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="col-lg-6">
+    <!-- Top Expenses -->
+    <div class="col-lg-5 mb-4">
         <div class="card shadow mb-4">
             <div class="card-header py-3">
                 <h6 class="m-0 font-weight-bold text-primary">Top Expenses</h6>
@@ -100,7 +104,7 @@ require_once 'includes/header.php';
                             </h4>
                             <div class="progress mb-4">
                                 <?php 
-                                $percentage = ($category['total'] / $monthly_expenses) * 100;
+                                $percentage = ($category['total'] / ($monthly_expenses ?? 1)) * 100;
                                 $color_class = 'bg-info';
                                 
                                 if ($percentage > 30) {
@@ -224,69 +228,6 @@ require_once 'includes/header.php';
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
                 <i class="fas fa-plus"></i> Add Your First Expense
             </button>
-        </div>
-    </div>
-</div>
-
-<!-- Expense Analytics -->
-<div class="card shadow mb-4">
-    <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h6 class="m-0 font-weight-bold text-primary">Expense Analytics</h6>
-        <button class="btn btn-sm btn-outline-primary" id="calculateAnalytics">
-            <i class="fas fa-calculator me-1"></i> Calculate
-        </button>
-    </div>
-    <div class="card-body">
-        <div class="row" id="analyticsContent" style="display: none;">
-            <div class="col-md-4">
-                <div class="card border-left-info shadow h-100 py-2">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                    Average Daily Expense</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgDailyExpense">$0.00</div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-left-warning shadow h-100 py-2">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                    Highest Expense</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="highestExpense">$0.00</div>
-                                <div class="small" id="highestExpenseCategory"></div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-arrow-up fa-2x text-gray-300"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-left-danger shadow h-100 py-2">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                    Projected Monthly Total</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="projectedMonthly">$0.00</div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-chart-line fa-2x text-gray-300"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -481,6 +422,7 @@ require_once 'includes/header.php';
     </div>
 </div>
 
+<!-- Add chart data as meta tags for JavaScript -->
 <?php
 // Chart data
 $chart_labels = [];
@@ -505,24 +447,12 @@ echo '<meta name="base-path" content="' . BASE_PATH . '">';
 echo '<meta name="chart-labels" content="' . htmlspecialchars(json_encode($chart_labels)) . '">';
 echo '<meta name="chart-data" content="' . htmlspecialchars(json_encode($chart_data)) . '">';
 echo '<meta name="chart-colors" content="' . htmlspecialchars(json_encode(array_slice($chart_colors, 0, count($chart_data)))) . '">';
+?>
 
-// Function to adjust color brightness
-function adjustColor($hex, $steps) {
-    // Extract RGB values
-    $hex = str_replace('#', '', $hex);
-    $r = hexdec(substr($hex, 0, 2));
-    $g = hexdec(substr($hex, 2, 2));
-    $b = hexdec(substr($hex, 4, 2));
-    
-    // Adjust brightness
-    $r = max(0, min(255, $r + $steps));
-    $g = max(0, min(255, $g + $steps));
-    $b = max(0, min(255, $b + $steps));
-    
-    // Convert back to hex
-    return sprintf('#%02x%02x%02x', $r, $g, $b);
-}
+<!-- Load Chart.js for expense chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 
+<?php
 // Include footer
 require_once 'includes/footer.php';
 ?>
