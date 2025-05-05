@@ -153,6 +153,40 @@ main {
   margin-bottom: 2rem;
 }
 
+/* Fix for Font Awesome icons */
+.fas, .fab, .far, .fa {
+  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands", "Font Awesome 6 Solid" !important;
+}
+
+.fas {
+  font-weight: 900;
+}
+
+.far {
+  font-weight: 400;
+}
+
+/* Card border styles */
+.border-left-primary {
+  border-left: 0.25rem solid var(--primary-color);
+}
+
+.border-left-success {
+  border-left: 0.25rem solid var(--secondary-color);
+}
+
+.border-left-info {
+  border-left: 0.25rem solid var(--info-color);
+}
+
+.border-left-warning {
+  border-left: 0.25rem solid var(--warning-color);
+}
+
+.border-left-danger {
+  border-left: 0.25rem solid var(--danger-color);
+}
+
 /* Media Queries */
 @media (max-width: 768px) {
   .sidebar {

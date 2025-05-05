@@ -374,6 +374,161 @@ const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-tog
 tooltipTriggerList.map(function (tooltipTriggerEl) {
     return new bootstrap.Tooltip(tooltipTriggerEl);
 });
+
+// Helper function to show spinner
+function showSpinner(container) {
+    // Create spinner element
+    const spinner = document.createElement('div');
+    spinner.className = 'text-center py-3';
+    spinner.innerHTML = `
+        <div class=\"spinner-border text-primary\" role=\"status\">
+            <span class=\"visually-hidden\">Loading...</span>
+        </div>
+    `;
+    
+    // Clear container and add spinner
+    container.innerHTML = '';
+    container.appendChild(spinner);
+}
+
+// Helper function to hide spinner
+function hideSpinner(container) {
+    // Find and remove spinner
+    const spinner = container.querySelector('.spinner-border');
+    if (spinner) {
+        spinner.parentNode.remove();
+    }
+}
+
+// Initialize frequency based calculation
+document.addEventListener('DOMContentLoaded', function() {
+    const frequencySelects = document.querySelectorAll('#frequency, #edit_frequency');
+    
+    frequencySelects.forEach(select => {
+        select.addEventListener('change', function() {
+            updateAmountLabel(this);
+            updateIncomePreview(this.closest('form'));
+        });
+        
+        // Initialize with current value
+        updateAmountLabel(select);
+    });
+    
+    // Add event listeners to amount inputs
+    const amountInputs = document.querySelectorAll('#amount, #edit_amount');
+    amountInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            updateIncomePreview(this.closest('form'));
+        });
+    });
+});
+
+// Update amount label based on frequency
+function updateAmountLabel(frequencySelect) {
+    const frequency = frequencySelect.value;
+    const isAddForm = frequencySelect.id === 'frequency';
+    const amountLabel = document.querySelector(`label[for=\"${isAddForm ? 'amount' : 'edit_amount'}\"]`);
+    
+    if (!amountLabel) return;
+    
+    let labelText = 'Amount';
+    
+    switch (frequency) {
+        case 'daily':
+            labelText = 'Daily Amount';
+            break;
+        case 'weekly':
+            labelText = 'Weekly Amount';
+            break;
+        case 'bi-weekly':
+            labelText = 'Bi-Weekly Amount';
+            break;
+        case 'monthly':
+            labelText = 'Monthly Amount';
+            break;
+        case 'quarterly':
+            labelText = 'Quarterly Amount';
+            break;
+        case 'annually':
+            labelText = 'Annual Amount';
+            break;
+        case 'one-time':
+            labelText = 'One-Time Amount';
+            break;
+    }
+    
+    amountLabel.textContent = labelText;
+}
+
+// Update income preview when amount or frequency changes
+function updateIncomePreview(form) {
+    if (!form) return;
+    
+    const amount = parseFloat(form.querySelector('input[name=\"amount\"]').value) || 0;
+    const frequency = form.querySelector('select[name=\"frequency\"]').value;
+    
+    // Calculate monthly and annual equivalents
+    let monthlyEquivalent = 0;
+    let annualEquivalent = 0;
+    
+    switch (frequency) {
+        case 'daily':
+            monthlyEquivalent = amount * 30;
+            annualEquivalent = amount * 365;
+            break;
+        case 'weekly':
+            monthlyEquivalent = amount * 4.33;
+            annualEquivalent = amount * 52;
+            break;
+        case 'bi-weekly':
+            monthlyEquivalent = amount * 2.17;
+            annualEquivalent = amount * 26;
+            break;
+        case 'monthly':
+            monthlyEquivalent = amount;
+            annualEquivalent = amount * 12;
+            break;
+        case 'quarterly':
+            monthlyEquivalent = amount / 3;
+            annualEquivalent = amount * 4;
+            break;
+        case 'annually':
+            monthlyEquivalent = amount / 12;
+            annualEquivalent = amount;
+            break;
+        case 'one-time':
+            monthlyEquivalent = amount;
+            annualEquivalent = amount;
+            break;
+    }
+    
+    // Create or update preview element
+    let previewElement = form.querySelector('.income-preview');
+    if (!previewElement) {
+        previewElement = document.createElement('div');
+        previewElement.className = 'income-preview mt-3 alert alert-info';
+        const amountInput = form.querySelector('input[name=\"amount\"]');
+        if (amountInput && amountInput.parentNode && amountInput.parentNode.parentNode) {
+            amountInput.parentNode.parentNode.insertAdjacentElement('afterend', previewElement);
+        }
+    }
+    
+    if (amount > 0) {
+        previewElement.innerHTML = `
+            <div class=\"d-flex justify-content-between\">
+                <span>Monthly equivalent:</span>
+                <strong>$${monthlyEquivalent.toFixed(2)}</strong>
+            </div>
+            <div class=\"d-flex justify-content-between\">
+                <span>Annual equivalent:</span>
+                <strong>$${annualEquivalent.toFixed(2)}</strong>
+            </div>
+        `;
+        previewElement.style.display = 'block';
+    } else {
+        previewElement.style.display = 'none';
+    }
+}
 ";
 
 // Include footer
