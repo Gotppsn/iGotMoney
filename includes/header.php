@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $page_title ?? 'iGotMoney - Financial Management'; ?></title>
     
-    <!-- Content Security Policy -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com https://use.fontawesome.com data:; img-src 'self' data:;">
+    <!-- Favicon -->
+    <link rel="icon" href="<?php echo BASE_PATH; ?>/assets/images/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="<?php echo BASE_PATH; ?>/assets/images/favicon.ico" type="image/x-icon">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="<?php echo BASE_PATH; ?>/assets/css/style.css">
@@ -29,7 +30,7 @@
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
             <div class="container">
                 <a class="navbar-brand" href="<?php echo BASE_PATH; ?>/dashboard">
-                    <i class="fas fa-money-bill-wave me-2"></i>iGotMoney
+                    <i class="fa fa-money-bill-wave me-2"></i>iGotMoney
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -38,13 +39,13 @@
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-user-circle me-1"></i> <?php echo htmlspecialchars($_SESSION['username']); ?>
+                                <i class="fa fa-user-circle me-1"></i> <?php echo htmlspecialchars($_SESSION['username']); ?>
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="userDropdown">
-                                <li><a class="dropdown-item" href="<?php echo BASE_PATH; ?>/profile"><i class="fas fa-id-card me-1"></i> Profile</a></li>
-                                <li><a class="dropdown-item" href="<?php echo BASE_PATH; ?>/settings"><i class="fas fa-cog me-1"></i> Settings</a></li>
+                                <li><a class="dropdown-item" href="<?php echo BASE_PATH; ?>/profile"><i class="fa fa-id-card me-1"></i> Profile</a></li>
+                                <li><a class="dropdown-item" href="<?php echo BASE_PATH; ?>/settings"><i class="fa fa-cog me-1"></i> Settings</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="<?php echo BASE_PATH; ?>/logout"><i class="fas fa-sign-out-alt me-1"></i> Logout</a></li>
+                                <li><a class="dropdown-item" href="<?php echo BASE_PATH; ?>/logout"><i class="fa fa-sign-out-alt me-1"></i> Logout</a></li>
                             </ul>
                         </li>
                     </ul>
@@ -61,47 +62,47 @@
                         <ul class="nav flex-column">
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'dashboard' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/dashboard">
-                                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                                    <i class="fa fa-tachometer-alt me-2"></i> Dashboard
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'income' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/income">
-                                    <i class="fas fa-wallet me-2"></i> Income
+                                    <i class="fa fa-wallet me-2"></i> Income
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'expenses' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/expenses">
-                                    <i class="fas fa-credit-card me-2"></i> Expenses
+                                    <i class="fa fa-credit-card me-2"></i> Expenses
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'budget' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/budget">
-                                    <i class="fas fa-chart-pie me-2"></i> Budget
+                                    <i class="fa fa-chart-pie me-2"></i> Budget
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'investments' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/investments">
-                                    <i class="fas fa-chart-line me-2"></i> Investments
+                                    <i class="fa fa-chart-line me-2"></i> Investments
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'stocks' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/stocks">
-                                    <i class="fas fa-exchange-alt me-2"></i> Stock Analysis
+                                    <i class="fa fa-exchange-alt me-2"></i> Stock Analysis
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'goals' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/goals">
-                                    <i class="fas fa-bullseye me-2"></i> Financial Goals
+                                    <i class="fa fa-bullseye me-2"></i> Financial Goals
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'taxes' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/taxes">
-                                    <i class="fas fa-file-invoice-dollar me-2"></i> Tax Planning
+                                    <i class="fa fa-file-invoice-dollar me-2"></i> Tax Planning
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'reports' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/reports">
-                                    <i class="fas fa-chart-bar me-2"></i> Reports
+                                    <i class="fa fa-chart-bar me-2"></i> Reports
                                 </a>
                             </li>
                         </ul>
@@ -115,7 +116,7 @@
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
             <div class="container">
                 <a class="navbar-brand" href="<?php echo BASE_PATH; ?>/">
-                    <i class="fas fa-money-bill-wave me-2"></i>iGotMoney
+                    <i class="fa fa-money-bill-wave me-2"></i>iGotMoney
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>

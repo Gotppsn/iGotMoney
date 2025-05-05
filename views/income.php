@@ -14,7 +14,7 @@ require_once 'includes/header.php';
     <h1 class="h2">Income Management</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
-            <i class="fas fa-plus"></i> Add Income
+            <i class="fa fa-plus"></i> Add Income
         </button>
     </div>
 </div>
@@ -31,7 +31,7 @@ require_once 'includes/header.php';
                         <div class="h5 mb-0 font-weight-bold text-gray-800">$<?php echo number_format($monthly_income, 2); ?></div>
                     </div>
                     <div class="col-auto">
-                        <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        <i class="fa fa-calendar fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
@@ -48,7 +48,7 @@ require_once 'includes/header.php';
                         <div class="h5 mb-0 font-weight-bold text-gray-800">$<?php echo number_format($yearly_income, 2); ?></div>
                     </div>
                     <div class="col-auto">
-                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        <i class="fa fa-dollar-sign fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
@@ -62,7 +62,7 @@ require_once 'includes/header.php';
         <h6 class="m-0 font-weight-bold text-primary">Income Sources</h6>
         <div class="input-group input-group-sm" style="width: 250px;">
             <input type="text" class="form-control" placeholder="Search income sources..." id="incomeSearch" data-table-search="incomeTable">
-            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <span class="input-group-text"><i class="fa fa-search"></i></span>
         </div>
     </div>
     <div class="card-body">
@@ -110,10 +110,10 @@ require_once 'includes/header.php';
                                 </td>
                                 <td>
                                     <button type="button" class="btn btn-sm btn-info edit-income" data-income-id="<?php echo $income['income_id']; ?>">
-                                        <i class="fas fa-edit"></i>
+                                        <i class="fa fa-edit"></i>
                                     </button>
                                     <button type="button" class="btn btn-sm btn-danger delete-income" data-income-id="<?php echo $income['income_id']; ?>">
-                                        <i class="fas fa-trash"></i>
+                                        <i class="fa fa-trash"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -125,7 +125,7 @@ require_once 'includes/header.php';
             <div class="text-center py-4">
                 <p>No income sources found.</p>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
-                    <i class="fas fa-plus"></i> Add Your First Income Source
+                    <i class="fa fa-plus"></i> Add Your First Income Source
                 </button>
             </div>
         <?php endif; ?>
@@ -281,7 +281,7 @@ require_once 'includes/header.php';
             <div class="modal-body">
                 <p>Are you sure you want to delete this income source? This action cannot be undone.</p>
                 <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <i class="fa fa-exclamation-triangle me-2"></i>
                     Deleting this income source will also remove it from your financial calculations.
                 </div>
             </div>
