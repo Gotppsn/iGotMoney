@@ -187,16 +187,17 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="addExpenseModalLabel">Add Expense</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/expenses" method="post">
+            <form action="<?php echo BASE_PATH; ?>/expenses" method="post" id="addExpenseForm" class="needs-validation" novalidate>
                 <input type="hidden" name="action" value="add">
                 
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="category_id" class="form-label">Category</label>
                         <select class="form-select" id="category_id" name="category_id" required>
+                            <option value="">Select a category</option>
                             <?php 
                             // Reset the categories result pointer
-                            if ($categories->num_rows > 0) {
+                            if (isset($categories) && $categories->num_rows > 0) {
                                 $categories->data_seek(0);
                                 while ($category = $categories->fetch_assoc()): 
                             ?>
@@ -208,24 +209,28 @@ require_once 'includes/header.php';
                             }
                             ?>
                         </select>
+                        <div class="invalid-feedback">Please select a category.</div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
                         <input type="text" class="form-control" id="description" name="description" required>
+                        <div class="invalid-feedback">Please provide a description.</div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="amount" class="form-label">Amount</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0" required>
+                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" required>
+                            <div class="invalid-feedback">Please enter a valid amount greater than zero.</div>
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="expense_date" class="form-label">Date</label>
                         <input type="date" class="form-control" id="expense_date" name="expense_date" value="<?php echo date('Y-m-d'); ?>" required>
+                        <div class="invalid-feedback">Please select a date.</div>
                     </div>
                     
                     <div class="mb-3 form-check">
@@ -266,7 +271,7 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="editExpenseModalLabel">Edit Expense</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/expenses" method="post">
+            <form action="<?php echo BASE_PATH; ?>/expenses" method="post" id="editExpenseForm" class="needs-validation" novalidate>
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="expense_id" id="edit_expense_id">
                 
@@ -274,9 +279,10 @@ require_once 'includes/header.php';
                     <div class="mb-3">
                         <label for="edit_category_id" class="form-label">Category</label>
                         <select class="form-select" id="edit_category_id" name="category_id" required>
+                            <option value="">Select a category</option>
                             <?php 
                             // Reset the categories result pointer
-                            if ($categories->num_rows > 0) {
+                            if (isset($categories) && $categories->num_rows > 0) {
                                 $categories->data_seek(0);
                                 while ($category = $categories->fetch_assoc()): 
                             ?>
@@ -288,24 +294,28 @@ require_once 'includes/header.php';
                             }
                             ?>
                         </select>
+                        <div class="invalid-feedback">Please select a category.</div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="edit_description" class="form-label">Description</label>
                         <input type="text" class="form-control" id="edit_description" name="description" required>
+                        <div class="invalid-feedback">Please provide a description.</div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="edit_amount" class="form-label">Amount</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0" required>
+                            <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0.01" required>
+                            <div class="invalid-feedback">Please enter a valid amount greater than zero.</div>
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="edit_expense_date" class="form-label">Date</label>
                         <input type="date" class="form-control" id="edit_expense_date" name="expense_date" required>
+                        <div class="invalid-feedback">Please select a date.</div>
                     </div>
                     
                     <div class="mb-3 form-check">
@@ -351,7 +361,7 @@ require_once 'includes/header.php';
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="<?php echo BASE_PATH; ?>/expenses" method="post">
+                <form action="<?php echo BASE_PATH; ?>/expenses" method="post" id="deleteExpenseForm">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="expense_id" id="delete_expense_id">
                     <button type="submit" class="btn btn-danger">Delete</button>
@@ -417,6 +427,26 @@ var expenseCategoryChart = new Chart(ctx, {
     }
 });
 
+// Initialize form validation
+(function() {
+    'use strict';
+    
+    // Fetch all forms we want to apply validation to
+    var forms = document.querySelectorAll('.needs-validation');
+    
+    // Loop over them and prevent submission
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            form.classList.add('was-validated');
+        }, false);
+    });
+})();
+
 // Toggle recurring options when checkbox is clicked
 document.getElementById('is_recurring').addEventListener('change', function() {
     document.getElementById('recurring_options').style.display = this.checked ? 'block' : 'none';
@@ -444,12 +474,16 @@ document.querySelectorAll('.edit-expense').forEach(button => {
     button.addEventListener('click', function() {
         const expenseId = this.getAttribute('data-expense-id');
         
+        // Reset form validation
+        const form = document.getElementById('editExpenseForm');
+        form.classList.remove('was-validated');
+        
         // Show loading spinner
         const modal = new bootstrap.Modal(document.getElementById('editExpenseModal'));
         modal.show();
         
         // Fetch expense data
-        fetch('/expenses?action=get_expense&expense_id=' + expenseId)
+        fetch('" . BASE_PATH . "/expenses?action=get_expense&expense_id=' + expenseId)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -501,6 +535,18 @@ document.getElementById('expenseSearch').addEventListener('input', function() {
         const text = row.textContent.toLowerCase();
         row.style.display = text.includes(searchTerm) ? '' : 'none';
     });
+});
+
+// Reset form when modal is closed
+document.getElementById('addExpenseModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('addExpenseForm').reset();
+    document.getElementById('addExpenseForm').classList.remove('was-validated');
+    document.getElementById('recurring_options').style.display = 'none';
+});
+
+// Auto-focus description field when add modal opens
+document.getElementById('addExpenseModal').addEventListener('shown.bs.modal', function() {
+    document.getElementById('description').focus();
 });
 ";
 

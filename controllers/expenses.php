@@ -25,53 +25,88 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
     if ($action === 'add') {
-        // Set expense properties
-        $expense->user_id = $user_id;
-        $expense->category_id = $_POST['category_id'] ?? 0;
-        $expense->amount = $_POST['amount'] ?? 0;
-        $expense->description = $_POST['description'] ?? '';
-        $expense->expense_date = $_POST['expense_date'] ?? date('Y-m-d');
-        $expense->frequency = $_POST['frequency'] ?? 'one-time';
-        $expense->is_recurring = isset($_POST['is_recurring']) ? 1 : 0;
-        
-        // Create new expense
-        if ($expense->create()) {
-            $success = 'Expense added successfully!';
+        // Validate input
+        if (empty($_POST['description']) || !is_numeric($_POST['amount']) || $_POST['amount'] <= 0) {
+            $error = 'Please provide a valid description and amount for your expense.';
         } else {
-            $error = 'Failed to add expense.';
+            // Set expense properties
+            $expense->user_id = $user_id;
+            $expense->category_id = $_POST['category_id'] ?? 0;
+            $expense->amount = $_POST['amount'] ?? 0;
+            $expense->description = $_POST['description'] ?? '';
+            $expense->expense_date = $_POST['expense_date'] ?? date('Y-m-d');
+            $expense->frequency = $_POST['frequency'] ?? 'one-time';
+            $expense->is_recurring = isset($_POST['is_recurring']) ? 1 : 0;
+            
+            // Create new expense
+            if ($expense->create()) {
+                $success = 'Expense added successfully!';
+            } else {
+                $error = 'Failed to add expense.';
+            }
         }
     } elseif ($action === 'edit') {
         // Get expense ID
         $expense_id = $_POST['expense_id'] ?? 0;
         
-        // Get expense data
-        if ($expense->getById($expense_id, $user_id)) {
-            // Update expense properties
-            $expense->category_id = $_POST['category_id'] ?? $expense->category_id;
-            $expense->amount = $_POST['amount'] ?? $expense->amount;
-            $expense->description = $_POST['description'] ?? $expense->description;
-            $expense->expense_date = $_POST['expense_date'] ?? $expense->expense_date;
-            $expense->frequency = $_POST['frequency'] ?? $expense->frequency;
-            $expense->is_recurring = isset($_POST['is_recurring']) ? 1 : 0;
-            
-            // Update expense
-            if ($expense->update()) {
-                $success = 'Expense updated successfully!';
-            } else {
-                $error = 'Failed to update expense.';
-            }
+        // Validate input
+        if (empty($_POST['description']) || !is_numeric($_POST['amount']) || $_POST['amount'] <= 0) {
+            $error = 'Please provide a valid description and amount for your expense.';
+        } elseif (!$expense_id) {
+            $error = 'Invalid expense.';
         } else {
-            $error = 'Expense not found.';
+            // Get expense data
+            if ($expense->getById($expense_id, $user_id)) {
+                // Debug log to see what's happening
+                error_log("Editing expense ID: " . $expense_id);
+                error_log("POST data: " . print_r($_POST, true));
+                
+                // Update expense properties
+                $expense->category_id = $_POST['category_id'] ?? $expense->category_id;
+                $expense->amount = $_POST['amount'] ?? $expense->amount;
+                $expense->description = $_POST['description'] ?? $expense->description;
+                $expense->expense_date = $_POST['expense_date'] ?? $expense->expense_date;
+                $expense->frequency = $_POST['frequency'] ?? $expense->frequency;
+                $expense->is_recurring = isset($_POST['is_recurring']) ? 1 : 0;
+                
+                // Debug log of properties before update
+                error_log("Expense object before update: " . print_r([
+                    'expense_id' => $expense->expense_id,
+                    'user_id' => $expense->user_id,
+                    'category_id' => $expense->category_id,
+                    'amount' => $expense->amount,
+                    'description' => $expense->description,
+                    'expense_date' => $expense->expense_date,
+                    'frequency' => $expense->frequency,
+                    'is_recurring' => $expense->is_recurring
+                ], true));
+                
+                // Update expense
+                if ($expense->update()) {
+                    $success = 'Expense updated successfully!';
+                } else {
+                    $error = 'Failed to update expense. Please try again.';
+                    // Log the error for debugging
+                    error_log("Failed to update expense ID: " . $expense_id);
+                }
+            } else {
+                $error = 'Expense not found.';
+            }
         }
     } elseif ($action === 'delete') {
         // Get expense ID
         $expense_id = $_POST['expense_id'] ?? 0;
         
-        // Delete expense
-        if ($expense->delete($expense_id, $user_id)) {
-            $success = 'Expense deleted successfully!';
+        // Validate input
+        if (!$expense_id) {
+            $error = 'Invalid expense.';
         } else {
-            $error = 'Failed to delete expense.';
+            // Delete expense
+            if ($expense->delete($expense_id, $user_id)) {
+                $success = 'Expense deleted successfully!';
+            } else {
+                $error = 'Failed to delete expense.';
+            }
         }
     }
 }
@@ -81,6 +116,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_expense') {
     header('Content-Type: application/json');
     
     $expense_id = $_GET['expense_id'] ?? 0;
+    
+    if (!$expense_id) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Invalid expense ID.'
+        ]);
+        exit();
+    }
     
     if ($expense->getById($expense_id, $user_id)) {
         echo json_encode([
