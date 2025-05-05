@@ -7,7 +7,7 @@
 
 // Base path configuration for sub-directory installation
 // Change this to '' if installed in the root directory
-define('BASE_PATH', '');
+define('BASE_PATH', '/igotmoney');
 
 // Database configuration
 define('DB_HOST', 'localhost');
