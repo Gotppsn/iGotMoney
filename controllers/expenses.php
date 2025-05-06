@@ -94,7 +94,7 @@ if (isset($_GET['action'])) {
             // Calculate total for the period
             $total = 0;
             foreach ($expenses_data as $exp) {
-                $total += $exp['amount'];
+                $total += floatval($exp['amount']);
             }
             
             echo json_encode([
@@ -122,7 +122,7 @@ if (isset($_GET['action'])) {
         $start_date = null;
         $end_date = null;
         
-        $now = new DateTime(); // FIXED: Changed from new Date() to new DateTime()
+        $now = new DateTime();
         
         switch ($period) {
             case 'current-month':
@@ -170,11 +170,12 @@ if (isset($_GET['action'])) {
                 ];
                 
                 // Calculate total
-                $total_amount += $row['amount'];
+                $amount = floatval($row['amount']);
+                $total_amount += $amount;
                 
                 // Track highest expense
-                if ($row['amount'] > $highest_amount) {
-                    $highest_amount = $row['amount'];
+                if ($amount > $highest_amount) {
+                    $highest_amount = $amount;
                     $highest_category = $row['category_name'];
                 }
                 
@@ -182,7 +183,7 @@ if (isset($_GET['action'])) {
                 if (!isset($category_totals[$row['category_name']])) {
                     $category_totals[$row['category_name']] = 0;
                 }
-                $category_totals[$row['category_name']] += $row['amount'];
+                $category_totals[$row['category_name']] += $amount;
             }
             
             // Sort categories by total
@@ -241,6 +242,9 @@ if (isset($_GET['action'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = isset($_POST['action']) ? $_POST['action'] : '';
     
+    // Log the POST data for debugging
+    error_log('POST data received: ' . print_r($_POST, true));
+    
     switch ($action) {
         case 'add':
             // Validate input
@@ -265,11 +269,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // If there are validation errors
             if (!empty($errors)) {
                 $error = implode(' ', $errors);
+                
+                // Handle AJAX requests
+                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => false,
+                        'message' => $error
+                    ]);
+                    exit();
+                }
             } else {
                 // Set expense properties
                 $expense->user_id = $user_id;
                 $expense->category_id = $_POST['category_id'];
-                $expense->amount = $_POST['amount'];
+                $expense->amount = floatval($_POST['amount']); 
                 $expense->description = $_POST['description'];
                 $expense->expense_date = $_POST['expense_date'];
                 $expense->frequency = isset($_POST['frequency']) ? $_POST['frequency'] : 'one-time';
@@ -278,8 +292,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Create new expense
                 if ($expense->create()) {
                     $success = 'Expense added successfully!';
+                    
+                    // Handle AJAX requests
+                    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                        header('Content-Type: application/json');
+                        echo json_encode([
+                            'success' => true,
+                            'message' => $success
+                        ]);
+                        exit();
+                    }
                 } else {
                     $error = 'Failed to add expense. Please try again.';
+                    
+                    // Handle AJAX requests
+                    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                        header('Content-Type: application/json');
+                        echo json_encode([
+                            'success' => false,
+                            'message' => $error
+                        ]);
+                        exit();
+                    }
                 }
             }
             break;
@@ -314,12 +348,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // If there are validation errors
             if (!empty($errors)) {
                 $error = implode(' ', $errors);
+                
+                // Handle AJAX requests
+                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => false,
+                        'message' => $error
+                    ]);
+                    exit();
+                }
             } else {
                 // Get expense data
                 if ($expense->getById($expense_id, $user_id)) {
                     // Update expense properties
                     $expense->category_id = $_POST['category_id'];
-                    $expense->amount = $_POST['amount'];
+                    $expense->amount = floatval($_POST['amount']);
                     $expense->description = $_POST['description'];
                     $expense->expense_date = $_POST['expense_date'];
                     $expense->frequency = isset($_POST['frequency']) ? $_POST['frequency'] : 'one-time';
@@ -328,11 +372,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Update expense
                     if ($expense->update()) {
                         $success = 'Expense updated successfully!';
+                        
+                        // Handle AJAX requests
+                        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                            header('Content-Type: application/json');
+                            echo json_encode([
+                                'success' => true,
+                                'message' => $success
+                            ]);
+                            exit();
+                        }
                     } else {
                         $error = 'Failed to update expense. Please try again.';
+                        
+                        // Handle AJAX requests
+                        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                            header('Content-Type: application/json');
+                            echo json_encode([
+                                'success' => false,
+                                'message' => $error
+                            ]);
+                            exit();
+                        }
                     }
                 } else {
                     $error = 'Expense not found.';
+                    
+                    // Handle AJAX requests
+                    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                        header('Content-Type: application/json');
+                        echo json_encode([
+                            'success' => false,
+                            'message' => $error
+                        ]);
+                        exit();
+                    }
                 }
             }
             break;
@@ -344,33 +418,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Validate input
             if (!$expense_id) {
                 $error = 'Invalid expense.';
+                
+                // Handle AJAX requests
+                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => false,
+                        'message' => $error
+                    ]);
+                    exit();
+                }
             } else {
                 // Delete expense
                 if ($expense->delete($expense_id, $user_id)) {
                     $success = 'Expense deleted successfully!';
+                    
+                    // Handle AJAX requests
+                    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                        header('Content-Type: application/json');
+                        echo json_encode([
+                            'success' => true,
+                            'message' => $success
+                        ]);
+                        exit();
+                    }
                 } else {
                     $error = 'Failed to delete expense. Please try again.';
+                    
+                    // Handle AJAX requests
+                    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                        header('Content-Type: application/json');
+                        echo json_encode([
+                            'success' => false,
+                            'message' => $error
+                        ]);
+                        exit();
+                    }
                 }
             }
             break;
     }
     
-    // Handle AJAX form submissions
-    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-        header('Content-Type: application/json');
-        
-        if (isset($error)) {
-            echo json_encode([
-                'success' => false,
-                'message' => $error
-            ]);
-        } else {
-            echo json_encode([
-                'success' => true,
-                'message' => $success ?? 'Operation completed successfully.'
-            ]);
-        }
-        
+    // Only handle non-AJAX responses here
+    if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest') {
+        // If AJAX handling hasn't exited by now, we need to redirect
+        header('Location: ' . BASE_PATH . '/expenses');
         exit();
     }
 }

@@ -500,7 +500,9 @@ function updateTopExpenses(expenses) {
             categories[categoryName] = 0;
         }
         
-        categories[categoryName] += parseFloat(expense.amount);
+        // Make sure the expense amount is treated as a number
+        const expenseAmount = parseFloat(expense.amount) || 0;
+        categories[categoryName] += expenseAmount;
     });
     
     // Convert to array and sort
@@ -520,7 +522,10 @@ function updateTopExpenses(expenses) {
     let html = '';
     
     categoryData.forEach(category => {
-        const percentage = (category.total / totalExpenses) * 100;
+        // Ensure values are numbers before calculations
+        const total = parseFloat(category.total) || 0;
+        const percentage = totalExpenses > 0 ? (total / totalExpenses) * 100 : 0;
+        
         let colorClass = 'bg-info';
         
         if (percentage > 30) {
@@ -534,7 +539,7 @@ function updateTopExpenses(expenses) {
         html += `
             <h4 class="small font-weight-bold">
                 ${escapeHTML(category.name)}
-                <span class="float-end">$${category.total.toFixed(2)}</span>
+                <span class="float-end">$${total.toFixed(2)}</span>
             </h4>
             <div class="progress mb-4">
                 <div class="progress-bar ${colorClass}" role="progressbar" 
@@ -621,6 +626,11 @@ function displayAnalytics(analytics) {
     const analyticsContent = document.getElementById('analyticsContent');
     if (!analyticsContent) return;
     
+    // Make sure values are numbers before using toFixed
+    const dailyAverage = parseFloat(analytics.daily_average) || 0;
+    const highestAmount = parseFloat(analytics.highest_amount) || 0;
+    const projectedMonthly = parseFloat(analytics.projected_monthly) || 0;
+    
     // Update the analytics UI
     analyticsContent.innerHTML = `
         <div class="col-md-4">
@@ -630,7 +640,7 @@ function displayAnalytics(analytics) {
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                 Average Daily Expense</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgDailyExpense">$${analytics.daily_average.toFixed(2)}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgDailyExpense">$${dailyAverage.toFixed(2)}</div>
                             <div class="small text-muted">Based on ${analytics.days_in_period} days</div>
                         </div>
                         <div class="col-auto">
@@ -647,7 +657,7 @@ function displayAnalytics(analytics) {
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                 Highest Expense</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="highestExpense">$${analytics.highest_amount.toFixed(2)}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="highestExpense">$${highestAmount.toFixed(2)}</div>
                             <div class="small" id="highestExpenseCategory">${analytics.highest_category}</div>
                         </div>
                         <div class="col-auto">
@@ -664,7 +674,7 @@ function displayAnalytics(analytics) {
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
                                 Projected Monthly Total</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="projectedMonthly">$${analytics.projected_monthly.toFixed(2)}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="projectedMonthly">$${projectedMonthly.toFixed(2)}</div>
                             <div class="small text-muted">Based on daily average</div>
                         </div>
                         <div class="col-auto">
@@ -683,7 +693,10 @@ function displayAnalytics(analytics) {
  */
 function calculateExpenseAnalytics(expenses) {
     // Calculate total expense amount
-    const totalAmount = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
+    const totalAmount = expenses.reduce((sum, expense) => {
+        const amount = parseFloat(expense.amount) || 0;
+        return sum + amount;
+    }, 0);
     
     // Find date range
     const dates = expenses.map(expense => new Date(expense.expense_date));
@@ -697,8 +710,11 @@ function calculateExpenseAnalytics(expenses) {
     const avgDaily = totalAmount / daysDiff;
     
     // Find highest expense
-    const highestExpense = expenses.length ? expenses.reduce((max, expense) => 
-        parseFloat(expense.amount) > parseFloat(max.amount) ? expense : max, expenses[0]) : { amount: 0, category_name: 'N/A' };
+    const highestExpense = expenses.length ? expenses.reduce((max, expense) => {
+        const currentAmount = parseFloat(expense.amount) || 0;
+        const maxAmount = parseFloat(max.amount) || 0;
+        return currentAmount > maxAmount ? expense : max;
+    }, expenses[0]) : { amount: 0, category_name: 'N/A' };
     
     // Calculate projected monthly total
     const daysInMonth = 30;
@@ -1311,6 +1327,8 @@ function formatDateForDisplay(date) {
  * @returns {string} - Escaped text
  */
 function escapeHTML(text) {
+    if (text === null || text === undefined) return '';
+    
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;

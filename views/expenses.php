@@ -3,8 +3,8 @@
 $page_title = 'Expense Management - iGotMoney';
 $current_page = 'expenses';
 
-// Additional JS - UPDATED to use CDN for Chart.js instead of local file
-$additional_js = ['/assets/js/expenses.js'];
+// Additional JS
+$additional_js = ['/assets/js/expenses.js', '/assets/js/direct-form-handler.js'];
 
 // Include header
 require_once 'includes/header.php';
@@ -102,7 +102,7 @@ require_once 'includes/header.php';
                             </h4>
                             <div class="progress mb-4">
                                 <?php 
-                                $percentage = ($category['total'] / $monthly_expenses) * 100;
+                                $percentage = ($category['total'] / max(0.01, $monthly_expenses)) * 100;
                                 $color_class = 'bg-info';
                                 
                                 if ($percentage > 30) {
@@ -380,6 +380,20 @@ require_once 'includes/header.php';
     </div>
 </div>
 
+<?php if (isset($success)): ?>
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    <?php echo $success; ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+<?php endif; ?>
+
+<?php if (isset($error)): ?>
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <?php echo $error; ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+<?php endif; ?>
+
 <?php
 // Chart data
 $chart_labels = [];
@@ -416,6 +430,8 @@ if (typeof Chart !== 'undefined') {
     Chart.defaults.color = '#5a5c69';
     Chart.defaults.responsive = true;
 }
+
+console.log('Base Path:', '" . BASE_PATH . "');
 ";
 
 // Include footer
