@@ -230,20 +230,15 @@ function initializeBudgetRecommendations() {
             formData.append('action', 'generate_plan');
             formData.append('replace_existing', '1');
             
-            // Get the correct form action URL
-            const formAction = BASE_PATH + '/budget';
+            // Get the form action URL from the generate budget form
+            const formAction = document.getElementById('generateBudgetForm').getAttribute('action');
             
             // Submit form with AJAX
             fetch(formAction, {
                 method: 'POST',
                 body: formData
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     showNotification(data.message, 'success');
@@ -285,20 +280,15 @@ function initializeBudgetRecommendations() {
             formData.append('start_date', new Date().toISOString().split('T')[0]);
             formData.append('end_date', new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0]);
             
-            // Get the correct form action URL
-            const formAction = BASE_PATH + '/budget';
+            // Get the form action URL from the add budget form
+            const formAction = document.getElementById('addBudgetForm').getAttribute('action');
             
             // Send AJAX request
             fetch(formAction, {
                 method: 'POST',
                 body: formData
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     showNotification(data.message || 'Budget added successfully!', 'success');
@@ -531,11 +521,8 @@ function validateBudgetForm(form) {
  * @param {HTMLFormElement} form - The form to submit
  */
 function submitFormWithAjax(form) {
-    // Use the globally defined BASE_PATH variable which should be defined in the footer
-    // If BASE_PATH is not available, fall back to a direct path
-    const formAction = typeof BASE_PATH !== 'undefined' ? BASE_PATH + '/budget' : '/igotmoney/budget';
-    
-    console.log('Form action URL:', formAction);
+    // Get the form action URL
+    const formAction = form.getAttribute('action');
     
     // Get submit button
     const submitButton = form.querySelector('button[type="submit"]');
@@ -549,6 +536,7 @@ function submitFormWithAjax(form) {
     const formData = new FormData(form);
     
     // For debugging
+    console.log('Submitting form to:', formAction);
     console.log('Form data action:', formData.get('action'));
     console.log('Form data budget_id:', formData.get('budget_id'));
     
@@ -594,7 +582,7 @@ function submitFormWithAjax(form) {
     })
     .catch(error => {
         console.error('Error submitting form:', error);
-        showNotification('Network error occurred. Please try again.', 'danger');
+        showNotification('Network error occurred: ' + error.message, 'danger');
         
         // Reset button
         submitButton.disabled = false;
@@ -628,8 +616,11 @@ function fetchBudgetData(budgetId) {
     // Set budget ID to form
     document.getElementById('edit_budget_id').value = budgetId;
     
-    // Use the globally defined BASE_PATH
-    const requestUrl = BASE_PATH + '/budget?action=get_budget&budget_id=' + budgetId;
+    // Use the base path from a form action
+    const basePath = form.getAttribute('action');
+    
+    // Create URL for fetch request
+    const requestUrl = `${basePath}?action=get_budget&budget_id=${budgetId}`;
     
     console.log('Fetching budget data from:', requestUrl);
     
