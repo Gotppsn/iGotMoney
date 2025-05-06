@@ -48,25 +48,13 @@ class Budget {
                 return false;
             }
             
-            // Sanitize input
-            $this->user_id = htmlspecialchars(strip_tags($this->user_id));
-            $this->category_id = htmlspecialchars(strip_tags($this->category_id));
-            $this->amount = htmlspecialchars(strip_tags($this->amount));
-            $this->start_date = htmlspecialchars(strip_tags($this->start_date));
-            $this->end_date = htmlspecialchars(strip_tags($this->end_date));
-            
             // Bind parameters
-            $bind_result = $stmt->bind_param("iidss", 
-                            $this->user_id, 
-                            $this->category_id, 
-                            $this->amount, 
-                            $this->start_date, 
-                            $this->end_date);
-                            
-            if (!$bind_result) {
-                error_log("Failed to bind parameters: " . $stmt->error);
-                return false;
-            }
+            $stmt->bind_param("iidss", 
+                $this->user_id, 
+                $this->category_id, 
+                $this->amount, 
+                $this->start_date, 
+                $this->end_date);
             
             // Execute query
             if ($stmt->execute()) {
@@ -74,7 +62,7 @@ class Budget {
                 return true;
             }
             
-            // Print error if something goes wrong
+            // Log error if something goes wrong
             error_log("Error executing statement: " . $stmt->error);
             return false;
         } catch (Exception $e) {
@@ -179,32 +167,21 @@ class Budget {
                 return false;
             }
             
-            // Sanitize input
-            $this->category_id = htmlspecialchars(strip_tags($this->category_id));
-            $this->amount = htmlspecialchars(strip_tags($this->amount));
-            $this->start_date = htmlspecialchars(strip_tags($this->start_date));
-            $this->end_date = htmlspecialchars(strip_tags($this->end_date));
-            
             // Bind parameters
-            $bind_result = $stmt->bind_param("idssii", 
-                            $this->category_id, 
-                            $this->amount, 
-                            $this->start_date, 
-                            $this->end_date, 
-                            $this->budget_id, 
-                            $this->user_id);
-                            
-            if (!$bind_result) {
-                error_log("Failed to bind parameters: " . $stmt->error);
-                return false;
-            }
+            $stmt->bind_param("idssii", 
+                $this->category_id, 
+                $this->amount, 
+                $this->start_date, 
+                $this->end_date, 
+                $this->budget_id, 
+                $this->user_id);
             
             // Execute query
             if ($stmt->execute()) {
                 return true;
             }
             
-            // Print error if something goes wrong
+            // Log error if something goes wrong
             error_log("Error executing statement: " . $stmt->error);
             return false;
         } catch (Exception $e) {
@@ -235,7 +212,7 @@ class Budget {
                 return true;
             }
             
-            // Print error if something goes wrong
+            // Log error if something goes wrong
             error_log("Error executing statement: " . $stmt->error);
             return false;
         } catch (Exception $e) {
@@ -269,7 +246,7 @@ class Budget {
                 return true;
             }
             
-            // Print error if something goes wrong
+            // Log error if something goes wrong
             error_log("Error executing statement: " . $stmt->error);
             return false;
         } catch (Exception $e) {
@@ -434,7 +411,6 @@ class Budget {
                     $past_average = $expense_map[$category_id]['average'];
                     
                     // Adjust allocation based on past spending
-                    // If there's a significant discrepancy, lean toward past spending but don't go too extreme
                     if ($past_average > $allocated_amount * 1.5) {
                         // Past spending is significantly higher - adjust upward but not fully
                         $allocated_amount = ($allocated_amount * 0.6) + ($past_average * 0.4);

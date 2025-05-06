@@ -500,8 +500,8 @@ if (!empty($budget_status)) {
     }
 }
 
-// Add meta tag for base path
-echo '<meta name="base-path" content="' . BASE_PATH . '">';
+// Include Chart.js library directly
+echo '<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>';
 
 // JavaScript for budget page
 $page_scripts = "

@@ -25,35 +25,53 @@ $expense = new Expense();
 $income = new Income();
 
 // Handle AJAX requests
-if (isset($_GET['action']) && $_GET['action'] === 'get_budget') {
+if (isset($_GET['action'])) {
+    $action = $_GET['action'];
     header('Content-Type: application/json');
     
-    $budget_id = $_GET['budget_id'] ?? 0;
-    
-    if ($budget->getById($budget_id, $user_id)) {
-        echo json_encode([
-            'success' => true,
-            'budget' => [
-                'budget_id' => $budget->budget_id,
-                'category_id' => $budget->category_id,
-                'amount' => $budget->amount,
-                'start_date' => $budget->start_date,
-                'end_date' => $budget->end_date
-            ]
-        ]);
-    } else {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Budget not found.'
-        ]);
+    if ($action === 'get_budget') {
+        $budget_id = isset($_GET['budget_id']) ? intval($_GET['budget_id']) : 0;
+        
+        if (!$budget_id) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Invalid budget ID.'
+            ]);
+            exit();
+        }
+        
+        if ($budget->getById($budget_id, $user_id)) {
+            echo json_encode([
+                'success' => true,
+                'budget' => [
+                    'budget_id' => $budget->budget_id,
+                    'category_id' => $budget->category_id,
+                    'amount' => $budget->amount,
+                    'start_date' => $budget->start_date,
+                    'end_date' => $budget->end_date
+                ]
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Budget not found.'
+            ]);
+        }
+        
+        exit();
     }
-    
-    exit();
 }
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
+    $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+    
+    // Set default response for AJAX requests
+    $response = [
+        'success' => false,
+        'message' => 'Unknown action'
+    ];
     
     if ($action === 'add') {
         // Set budget properties
@@ -86,18 +104,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'End date must be after start date.';
         }
         
-        // Check for AJAX request
-        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
-        
         if (!empty($errors)) {
             $error = implode(' ', $errors);
             
             if ($isAjax) {
-                echo json_encode([
+                $response = [
                     'success' => false,
                     'message' => $error
-                ]);
-                exit();
+                ];
             }
         } else {
             // Create new budget
@@ -105,27 +119,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $success = 'Budget added successfully!';
                 
                 if ($isAjax) {
-                    echo json_encode([
+                    $response = [
                         'success' => true,
                         'message' => $success
-                    ]);
-                    exit();
+                    ];
                 }
             } else {
                 $error = 'Failed to add budget.';
                 
                 if ($isAjax) {
-                    echo json_encode([
+                    $response = [
                         'success' => false,
                         'message' => $error
-                    ]);
-                    exit();
+                    ];
                 }
             }
         }
     } elseif ($action === 'edit') {
         // Get budget ID
-        $budget_id = $_POST['budget_id'] ?? 0;
+        $budget_id = isset($_POST['budget_id']) ? intval($_POST['budget_id']) : 0;
         
         // Get budget data
         if ($budget->getById($budget_id, $user_id)) {
@@ -158,18 +170,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'End date must be after start date.';
             }
             
-            // Check for AJAX request
-            $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
-            
             if (!empty($errors)) {
                 $error = implode(' ', $errors);
                 
                 if ($isAjax) {
-                    echo json_encode([
+                    $response = [
                         'success' => false,
                         'message' => $error
-                    ]);
-                    exit();
+                    ];
                 }
             } else {
                 // Update budget
@@ -177,59 +185,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $success = 'Budget updated successfully!';
                     
                     if ($isAjax) {
-                        echo json_encode([
+                        $response = [
                             'success' => true,
                             'message' => $success
-                        ]);
-                        exit();
+                        ];
                     }
                 } else {
                     $error = 'Failed to update budget.';
                     
                     if ($isAjax) {
-                        echo json_encode([
+                        $response = [
                             'success' => false,
                             'message' => $error
-                        ]);
-                        exit();
+                        ];
                     }
                 }
             }
         } else {
             $error = 'Budget not found.';
             
-            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                echo json_encode([
+            if ($isAjax) {
+                $response = [
                     'success' => false,
                     'message' => $error
-                ]);
-                exit();
+                ];
             }
         }
     } elseif ($action === 'delete') {
         // Get budget ID
-        $budget_id = $_POST['budget_id'] ?? 0;
+        $budget_id = isset($_POST['budget_id']) ? intval($_POST['budget_id']) : 0;
         
         // Delete budget
         if ($budget->delete($budget_id, $user_id)) {
             $success = 'Budget deleted successfully!';
             
-            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                echo json_encode([
+            if ($isAjax) {
+                $response = [
                     'success' => true,
                     'message' => $success
-                ]);
-                exit();
+                ];
             }
         } else {
             $error = 'Failed to delete budget.';
             
-            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                echo json_encode([
+            if ($isAjax) {
+                $response = [
                     'success' => false,
                     'message' => $error
-                ]);
-                exit();
+                ];
             }
         }
     } elseif ($action === 'generate_plan') {
@@ -239,12 +242,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($monthly_income <= 0) {
             $error = 'You need to add income sources before generating a budget plan.';
             
-            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                echo json_encode([
+            if ($isAjax) {
+                $response = [
                     'success' => false,
                     'message' => $error
-                ]);
-                exit();
+                ];
             }
         } else {
             // Generate budget plan
@@ -279,45 +281,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($success_count > 0) {
                     $success = "Generated and added $success_count budget items!";
                     
-                    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                        echo json_encode([
+                    if ($isAjax) {
+                        $response = [
                             'success' => true,
-                            'message' => $success,
-                            'redirect' => BASE_PATH . '/budget'
-                        ]);
-                        exit();
+                            'message' => $success
+                        ];
                     }
                 } else {
                     $error = 'Failed to add budget items.';
                     
-                    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                        echo json_encode([
+                    if ($isAjax) {
+                        $response = [
                             'success' => false,
                             'message' => $error
-                        ]);
-                        exit();
+                        ];
                     }
                 }
             } else {
                 $error = 'Failed to generate budget plan.';
                 
-                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    echo json_encode([
+                if ($isAjax) {
+                    $response = [
                         'success' => false,
                         'message' => $error
-                    ]);
-                    exit();
+                    ];
                 }
             }
         }
     }
     
-    // If we're still here and this was an AJAX request, something went wrong
-    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-        echo json_encode([
-            'success' => false,
-            'message' => 'An unknown error occurred.'
-        ]);
+    // Output JSON response for AJAX requests
+    if ($isAjax) {
+        header('Content-Type: application/json');
+        echo json_encode($response);
         exit();
     }
     
@@ -343,4 +339,3 @@ $budget_plan = $budget->generateBudgetPlan($user_id, $monthly_income);
 
 // Include view
 require_once 'views/budget.php';
-?>
