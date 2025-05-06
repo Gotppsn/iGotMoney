@@ -689,6 +689,37 @@ require_once 'includes/header.php';
     </div>
 </div>
 
+<!-- Add the global spinner functions that will fix the issues -->
+<script>
+// Define showSpinner globally so it works with any script calling it
+function showSpinner(element) {
+    // Check if spinner already exists
+    if (element.querySelector('.spinner-border')) return;
+    
+    // Save original content
+    const originalContent = element.innerHTML;
+    element.setAttribute('data-original-content', originalContent);
+    
+    // Add spinner
+    element.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3">Loading data...</p></div>';
+}
+
+// Define hideSpinner globally
+function hideSpinner(element) {
+    // Get original content
+    const originalContent = element.getAttribute('data-original-content');
+    if (originalContent) {
+        element.innerHTML = originalContent;
+        element.removeAttribute('data-original-content');
+    }
+}
+
+// Helper function for formatting numbers
+function formatNumber(num) {
+    return parseFloat(num).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+</script>
+
 <?php
 // JavaScript for goals page
 $page_scripts = "
@@ -729,273 +760,6 @@ function setActiveButton(button) {
         btn.classList.remove('active');
     });
     button.classList.add('active');
-}
-
-// Handle edit goal button
-document.querySelectorAll('.edit-goal').forEach(button => {
-    button.addEventListener('click', function() {
-        const goalId = this.getAttribute('data-goal-id');
-        
-        // Show loading spinner
-        showSpinner(document.querySelector('#editGoalModal .modal-body'));
-        
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('editGoalModal'));
-        modal.show();
-        
-        // Fetch goal data
-        fetch('/goals?action=get_goal&goal_id=' + goalId)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Populate form fields
-                    document.getElementById('edit_goal_id').value = data.goal.goal_id;
-                    document.getElementById('edit_name').value = data.goal.name;
-                    document.getElementById('edit_description').value = data.goal.description || '';
-                    document.getElementById('edit_target_amount').value = data.goal.target_amount;
-                    document.getElementById('edit_current_amount').value = data.goal.current_amount;
-                    document.getElementById('edit_start_date').value = data.goal.start_date;
-                    document.getElementById('edit_target_date').value = data.goal.target_date;
-                    document.getElementById('edit_priority').value = data.goal.priority;
-                    document.getElementById('edit_status').value = data.goal.status;
-                    
-                    // Update calculator
-                    updateEditGoalCalculator();
-                    
-                    // Remove spinner
-                    hideSpinner(document.querySelector('#editGoalModal .modal-body'));
-                } else {
-                    // Show error
-                    alert('Failed to load goal data: ' + data.message);
-                    modal.hide();
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching goal data:', error);
-                alert('An error occurred while loading goal data.');
-                modal.hide();
-            });
-    });
-});
-
-// Handle update progress button
-document.querySelectorAll('.update-progress').forEach(button => {
-    button.addEventListener('click', function() {
-        const goalId = this.getAttribute('data-goal-id');
-        
-        // Show loading spinner
-        showSpinner(document.querySelector('#updateProgressModal .modal-body'));
-        
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('updateProgressModal'));
-        modal.show();
-        
-        // Fetch goal data
-        fetch('/goals?action=get_goal&goal_id=' + goalId)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Populate form fields
-                    document.getElementById('progress_goal_id').value = data.goal.goal_id;
-                    document.getElementById('progress_goal_name').textContent = data.goal.name;
-                    document.getElementById('progress_current_amount').textContent = '$' + formatNumber(data.goal.current_amount);
-                    document.getElementById('progress_target_amount').textContent = '$' + formatNumber(data.goal.target_amount);
-                    
-                    // Update progress bar
-                    const progressBar = document.getElementById('progress_bar');
-                    const progress = (data.goal.current_amount / data.goal.target_amount) * 100;
-                    progressBar.style.width = Math.min(100, progress) + '%';
-                    progressBar.textContent = progress.toFixed(0) + '%';
-                    
-                    // Clear amount input
-                    document.getElementById('progress_amount').value = '';
-                    
-                    // Hide completion alert
-                    document.getElementById('progress_completion_alert').classList.add('d-none');
-                    
-                    // Add event listener to amount input
-                    const amountInput = document.getElementById('progress_amount');
-                    amountInput.addEventListener('input', function() {
-                        const amount = parseFloat(this.value) || 0;
-                        const currentAmount = parseFloat(data.goal.current_amount);
-                        const targetAmount = parseFloat(data.goal.target_amount);
-                        
-                        // Check if this contribution would complete the goal
-                        if (currentAmount + amount >= targetAmount) {
-                            document.getElementById('progress_completion_alert').classList.remove('d-none');
-                        } else {
-                            document.getElementById('progress_completion_alert').classList.add('d-none');
-                        }
-                    });
-                    
-                    // Remove spinner
-                    hideSpinner(document.querySelector('#updateProgressModal .modal-body'));
-                } else {
-                    // Show error
-                    alert('Failed to load goal data: ' + data.message);
-                    modal.hide();
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching goal data:', error);
-                alert('An error occurred while loading goal data.');
-                modal.hide();
-            });
-    });
-});
-
-// Handle delete goal button
-document.querySelectorAll('.delete-goal').forEach(button => {
-    button.addEventListener('click', function() {
-        const goalId = this.getAttribute('data-goal-id');
-        const goalName = this.closest('.card-header').querySelector('h6').textContent.trim();
-        
-        document.getElementById('delete_goal_id').value = goalId;
-        document.getElementById('delete_goal_name').textContent = goalName;
-        
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('deleteGoalModal'));
-        modal.show();
-    });
-});
-
-// Handle adopt recommended goal
-document.querySelectorAll('.adopt-goal').forEach(button => {
-    button.addEventListener('click', function() {
-        const name = this.getAttribute('data-name');
-        const description = this.getAttribute('data-description');
-        const targetAmount = this.getAttribute('data-target');
-        const priority = this.getAttribute('data-priority');
-        const timeline = this.getAttribute('data-timeline');
-        
-        // Calculate target date based on timeline
-        const targetDate = new Date();
-        if (timeline.includes('month')) {
-            const months = parseInt(timeline);
-            targetDate.setMonth(targetDate.getMonth() + months);
-        } else if (timeline.includes('year')) {
-            const years = parseInt(timeline);
-            targetDate.setFullYear(targetDate.getFullYear() + years);
-        } else {
-            targetDate.setFullYear(targetDate.getFullYear() + 1); // Default to 1 year
-        }
-        
-        // Populate add goal form
-        document.getElementById('name').value = name;
-        document.getElementById('description').value = description;
-        document.getElementById('target_amount').value = targetAmount;
-        document.getElementById('current_amount').value = 0;
-        document.getElementById('start_date').value = new Date().toISOString().split('T')[0];
-        document.getElementById('target_date').value = targetDate.toISOString().split('T')[0];
-        document.getElementById('priority').value = priority;
-        
-        // Close recommend modal and open add goal modal
-        bootstrap.Modal.getInstance(document.getElementById('recommendGoalsModal')).hide();
-        const addModal = new bootstrap.Modal(document.getElementById('addGoalModal'));
-        addModal.show();
-        
-        // Update calculator
-        updateGoalCalculator();
-    });
-});
-
-// Goal calculator for add form
-const targetAmountInput = document.getElementById('target_amount');
-const currentAmountInput = document.getElementById('current_amount');
-const startDateInput = document.getElementById('start_date');
-const targetDateInput = document.getElementById('target_date');
-const calculator = document.getElementById('goalCalculator');
-const monthlyContribution = document.getElementById('monthlyContribution');
-const timeToGoal = document.getElementById('timeToGoal');
-
-function updateGoalCalculator() {
-    const targetAmount = parseFloat(targetAmountInput.value) || 0;
-    const currentAmount = parseFloat(currentAmountInput.value) || 0;
-    const startDate = new Date(startDateInput.value);
-    const targetDate = new Date(targetDateInput.value);
-    
-    // Check if we have valid values
-    if (targetAmount <= 0 || isNaN(startDate.getTime()) || isNaN(targetDate.getTime())) {
-        calculator.classList.add('d-none');
-        return;
-    }
-    
-    // Show calculator
-    calculator.classList.remove('d-none');
-    
-    // Calculate months between dates
-    const monthsDiff = (targetDate.getFullYear() - startDate.getFullYear()) * 12 + 
-                      (targetDate.getMonth() - startDate.getMonth());
-    
-    // Calculate monthly contribution
-    const remainingAmount = targetAmount - currentAmount;
-    const monthly = monthsDiff > 0 ? remainingAmount / monthsDiff : remainingAmount;
-    
-    // Calculate time to goal at a fixed monthly contribution
-    const fixedMonthly = 100; // Example fixed monthly contribution
-    const timeMonths = remainingAmount > 0 ? Math.ceil(remainingAmount / fixedMonthly) : 0;
-    
-    // Update calculator display
-    monthlyContribution.textContent = '$' + formatNumber(monthly);
-    timeToGoal.textContent = monthsDiff + ' months';
-}
-
-// Add event listeners to calculator inputs
-if (targetAmountInput && currentAmountInput && startDateInput && targetDateInput) {
-    targetAmountInput.addEventListener('input', updateGoalCalculator);
-    currentAmountInput.addEventListener('input', updateGoalCalculator);
-    startDateInput.addEventListener('input', updateGoalCalculator);
-    targetDateInput.addEventListener('input', updateGoalCalculator);
-}
-
-// Goal calculator for edit form
-const editTargetAmountInput = document.getElementById('edit_target_amount');
-const editCurrentAmountInput = document.getElementById('edit_current_amount');
-const editStartDateInput = document.getElementById('edit_start_date');
-const editTargetDateInput = document.getElementById('edit_target_date');
-const editCalculator = document.getElementById('editGoalCalculator');
-const editMonthlyContribution = document.getElementById('editMonthlyContribution');
-const editTimeToGoal = document.getElementById('editTimeToGoal');
-
-function updateEditGoalCalculator() {
-    const targetAmount = parseFloat(editTargetAmountInput.value) || 0;
-    const currentAmount = parseFloat(editCurrentAmountInput.value) || 0;
-    const startDate = new Date(editStartDateInput.value);
-    const targetDate = new Date(editTargetDateInput.value);
-    
-    // Check if we have valid values
-    if (targetAmount <= 0 || isNaN(startDate.getTime()) || isNaN(targetDate.getTime())) {
-        editCalculator.classList.add('d-none');
-        return;
-    }
-    
-    // Show calculator
-    editCalculator.classList.remove('d-none');
-    
-    // Calculate months between dates
-    const monthsDiff = (targetDate.getFullYear() - startDate.getFullYear()) * 12 + 
-                      (targetDate.getMonth() - startDate.getMonth());
-    
-    // Calculate monthly contribution
-    const remainingAmount = targetAmount - currentAmount;
-    const monthly = monthsDiff > 0 ? remainingAmount / monthsDiff : remainingAmount;
-    
-    // Update calculator display
-    editMonthlyContribution.textContent = '$' + formatNumber(monthly);
-    editTimeToGoal.textContent = monthsDiff + ' months';
-}
-
-// Add event listeners to edit calculator inputs
-if (editTargetAmountInput && editCurrentAmountInput && editStartDateInput && editTargetDateInput) {
-    editTargetAmountInput.addEventListener('input', updateEditGoalCalculator);
-    editCurrentAmountInput.addEventListener('input', updateEditGoalCalculator);
-    editStartDateInput.addEventListener('input', updateEditGoalCalculator);
-    editTargetDateInput.addEventListener('input', updateEditGoalCalculator);
-}
-
-// Format number with commas and 2 decimal places
-function formatNumber(num) {
-    return Number(num).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
 }
 ";
 

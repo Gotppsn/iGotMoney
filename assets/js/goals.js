@@ -22,6 +22,37 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
+ * Show spinner on an element
+ * @param {HTMLElement} element - Element to show spinner on
+ */
+function showSpinner(element) {
+    // Check if spinner already exists
+    if (element.querySelector('.spinner-border')) return;
+    
+    // Save original content
+    const originalContent = element.innerHTML;
+    element.setAttribute('data-original-content', originalContent);
+    
+    // Add spinner
+    element.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Loading...';
+    element.disabled = true;
+}
+
+/**
+ * Hide spinner and restore original content
+ * @param {HTMLElement} element - Element to hide spinner from
+ */
+function hideSpinner(element) {
+    // Get original content
+    const originalContent = element.getAttribute('data-original-content');
+    if (originalContent) {
+        element.innerHTML = originalContent;
+        element.removeAttribute('data-original-content');
+        element.disabled = false;
+    }
+}
+
+/**
  * Initialize goal visualization
  * Enhances the visual representation of financial goals
  */
@@ -162,6 +193,9 @@ function initializeProgressTracking(basePath) {
             const goalId = this.getAttribute('data-goal-id');
             document.getElementById('progress_goal_id').value = goalId;
             
+            // Show spinner on the button
+            showSpinner(this);
+            
             // Fetch goal data with error handling - using basePath
             fetch(`${basePath}/goals?action=get_goal&goal_id=${goalId}`)
                 .then(response => {
@@ -171,6 +205,9 @@ function initializeProgressTracking(basePath) {
                     return response.json();
                 })
                 .then(data => {
+                    // Hide spinner
+                    hideSpinner(this);
+                    
                     if (data.success) {
                         // Populate form fields
                         document.getElementById('progress_goal_name').textContent = data.goal.name;
@@ -208,11 +245,72 @@ function initializeProgressTracking(basePath) {
                                 }
                             }
                         });
+                        
+                        // Show the modal
+                        const modal = new bootstrap.Modal(document.getElementById('updateProgressModal'));
+                        modal.show();
                     } else {
                         showNotification('Failed to load goal data: ' + (data.message || 'Unknown error'), 'danger');
                     }
                 })
                 .catch(error => {
+                    // Hide spinner
+                    hideSpinner(this);
+                    
+                    console.error('Error fetching goal data:', error);
+                    showNotification('An error occurred while loading goal data.', 'danger');
+                });
+        });
+    });
+    
+    // Handle edit goal button clicks
+    document.querySelectorAll('.edit-goal').forEach(button => {
+        button.addEventListener('click', function() {
+            const goalId = this.getAttribute('data-goal-id');
+            
+            // Show spinner on the button
+            showSpinner(this);
+            
+            // Fetch goal data
+            fetch(`${basePath}/goals?action=get_goal&goal_id=${goalId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Hide spinner
+                    hideSpinner(this);
+                    
+                    if (data.success) {
+                        // Populate form fields
+                        document.getElementById('edit_goal_id').value = data.goal.goal_id;
+                        document.getElementById('edit_name').value = data.goal.name;
+                        document.getElementById('edit_description').value = data.goal.description || '';
+                        document.getElementById('edit_target_amount').value = data.goal.target_amount;
+                        document.getElementById('edit_current_amount').value = data.goal.current_amount;
+                        document.getElementById('edit_start_date').value = data.goal.start_date;
+                        document.getElementById('edit_target_date').value = data.goal.target_date;
+                        document.getElementById('edit_priority').value = data.goal.priority;
+                        document.getElementById('edit_status').value = data.goal.status;
+                        
+                        // Update calculator
+                        if (typeof updateEditGoalCalculator === 'function') {
+                            updateEditGoalCalculator();
+                        }
+                        
+                        // Show the modal
+                        const modal = new bootstrap.Modal(document.getElementById('editGoalModal'));
+                        modal.show();
+                    } else {
+                        showNotification('Failed to load goal data: ' + (data.message || 'Unknown error'), 'danger');
+                    }
+                })
+                .catch(error => {
+                    // Hide spinner
+                    hideSpinner(this);
+                    
                     console.error('Error fetching goal data:', error);
                     showNotification('An error occurred while loading goal data.', 'danger');
                 });
