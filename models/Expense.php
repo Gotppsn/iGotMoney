@@ -43,48 +43,59 @@ class Expense {
             return false;
         }
         
-        // SQL query
-        $query = "INSERT INTO " . $this->table . " 
-                  (user_id, category_id, amount, description, expense_date, frequency, is_recurring, next_due_date) 
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        
-        // Prepare statement
-        $stmt = $this->conn->prepare($query);
-        if (!$stmt) {
-            error_log("Query preparation failed: " . $this->conn->error);
-            return false;
-        }
-        
-        // Calculate next due date for recurring expenses
-        $this->calculateNextDueDate();
-        
-        // Bind parameters
-        if (!$stmt->bind_param("iidssiss", 
-                          $this->user_id, 
-                          $this->category_id, 
-                          $this->amount, 
-                          $this->description, 
-                          $this->expense_date, 
-                          $this->frequency, 
-                          $this->is_recurring, 
-                          $this->next_due_date)) {
-            error_log("Parameter binding failed: " . $stmt->error);
-            return false;
-        }
-        
-        // Execute query
-        if ($stmt->execute()) {
+        try {
+            // Begin transaction
+            $this->conn->begin_transaction();
+            
+            // SQL query
+            $query = "INSERT INTO " . $this->table . " 
+                      (user_id, category_id, amount, description, expense_date, frequency, is_recurring, next_due_date) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            
+            // Prepare statement
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Query preparation failed: " . $this->conn->error);
+            }
+            
+            // Calculate next due date for recurring expenses
+            $this->calculateNextDueDate();
+            
+            // Bind parameters
+            if (!$stmt->bind_param("iidssiss", 
+                              $this->user_id, 
+                              $this->category_id, 
+                              $this->amount, 
+                              $this->description, 
+                              $this->expense_date, 
+                              $this->frequency, 
+                              $this->is_recurring, 
+                              $this->next_due_date)) {
+                throw new Exception("Parameter binding failed: " . $stmt->error);
+            }
+            
+            // Execute query
+            if (!$stmt->execute()) {
+                throw new Exception("Query execution failed: " . $stmt->error);
+            }
+            
             $this->expense_id = $this->conn->insert_id;
             
             // Record transaction
-            $this->recordTransaction();
+            if (!$this->recordTransaction()) {
+                throw new Exception("Failed to record transaction");
+            }
+            
+            // Commit transaction
+            $this->conn->commit();
             
             return true;
+        } catch (Exception $e) {
+            // Rollback transaction on error
+            $this->conn->rollback();
+            error_log("Create expense failed: " . $e->getMessage());
+            return false;
         }
-        
-        // Log error if something goes wrong
-        error_log("Query execution failed: " . $stmt->error);
-        return false;
     }
     
     // Validate expense inputs
@@ -113,6 +124,24 @@ class Expense {
         // If not recurring, force frequency to be one-time
         if (!$this->is_recurring) {
             $this->frequency = 'one-time';
+        }
+        
+        // Validate category exists
+        $cat_query = "SELECT COUNT(*) as count FROM " . $this->categories_table . " WHERE category_id = ?";
+        $cat_stmt = $this->conn->prepare($cat_query);
+        if (!$cat_stmt) {
+            error_log("Category validation query preparation failed: " . $this->conn->error);
+            return false;
+        }
+        
+        $cat_stmt->bind_param("i", $this->category_id);
+        $cat_stmt->execute();
+        $result = $cat_stmt->get_result();
+        $row = $result->fetch_assoc();
+        
+        if ($row['count'] == 0) {
+            error_log("Expense validation failed: Category does not exist");
+            return false;
         }
         
         // Sanitize inputs
@@ -268,47 +297,59 @@ class Expense {
             return false;
         }
         
-        // Calculate next due date for recurring expenses
-        $this->calculateNextDueDate();
-        
-        // SQL query
-        $query = "UPDATE " . $this->table . " 
-                  SET category_id = ?, amount = ?, description = ?, 
-                      expense_date = ?, frequency = ?, is_recurring = ?, next_due_date = ? 
-                  WHERE expense_id = ? AND user_id = ?";
-        
-        // Prepare statement
-        $stmt = $this->conn->prepare($query);
-        if (!$stmt) {
-            error_log("Update query preparation failed: " . $this->conn->error);
-            return false;
-        }
-        
-        // Bind parameters
-        if (!$stmt->bind_param("idsssissi", 
-                          $this->category_id, 
-                          $this->amount, 
-                          $this->description, 
-                          $this->expense_date, 
-                          $this->frequency, 
-                          $this->is_recurring, 
-                          $this->next_due_date, 
-                          $this->expense_id, 
-                          $this->user_id)) {
-            error_log("Update parameter binding failed: " . $stmt->error);
-            return false;
-        }
-        
-        // Execute query
-        if ($stmt->execute()) {
+        try {
+            // Begin transaction
+            $this->conn->begin_transaction();
+            
+            // Calculate next due date for recurring expenses
+            $this->calculateNextDueDate();
+            
+            // SQL query
+            $query = "UPDATE " . $this->table . " 
+                      SET category_id = ?, amount = ?, description = ?, 
+                          expense_date = ?, frequency = ?, is_recurring = ?, next_due_date = ? 
+                      WHERE expense_id = ? AND user_id = ?";
+            
+            // Prepare statement
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Update query preparation failed: " . $this->conn->error);
+            }
+            
+            // Bind parameters
+            if (!$stmt->bind_param("idsssissi", 
+                              $this->category_id, 
+                              $this->amount, 
+                              $this->description, 
+                              $this->expense_date, 
+                              $this->frequency, 
+                              $this->is_recurring, 
+                              $this->next_due_date, 
+                              $this->expense_id, 
+                              $this->user_id)) {
+                throw new Exception("Update parameter binding failed: " . $stmt->error);
+            }
+            
+            // Execute query
+            if (!$stmt->execute()) {
+                throw new Exception("Update execution failed: " . $stmt->error);
+            }
+            
             // Update related transaction
-            $this->updateTransaction();
+            if (!$this->updateTransaction()) {
+                throw new Exception("Failed to update transaction");
+            }
+            
+            // Commit transaction
+            $this->conn->commit();
+            
             return true;
+        } catch (Exception $e) {
+            // Rollback transaction on error
+            $this->conn->rollback();
+            error_log("Update expense failed: " . $e->getMessage());
+            return false;
         }
-        
-        // Log error if something goes wrong
-        error_log("Update execution failed: " . $stmt->error);
-        return false;
     }
     
     // Delete expense
@@ -640,6 +681,25 @@ class Expense {
     // Update transaction for expense
     private function updateTransaction() {
         try {
+            // Check if transaction exists
+            $check_query = "SELECT COUNT(*) as count FROM " . $this->transactions_table . " 
+                          WHERE expense_id = ? AND user_id = ? AND type = 'expense'";
+            
+            $check_stmt = $this->conn->prepare($check_query);
+            if (!$check_stmt) {
+                throw new Exception("Transaction check query preparation failed: " . $this->conn->error);
+            }
+            
+            $check_stmt->bind_param("ii", $this->expense_id, $this->user_id);
+            $check_stmt->execute();
+            $result = $check_stmt->get_result();
+            $row = $result->fetch_assoc();
+            
+            if ($row['count'] == 0) {
+                // No transaction exists, create a new one
+                return $this->recordTransaction();
+            }
+            
             // Get category name
             $category_query = "SELECT name FROM " . $this->categories_table . " WHERE category_id = ?";
             $category_stmt = $this->conn->prepare($category_query);

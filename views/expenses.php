@@ -27,7 +27,7 @@ require_once 'includes/header.php';
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                            Monthly Expenses</div>
+                            MONTHLY EXPENSES</div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">$<?php echo number_format($monthly_expenses, 2); ?></div>
                     </div>
                     <div class="col-auto">
@@ -44,7 +44,7 @@ require_once 'includes/header.php';
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                            Annual Expenses</div>
+                            ANNUAL EXPENSES</div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">$<?php echo number_format($yearly_expenses, 2); ?></div>
                     </div>
                     <div class="col-auto">
@@ -92,7 +92,7 @@ require_once 'includes/header.php';
             </div>
             <div class="card-body">
                 <div id="topExpensesContent">
-                    <?php if (isset($top_expenses) && $top_expenses->num_rows > 0): ?>
+                    <?php if (isset($top_expenses) && $top_expenses && $top_expenses->num_rows > 0): ?>
                         <?php while ($category = $top_expenses->fetch_assoc()): ?>
                             <h4 class="small font-weight-bold">
                                 <?php echo htmlspecialchars($category['category_name']); ?>
@@ -100,7 +100,7 @@ require_once 'includes/header.php';
                             </h4>
                             <div class="progress mb-4">
                                 <?php 
-                                $percentage = ($category['total'] / $monthly_expenses) * 100;
+                                $percentage = $monthly_expenses > 0 ? ($category['total'] / $monthly_expenses) * 100 : 0;
                                 $color_class = 'bg-info';
                                 
                                 if ($percentage > 30) {
@@ -185,7 +185,7 @@ require_once 'includes/header.php';
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (isset($expenses) && $expenses->num_rows > 0): ?>
+                    <?php if (isset($expenses) && $expenses && $expenses->num_rows > 0): ?>
                         <?php while ($expense = $expenses->fetch_assoc()): ?>
                             <tr>
                                 <td><?php echo htmlspecialchars($expense['description']); ?></td>
@@ -219,7 +219,7 @@ require_once 'includes/header.php';
                 </tbody>
             </table>
         </div>
-        <div id="tableNoData" class="text-center py-4" style="display: <?php echo (isset($expenses) && $expenses->num_rows > 0) ? 'none' : 'block'; ?>">
+        <div id="tableNoData" class="text-center py-4" style="display: <?php echo (isset($expenses) && $expenses && $expenses->num_rows > 0) ? 'none' : 'block'; ?>">
             <p>No expenses recorded yet.</p>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
                 <i class="fas fa-plus"></i> Add Your First Expense
@@ -309,7 +309,7 @@ require_once 'includes/header.php';
                             <option value="">Select a category</option>
                             <?php 
                             // Reset the categories result pointer
-                            if (isset($categories) && $categories->num_rows > 0) {
+                            if (isset($categories) && $categories && $categories->num_rows > 0) {
                                 $categories->data_seek(0);
                                 while ($category = $categories->fetch_assoc()): 
                             ?>
@@ -393,7 +393,7 @@ require_once 'includes/header.php';
                             <option value="">Select a category</option>
                             <?php 
                             // Reset the categories result pointer
-                            if (isset($categories) && $categories->num_rows > 0) {
+                            if (isset($categories) && $categories && $categories->num_rows > 0) {
                                 $categories->data_seek(0);
                                 while ($category = $categories->fetch_assoc()): 
                             ?>
@@ -490,7 +490,7 @@ $chart_colors = [
     '#6f42c1', '#fd7e14', '#20c9a6', '#5a5c69', '#858796'
 ];
 
-if (isset($top_expenses) && $top_expenses->num_rows > 0) {
+if (isset($top_expenses) && $top_expenses && $top_expenses->num_rows > 0) {
     $top_expenses->data_seek(0);
     while ($category = $top_expenses->fetch_assoc()) {
         $chart_labels[] = $category['category_name'];
@@ -505,24 +505,34 @@ echo '<meta name="base-path" content="' . BASE_PATH . '">';
 echo '<meta name="chart-labels" content="' . htmlspecialchars(json_encode($chart_labels)) . '">';
 echo '<meta name="chart-data" content="' . htmlspecialchars(json_encode($chart_data)) . '">';
 echo '<meta name="chart-colors" content="' . htmlspecialchars(json_encode(array_slice($chart_colors, 0, count($chart_data)))) . '">';
+?>
 
-// Function to adjust color brightness
-function adjustColor($hex, $steps) {
-    // Extract RGB values
-    $hex = str_replace('#', '', $hex);
-    $r = hexdec(substr($hex, 0, 2));
-    $g = hexdec(substr($hex, 2, 2));
-    $b = hexdec(substr($hex, 4, 2));
+<script>
+// Fix for modal backdrop issues
+document.addEventListener('DOMContentLoaded', function() {
+    // Simple function to remove modal backdrops
+    function removeBackdrops() {
+        document.querySelectorAll('.modal-backdrop').forEach(function(el) {
+            el.remove();
+        });
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    }
     
-    // Adjust brightness
-    $r = max(0, min(255, $r + $steps));
-    $g = max(0, min(255, $g + $steps));
-    $b = max(0, min(255, $b + $steps));
+    // Run immediately on page load
+    removeBackdrops();
     
-    // Convert back to hex
-    return sprintf('#%02x%02x%02x', $r, $g, $b);
-}
+    // Also run when any modal is hidden
+    document.querySelectorAll('.modal').forEach(function(modal) {
+        modal.addEventListener('hidden.bs.modal', function() {
+            setTimeout(removeBackdrops, 100);
+        });
+    });
+});
+</script>
 
+<?php
 // Include footer
 require_once 'includes/footer.php';
 ?>

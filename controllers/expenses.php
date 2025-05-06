@@ -1,262 +1,576 @@
 <?php
-/**
- * Expenses Controller
- * 
- * Handles expense management functionality
- */
+// Set page title and current page for menu highlighting
+$page_title = 'Expense Management - iGotMoney';
+$current_page = 'expenses';
 
-// Check if user is logged in
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header('Location: ' . BASE_PATH . '/login');
-    exit();
-}
+// Additional JS
+$additional_js = ['/assets/js/expenses.js'];
 
-// Include required models
-require_once 'models/Expense.php';
+// Include header
+require_once 'includes/header.php';
+?>
 
-// Get user ID
-$user_id = $_SESSION['user_id'];
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Expense Management</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+            <i class="fa fa-plus"></i> Add Expense
+        </button>
+    </div>
+</div>
 
-// Initialize Expense object
-$expense = new Expense();
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-6 col-xl-3 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2 dashboard-card expenses">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            MONTHLY EXPENSES</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">$<?php echo number_format($monthly_expenses, 2); ?></div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-// Handle AJAX requests
-if (isset($_GET['action'])) {
-    $action = $_GET['action'];
+    <div class="col-md-6 col-xl-3 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2 dashboard-card expenses">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            ANNUAL EXPENSES</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">$<?php echo number_format($yearly_expenses, 2); ?></div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Expense Categories Chart -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Expenses by Category</h6>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="chartPeriodDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-calendar-alt me-1"></i> This Month
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="chartPeriodDropdown">
+                        <li><a class="dropdown-item chart-period" href="#" data-period="month">This Month</a></li>
+                        <li><a class="dropdown-item chart-period" href="#" data-period="quarter">This Quarter</a></li>
+                        <li><a class="dropdown-item chart-period" href="#" data-period="year">This Year</a></li>
+                        <li><a class="dropdown-item chart-period" href="#" data-period="all">All Time</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="expenseCategoryChart"></canvas>
+                </div>
+                <div id="chartNoData" class="text-center py-4" style="display: none;">
+                    <p>No expense data available for the selected period.</p>
+                </div>
+            </div>
+        </div>
+    </div>
     
-    if ($action === 'get_expense') {
-        // Set content type to JSON
-        header('Content-Type: application/json');
-        
-        $expense_id = isset($_GET['expense_id']) ? intval($_GET['expense_id']) : 0;
-        
-        if (!$expense_id) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Invalid expense ID.'
-            ]);
-            exit();
-        }
-        
-        if ($expense->getById($expense_id, $user_id)) {
-            echo json_encode([
-                'success' => true,
-                'expense' => [
-                    'expense_id' => $expense->expense_id,
-                    'category_id' => $expense->category_id,
-                    'amount' => $expense->amount,
-                    'description' => $expense->description,
-                    'expense_date' => $expense->expense_date,
-                    'frequency' => $expense->frequency,
-                    'is_recurring' => $expense->is_recurring
-                ]
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Expense not found.'
-            ]);
-        }
-        
-        exit();
-    } elseif ($action === 'get_expenses_by_date') {
-        // Set content type to JSON
-        header('Content-Type: application/json');
-        
-        $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : null;
-        $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : null;
-        
-        if (!$start_date || !$end_date) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Start and end dates are required.'
-            ]);
-            exit();
-        }
-        
-        $result = $expense->getByDateRange($user_id, $start_date, $end_date);
-        
-        if ($result && $result->num_rows > 0) {
-            $expenses_data = [];
-            while ($row = $result->fetch_assoc()) {
-                $expenses_data[] = [
-                    'expense_id' => $row['expense_id'],
-                    'category_id' => $row['category_id'],
-                    'category_name' => $row['category_name'],
-                    'amount' => $row['amount'],
-                    'description' => $row['description'],
-                    'expense_date' => $row['expense_date'],
-                    'frequency' => $row['frequency'],
-                    'is_recurring' => $row['is_recurring']
-                ];
-            }
-            
-            echo json_encode([
-                'success' => true,
-                'expenses' => $expenses_data
-            ]);
-        } else {
-            echo json_encode([
-                'success' => true,
-                'expenses' => []
-            ]);
-        }
-        
-        exit();
-    }
-}
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Top Expenses</h6>
+            </div>
+            <div class="card-body">
+                <div id="topExpensesContent">
+                    <?php if (isset($top_expenses) && $top_expenses && $top_expenses->num_rows > 0): ?>
+                        <?php while ($category = $top_expenses->fetch_assoc()): ?>
+                            <h4 class="small font-weight-bold">
+                                <?php echo htmlspecialchars($category['category_name']); ?>
+                                <span class="float-end">$<?php echo number_format($category['total'], 2); ?></span>
+                            </h4>
+                            <div class="progress mb-4">
+                                <?php 
+                                $percentage = ($category['total'] / $monthly_expenses) * 100;
+                                if ($monthly_expenses == 0) $percentage = 0;
+                                $color_class = 'bg-info';
+                                
+                                if ($percentage > 30) {
+                                    $color_class = 'bg-danger';
+                                } else if ($percentage > 20) {
+                                    $color_class = 'bg-warning';
+                                } else if ($percentage > 10) {
+                                    $color_class = 'bg-primary';
+                                }
+                                ?>
+                                <div class="progress-bar <?php echo $color_class; ?>" role="progressbar" 
+                                    style="width: <?php echo min(100, $percentage); ?>%" 
+                                    aria-valuenow="<?php echo $percentage; ?>" 
+                                    aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <p>No expense data available.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-// Handle form submissions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = isset($_POST['action']) ? $_POST['action'] : '';
-    
-    switch ($action) {
-        case 'add':
-            // Validate input
-            $errors = [];
-            
-            if (empty($_POST['description'])) {
-                $errors[] = 'Description is required.';
-            }
-            
-            if (!isset($_POST['amount']) || !is_numeric($_POST['amount']) || $_POST['amount'] <= 0) {
-                $errors[] = 'Please enter a valid amount greater than zero.';
-            }
-            
-            if (empty($_POST['category_id'])) {
-                $errors[] = 'Please select a category.';
-            }
-            
-            if (empty($_POST['expense_date'])) {
-                $errors[] = 'Please select a date.';
-            }
-            
-            // If there are validation errors
-            if (!empty($errors)) {
-                $error = implode(' ', $errors);
-            } else {
-                // Set expense properties
-                $expense->user_id = $user_id;
-                $expense->category_id = $_POST['category_id'];
-                $expense->amount = $_POST['amount'];
-                $expense->description = $_POST['description'];
-                $expense->expense_date = $_POST['expense_date'];
-                $expense->frequency = isset($_POST['frequency']) ? $_POST['frequency'] : 'one-time';
-                $expense->is_recurring = isset($_POST['is_recurring']) ? 1 : 0;
+<!-- Expenses Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Your Expenses</h6>
+        <div class="d-flex">
+            <div class="input-group input-group-sm me-2" style="width: 250px;">
+                <input type="text" class="form-control" placeholder="Search expenses..." id="expenseSearch" data-table-search="expenseTable">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dateFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-calendar me-1"></i> Filter
+                </button>
+                <div class="dropdown-menu p-3" style="width: 300px;">
+                    <h6 class="dropdown-header">Date Range</h6>
+                    <div class="mb-2">
+                        <select class="form-select form-select-sm" id="dateRangeSelect">
+                            <option value="all">All Time</option>
+                            <option value="current-month" selected>Current Month</option>
+                            <option value="last-month">Last Month</option>
+                            <option value="last-3-months">Last 3 Months</option>
+                            <option value="last-6-months">Last 6 Months</option>
+                            <option value="current-year">Current Year</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    <div id="customDateRange" style="display: none;">
+                        <div class="mb-2">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-control form-control-sm" id="startDate">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-control form-control-sm" id="endDate">
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button class="btn btn-sm btn-primary" id="applyDateFilter">Apply</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered data-table" id="expenseTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Frequency</th>
+                        <th>Recurring</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (isset($expenses) && $expenses && $expenses->num_rows > 0): ?>
+                        <?php while ($expense = $expenses->fetch_assoc()): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($expense['description']); ?></td>
+                                <td><?php echo htmlspecialchars($expense['category_name']); ?></td>
+                                <td>$<?php echo number_format($expense['amount'], 2); ?></td>
+                                <td><?php echo date('M j, Y', strtotime($expense['expense_date'])); ?></td>
+                                <td>
+                                    <?php 
+                                    $frequency = ucfirst(str_replace('-', ' ', $expense['frequency']));
+                                    echo $frequency; 
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php if ($expense['is_recurring']): ?>
+                                        <span class="badge bg-info">Yes</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-secondary">No</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-info edit-expense" data-expense-id="<?php echo $expense['expense_id']; ?>">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger delete-expense" data-expense-id="<?php echo $expense['expense_id']; ?>">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <div id="tableNoData" class="text-center py-4" style="display: <?php echo (isset($expenses) && $expenses && $expenses->num_rows > 0) ? 'none' : 'block'; ?>">
+            <p>No expenses recorded yet.</p>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+                <i class="fas fa-plus"></i> Add Your First Expense
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Expense Analytics -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Expense Analytics</h6>
+        <button class="btn btn-sm btn-outline-primary" id="calculateAnalytics">
+            <i class="fas fa-calculator me-1"></i> Calculate
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="row" id="analyticsContent" style="display: none;">
+            <div class="col-md-4">
+                <div class="card border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    Average Daily Expense</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgDailyExpense">$0.00</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Highest Expense</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="highestExpense">$0.00</div>
+                                <div class="small" id="highestExpenseCategory"></div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-arrow-up fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-left-danger shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                    Projected Monthly Total</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="projectedMonthly">$0.00</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Expense Modal -->
+<div class="modal fade" id="addExpenseModal" tabindex="-1" aria-labelledby="addExpenseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addExpenseModalLabel">Add Expense</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="<?php echo BASE_PATH; ?>/expenses" method="post" id="addExpenseForm" class="needs-validation" novalidate>
+                <input type="hidden" name="action" value="add">
                 
-                // Create new expense
-                if ($expense->create()) {
-                    $success = 'Expense added successfully!';
-                } else {
-                    $error = 'Failed to add expense. Please try again.';
-                }
-            }
-            break;
-            
-        case 'edit':
-            // Get expense ID
-            $expense_id = isset($_POST['expense_id']) ? intval($_POST['expense_id']) : 0;
-            
-            // Validate input
-            $errors = [];
-            
-            if (empty($_POST['description'])) {
-                $errors[] = 'Description is required.';
-            }
-            
-            if (!isset($_POST['amount']) || !is_numeric($_POST['amount']) || $_POST['amount'] <= 0) {
-                $errors[] = 'Please enter a valid amount greater than zero.';
-            }
-            
-            if (empty($_POST['category_id'])) {
-                $errors[] = 'Please select a category.';
-            }
-            
-            if (empty($_POST['expense_date'])) {
-                $errors[] = 'Please select a date.';
-            }
-            
-            if (!$expense_id) {
-                $errors[] = 'Invalid expense.';
-            }
-            
-            // If there are validation errors
-            if (!empty($errors)) {
-                $error = implode(' ', $errors);
-            } else {
-                // Get expense data
-                if ($expense->getById($expense_id, $user_id)) {
-                    // Update expense properties
-                    $expense->category_id = $_POST['category_id'];
-                    $expense->amount = $_POST['amount'];
-                    $expense->description = $_POST['description'];
-                    $expense->expense_date = $_POST['expense_date'];
-                    $expense->frequency = isset($_POST['frequency']) ? $_POST['frequency'] : 'one-time';
-                    $expense->is_recurring = isset($_POST['is_recurring']) ? 1 : 0;
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="category_id" class="form-label">Category</label>
+                        <select class="form-select" id="category_id" name="category_id" required>
+                            <option value="">Select a category</option>
+                            <?php 
+                            // Reset the categories result pointer
+                            if (isset($categories) && $categories && $categories->num_rows > 0) {
+                                $categories->data_seek(0);
+                                while ($category = $categories->fetch_assoc()): 
+                            ?>
+                                <option value="<?php echo $category['category_id']; ?>">
+                                    <?php echo htmlspecialchars($category['name']); ?>
+                                </option>
+                            <?php 
+                                endwhile;
+                            }
+                            ?>
+                        </select>
+                        <div class="invalid-feedback">Please select a category.</div>
+                    </div>
                     
-                    // Update expense
-                    if ($expense->update()) {
-                        $success = 'Expense updated successfully!';
-                    } else {
-                        $error = 'Failed to update expense. Please try again.';
-                    }
-                } else {
-                    $error = 'Expense not found.';
-                }
-            }
-            break;
-            
-        case 'delete':
-            // Get expense ID
-            $expense_id = isset($_POST['expense_id']) ? intval($_POST['expense_id']) : 0;
-            
-            // Validate input
-            if (!$expense_id) {
-                $error = 'Invalid expense.';
-            } else {
-                // Delete expense
-                if ($expense->delete($expense_id, $user_id)) {
-                    $success = 'Expense deleted successfully!';
-                } else {
-                    $error = 'Failed to delete expense. Please try again.';
-                }
-            }
-            break;
-    }
-    
-    // Handle AJAX form submissions
-    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-        header('Content-Type: application/json');
-        
-        if (isset($error)) {
-            echo json_encode([
-                'success' => false,
-                'message' => $error
-            ]);
-        } else {
-            echo json_encode([
-                'success' => true,
-                'message' => $success ?? 'Operation completed successfully.'
-            ]);
-        }
-        
-        exit();
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="description" name="description" required>
+                        <div class="invalid-feedback">Please provide a description.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" required>
+                            <div class="invalid-feedback">Please enter a valid amount greater than zero.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="expense_date" class="form-label">Date</label>
+                        <input type="date" class="form-control" id="expense_date" name="expense_date" value="<?php echo date('Y-m-d'); ?>" required>
+                        <div class="invalid-feedback">Please select a date.</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_recurring" name="is_recurring">
+                        <label class="form-check-label" for="is_recurring">Recurring Expense</label>
+                    </div>
+                    
+                    <div id="recurring_options" style="display: none;">
+                        <div class="mb-3">
+                            <label for="frequency" class="form-label">Frequency</label>
+                            <select class="form-select" id="frequency" name="frequency">
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="bi-weekly">Bi-Weekly</option>
+                                <option value="monthly" selected>Monthly</option>
+                                <option value="quarterly">Quarterly</option>
+                                <option value="annually">Annually</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Expense Modal -->
+<div class="modal fade" id="editExpenseModal" tabindex="-1" aria-labelledby="editExpenseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editExpenseModalLabel">Edit Expense</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="<?php echo BASE_PATH; ?>/expenses" method="post" id="editExpenseForm" class="needs-validation" novalidate>
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="expense_id" id="edit_expense_id">
+                
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_category_id" class="form-label">Category</label>
+                        <select class="form-select" id="edit_category_id" name="category_id" required>
+                            <option value="">Select a category</option>
+                            <?php 
+                            // Reset the categories result pointer
+                            if (isset($categories) && $categories && $categories->num_rows > 0) {
+                                $categories->data_seek(0);
+                                while ($category = $categories->fetch_assoc()): 
+                            ?>
+                                <option value="<?php echo $category['category_id']; ?>">
+                                    <?php echo htmlspecialchars($category['name']); ?>
+                                </option>
+                            <?php 
+                                endwhile;
+                            }
+                            ?>
+                        </select>
+                        <div class="invalid-feedback">Please select a category.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="edit_description" name="description" required>
+                        <div class="invalid-feedback">Please provide a description.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_amount" class="form-label">Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0.01" required>
+                            <div class="invalid-feedback">Please enter a valid amount greater than zero.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_expense_date" class="form-label">Date</label>
+                        <input type="date" class="form-control" id="edit_expense_date" name="expense_date" required>
+                        <div class="invalid-feedback">Please select a date.</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="edit_is_recurring" name="is_recurring">
+                        <label class="form-check-label" for="edit_is_recurring">Recurring Expense</label>
+                    </div>
+                    
+                    <div id="edit_recurring_options" style="display: none;">
+                        <div class="mb-3">
+                            <label for="edit_frequency" class="form-label">Frequency</label>
+                            <select class="form-select" id="edit_frequency" name="frequency">
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="bi-weekly">Bi-Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="quarterly">Quarterly</option>
+                                <option value="annually">Annually</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Expense Modal -->
+<div class="modal fade" id="deleteExpenseModal" tabindex="-1" aria-labelledby="deleteExpenseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteExpenseModalLabel">Delete Expense</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this expense? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="<?php echo BASE_PATH; ?>/expenses" method="post" id="deleteExpenseForm">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="expense_id" id="delete_expense_id">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php
+// Chart data
+$chart_labels = [];
+$chart_data = [];
+$chart_colors = [
+    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+    '#6f42c1', '#fd7e14', '#20c9a6', '#5a5c69', '#858796'
+];
+
+if (isset($top_expenses) && $top_expenses && $top_expenses->num_rows > 0) {
+    $top_expenses->data_seek(0);
+    while ($category = $top_expenses->fetch_assoc()) {
+        $chart_labels[] = $category['category_name'];
+        $chart_data[] = $category['total'];
     }
 }
 
-// Get all expense categories
-$categories = $expense->getAllCategories();
+// Add meta tag for base path
+echo '<meta name="base-path" content="' . BASE_PATH . '">';
 
-// Get all expenses
-$expenses = $expense->getAll($user_id);
+// Add hidden meta tags for passing chart data
+echo '<meta name="chart-labels" content="' . htmlspecialchars(json_encode($chart_labels)) . '">';
+echo '<meta name="chart-data" content="' . htmlspecialchars(json_encode($chart_data)) . '">';
+echo '<meta name="chart-colors" content="' . htmlspecialchars(json_encode(array_slice($chart_colors, 0, count($chart_data)))) . '">';
+?>
 
-// Calculate total monthly and yearly expenses
-$monthly_expenses = $expense->getMonthlyTotal($user_id);
-$yearly_expenses = $expense->getYearlyTotal($user_id);
+<!-- Add this script right before the `require_once 'includes/footer.php';` line -->
+<script>
+// Fix for modal backdrop issue
+document.addEventListener('DOMContentLoaded', function() {
+    // Remove modal backdrops
+    function removeModalBackdrops() {
+        // Remove any modal-backdrop elements
+        document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
+            backdrop.remove();
+        });
+        
+        // Remove modal-open class and inline styles from body
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    }
+    
+    // Run on page load
+    removeModalBackdrops();
+    
+    // Run on modal hide events
+    const allModals = document.querySelectorAll('.modal');
+    allModals.forEach(function(modal) {
+        modal.addEventListener('hidden.bs.modal', function() {
+            // Delay slightly to ensure page has time to update
+            setTimeout(removeModalBackdrops, 100);
+        });
+    });
+    
+    // Set up a MutationObserver to detect DOM changes
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            // If we see a modal backdrop added, set a timeout to check if it should be removed
+            if (mutation.addedNodes) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.classList && node.classList.contains('modal-backdrop')) {
+                        // Set a delayed check to see if any modals are actually open
+                        setTimeout(function() {
+                            const openModals = document.querySelectorAll('.modal.show');
+                            if (openModals.length === 0) {
+                                removeModalBackdrops();
+                            }
+                        }, 500);
+                    }
+                });
+            }
+        });
+    });
+    
+    // Start observing the document with the configured parameters
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Run every 3 seconds as a fallback
+    setInterval(function() {
+        const openModals = document.querySelectorAll('.modal.show');
+        if (openModals.length === 0) {
+            removeModalBackdrops();
+        }
+    }, 3000);
+});
+</script>
 
-// Get top expense categories
-$top_expenses = $expense->getTopCategories($user_id, 5);
-
-// Include view
-require_once 'views/expenses.php';
+<?php
+// Include footer
+require_once 'includes/footer.php';
 ?>
