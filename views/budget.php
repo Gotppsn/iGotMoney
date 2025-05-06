@@ -131,7 +131,7 @@ require_once 'includes/header.php';
                 <h6 class="m-0 font-weight-bold text-primary">Budget vs. Actual</h6>
             </div>
             <div class="card-body">
-                <div class="chart-container">
+                <div class="chart-container" style="position: relative; height: 300px;">
                     <canvas id="budgetVsActualChart"></canvas>
                 </div>
             </div>
@@ -195,7 +195,7 @@ require_once 'includes/header.php';
                                         </div>
                                     </div>
                                 </td>
-                                <td>
+                                <td class="text-center">
                                     <?php
                                     if ($budget['percentage'] >= 90) {
                                         echo '<span class="badge bg-danger">Critical</span>';
@@ -206,7 +206,7 @@ require_once 'includes/header.php';
                                     }
                                     ?>
                                 </td>
-                                <td>
+                                <td class="text-center">
                                     <button type="button" class="btn btn-sm btn-info edit-budget" data-budget-id="<?php echo $budget['budget_id']; ?>">
                                         <i class="fas fa-edit"></i>
                                     </button>
@@ -224,7 +224,7 @@ require_once 'includes/header.php';
 </div>
 
 <!-- Budget Recommendations -->
-<?php if (isset($budget_plan) && !empty($budget_plan)): ?>
+<?php if (isset($monthly_income) && $monthly_income > 0 && isset($budget_plan) && !empty($budget_plan)): ?>
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">Budget Recommendations</h6>
@@ -268,6 +268,19 @@ require_once 'includes/header.php';
         </div>
     </div>
 </div>
+<?php elseif (isset($monthly_income) && $monthly_income <= 0): ?>
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Budget Recommendations</h6>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            You need to add income sources before we can generate budget recommendations.
+            <a href="<?php echo BASE_PATH; ?>/income" class="alert-link">Go to Income Management</a> to add your income sources.
+        </div>
+    </div>
+</div>
 <?php endif; ?>
 
 <!-- Add Budget Modal -->
@@ -278,41 +291,51 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="addBudgetModalLabel">Add Budget</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/budget" method="post">
+            <form action="<?php echo BASE_PATH; ?>/budget" method="post">
                 <input type="hidden" name="action" value="add">
                 
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="category_id" class="form-label">Category</label>
                         <select class="form-select" id="category_id" name="category_id" required>
+                            <option value="">Select a category</option>
                             <?php 
-                            // Reset the categories result pointer
-                            $categories->data_seek(0);
-                            while ($category = $categories->fetch_assoc()): 
+                            // Check if categories exist
+                            if (isset($categories) && $categories->num_rows > 0) {
+                                // Reset the categories result pointer
+                                $categories->data_seek(0);
+                                while ($category = $categories->fetch_assoc()): 
                             ?>
                                 <option value="<?php echo $category['category_id']; ?>">
                                     <?php echo htmlspecialchars($category['name']); ?>
                                 </option>
-                            <?php endwhile; ?>
+                            <?php 
+                                endwhile;
+                            }
+                            ?>
                         </select>
+                        <div class="invalid-feedback">Please select a category.</div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="amount" class="form-label">Budget Amount</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0" required>
+                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" required>
+                            <div class="invalid-feedback">Please enter a valid amount greater than zero.</div>
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="start_date" class="form-label">Start Date</label>
                         <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
+                        <div class="invalid-feedback">Please select a start date.</div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="end_date" class="form-label">End Date</label>
                         <input type="date" class="form-control" id="end_date" name="end_date" value="<?php echo date('Y-m-d', strtotime('+1 month')); ?>" required>
+                        <div class="invalid-feedback">Please select an end date.</div>
                     </div>
                 </div>
                 
@@ -333,7 +356,7 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="editBudgetModalLabel">Edit Budget</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/budget" method="post">
+            <form action="<?php echo BASE_PATH; ?>/budget" method="post">
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="budget_id" id="edit_budget_id">
                 
@@ -342,33 +365,42 @@ require_once 'includes/header.php';
                         <label for="edit_category_id" class="form-label">Category</label>
                         <select class="form-select" id="edit_category_id" name="category_id" required>
                             <?php 
-                            // Reset the categories result pointer
-                            $categories->data_seek(0);
-                            while ($category = $categories->fetch_assoc()): 
+                            // Check if categories exist
+                            if (isset($categories) && $categories->num_rows > 0) {
+                                // Reset the categories result pointer
+                                $categories->data_seek(0);
+                                while ($category = $categories->fetch_assoc()): 
                             ?>
                                 <option value="<?php echo $category['category_id']; ?>">
                                     <?php echo htmlspecialchars($category['name']); ?>
                                 </option>
-                            <?php endwhile; ?>
+                            <?php 
+                                endwhile;
+                            }
+                            ?>
                         </select>
+                        <div class="invalid-feedback">Please select a category.</div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="edit_amount" class="form-label">Budget Amount</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0" required>
+                            <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0.01" required>
+                            <div class="invalid-feedback">Please enter a valid amount greater than zero.</div>
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="edit_start_date" class="form-label">Start Date</label>
                         <input type="date" class="form-control" id="edit_start_date" name="start_date" required>
+                        <div class="invalid-feedback">Please select a start date.</div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="edit_end_date" class="form-label">End Date</label>
                         <input type="date" class="form-control" id="edit_end_date" name="end_date" required>
+                        <div class="invalid-feedback">Please select an end date.</div>
                     </div>
                 </div>
                 
@@ -394,7 +426,7 @@ require_once 'includes/header.php';
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="/budget" method="post">
+                <form action="<?php echo BASE_PATH; ?>/budget" method="post">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="budget_id" id="delete_budget_id">
                     <button type="submit" class="btn btn-danger">Delete</button>
@@ -412,33 +444,42 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="generateBudgetModalLabel">Auto-Generate Budget</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/budget" method="post">
+            <form action="<?php echo BASE_PATH; ?>/budget" method="post">
                 <input type="hidden" name="action" value="generate_plan">
+                <input type="hidden" name="replace_existing" value="1">
                 
                 <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        The system will generate a recommended budget based on your income and spending patterns.
-                    </div>
-                    
-                    <p>Your current monthly income: <strong>$<?php echo number_format($monthly_income, 2); ?></strong></p>
-                    
-                    <p>This will create budget allocations for all expense categories using:</p>
-                    <ul>
-                        <li>Your income level</li>
-                        <li>Your previous spending patterns</li>
-                        <li>Recommended financial ratios</li>
-                    </ul>
-                    
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        This will replace any existing budgets for the current month.
-                    </div>
+                    <?php if (isset($monthly_income) && $monthly_income > 0): ?>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            The system will generate a recommended budget based on your income and spending patterns.
+                        </div>
+                        
+                        <p>Your current monthly income: <strong>$<?php echo number_format($monthly_income, 2); ?></strong></p>
+                        
+                        <p>This will create budget allocations for all expense categories using:</p>
+                        <ul>
+                            <li>Your income level</li>
+                            <li>Your previous spending patterns</li>
+                            <li>Recommended financial ratios</li>
+                        </ul>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            This will replace any existing budgets for the current month.
+                        </div>
+                    <?php else: ?>
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            You need to add income sources before generating a budget plan.
+                            <a href="<?php echo BASE_PATH; ?>/income" class="alert-link">Go to Income Management</a> to add your income sources.
+                        </div>
+                    <?php endif; ?>
                 </div>
                 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">Generate Budget</button>
+                    <button type="submit" class="btn btn-success" <?php echo (isset($monthly_income) && $monthly_income > 0) ? '' : 'disabled'; ?>>Generate Budget</button>
                 </div>
             </form>
         </div>
@@ -459,187 +500,97 @@ if (!empty($budget_status)) {
     }
 }
 
+// Include Chart.js library directly
+echo '<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>';
+
 // JavaScript for budget page
 $page_scripts = "
-// Initialize the chart for budget vs actual
-var ctx = document.getElementById('budgetVsActualChart').getContext('2d');
-var budgetVsActualChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: " . json_encode($categories) . ",
-        datasets: [
-            {
-                label: 'Budget',
-                data: " . json_encode($budget_amounts) . ",
-                backgroundColor: 'rgba(78, 115, 223, 0.8)',
-                borderColor: 'rgba(78, 115, 223, 1)',
-                borderWidth: 1
-            },
-            {
-                label: 'Spent',
-                data: " . json_encode($spent_amounts) . ",
-                backgroundColor: 'rgba(231, 74, 59, 0.8)',
-                borderColor: 'rgba(231, 74, 59, 1)',
-                borderWidth: 1
-            }
-        ]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return '$' + value.toLocaleString();
-                    }
-                }
-            }
-        },
-        plugins: {
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        var label = context.dataset.label || '';
-                        var value = context.raw || 0;
-                        return label + ': $' + value.toLocaleString();
-                    }
-                }
-            }
-        },
-        barPercentage: 0.6,
-        categoryPercentage: 0.8
+// Initialize the chart for budget vs actual when document is ready and Chart.js is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Make sure Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not loaded. Please include it in your page.');
+        // Add fallback message in chart container
+        var chartContainer = document.querySelector('.chart-container');
+        if (chartContainer) {
+            chartContainer.innerHTML = '<div class=\"alert alert-warning\">Chart cannot be displayed: Chart.js library not available</div>';
+        }
+        return;
     }
-});
-
-// Handle edit budget button
-document.querySelectorAll('.edit-budget').forEach(button => {
-    button.addEventListener('click', function() {
-        const budgetId = this.getAttribute('data-budget-id');
-        
-        // Show loading spinner
-        showSpinner(document.querySelector('#editBudgetModal .modal-body'));
-        
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('editBudgetModal'));
-        modal.show();
-        
-        // Fetch budget data
-        fetch('/budget?action=get_budget&budget_id=' + budgetId)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Populate form fields
-                    document.getElementById('edit_budget_id').value = data.budget.budget_id;
-                    document.getElementById('edit_category_id').value = data.budget.category_id;
-                    document.getElementById('edit_amount').value = data.budget.amount;
-                    document.getElementById('edit_start_date').value = data.budget.start_date;
-                    document.getElementById('edit_end_date').value = data.budget.end_date;
-                    
-                    // Remove spinner
-                    hideSpinner(document.querySelector('#editBudgetModal .modal-body'));
-                } else {
-                    // Show error
-                    alert('Failed to load budget data: ' + data.message);
-                    modal.hide();
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching budget data:', error);
-                alert('An error occurred while loading budget data.');
-                modal.hide();
-            });
+    
+    var ctx = document.getElementById('budgetVsActualChart');
+    if (!ctx) {
+        console.error('Canvas element not found');
+        return;
+    }
+    
+    try {
+        var budgetVsActualChart = new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: " . json_encode($categories) . ",
+                datasets: [
+                    {
+                        label: 'Budget',
+                        data: " . json_encode($budget_amounts) . ",
+                        backgroundColor: 'rgba(78, 115, 223, 0.8)',
+                        borderColor: 'rgba(78, 115, 223, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Spent',
+                        data: " . json_encode($spent_amounts) . ",
+                        backgroundColor: 'rgba(231, 74, 59, 0.8)',
+                        borderColor: 'rgba(231, 74, 59, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var label = context.dataset.label || '';
+                                var value = context.raw || 0;
+                                return label + ': $' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                barPercentage: 0.6,
+                categoryPercentage: 0.8
+            }
+        });
+        console.log('Chart initialized successfully');
+    } catch (e) {
+        console.error('Error initializing chart:', e);
+        // Display error in chart container
+        var chartContainer = document.querySelector('.chart-container');
+        if (chartContainer) {
+            chartContainer.innerHTML = '<div class=\"alert alert-danger\">Error initializing chart: ' + e.message + '</div>';
+        }
+    }
+    
+    // Add event handlers for AJAX form submission
+    document.querySelectorAll('form').forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            // Let the JS handle the form validation and submission
+        });
     });
-});
-
-// Handle delete budget button
-document.querySelectorAll('.delete-budget').forEach(button => {
-    button.addEventListener('click', function() {
-        const budgetId = this.getAttribute('data-budget-id');
-        document.getElementById('delete_budget_id').value = budgetId;
-        
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('deleteBudgetModal'));
-        modal.show();
-    });
-});
-
-// Handle adopt recommendation button
-document.querySelectorAll('.adopt-recommendation').forEach(button => {
-    button.addEventListener('click', function() {
-        const categoryId = this.getAttribute('data-category-id');
-        const amount = this.getAttribute('data-amount');
-        
-        // Show loading spinner
-        this.innerHTML = '<i class=\"fas fa-spinner fa-spin\"></i> Adopting...';
-        this.disabled = true;
-        
-        // Create form and submit
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/budget';
-        
-        const actionInput = document.createElement('input');
-        actionInput.type = 'hidden';
-        actionInput.name = 'action';
-        actionInput.value = 'add';
-        
-        const categoryInput = document.createElement('input');
-        categoryInput.type = 'hidden';
-        categoryInput.name = 'category_id';
-        categoryInput.value = categoryId;
-        
-        const amountInput = document.createElement('input');
-        amountInput.type = 'hidden';
-        amountInput.name = 'amount';
-        amountInput.value = amount;
-        
-        const startDateInput = document.createElement('input');
-        startDateInput.type = 'hidden';
-        startDateInput.name = 'start_date';
-        startDateInput.value = '" . date('Y-m-d') . "';
-        
-        const endDateInput = document.createElement('input');
-        endDateInput.type = 'hidden';
-        endDateInput.name = 'end_date';
-        endDateInput.value = '" . date('Y-m-d', strtotime('+1 month')) . "';
-        
-        form.appendChild(actionInput);
-        form.appendChild(categoryInput);
-        form.appendChild(amountInput);
-        form.appendChild(startDateInput);
-        form.appendChild(endDateInput);
-        
-        document.body.appendChild(form);
-        form.submit();
-    });
-});
-
-// Handle adopt all recommendations button
-const adoptAllBtn = document.getElementById('adoptAllRecommendations');
-if (adoptAllBtn) {
-    adoptAllBtn.addEventListener('click', function() {
-        // Show loading spinner
-        this.innerHTML = '<i class=\"fas fa-spinner fa-spin\"></i> Adopting All...';
-        this.disabled = true;
-        
-        // Create form and submit
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/budget';
-        
-        const actionInput = document.createElement('input');
-        actionInput.type = 'hidden';
-        actionInput.name = 'action';
-        actionInput.value = 'generate_plan';
-        
-        form.appendChild(actionInput);
-        document.body.appendChild(form);
-        form.submit();
-    });
-}
-";
+});";
 
 // Include footer
 require_once 'includes/footer.php';

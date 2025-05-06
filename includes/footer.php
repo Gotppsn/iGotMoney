@@ -19,6 +19,9 @@
     <!-- jQuery -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    
     <!-- Custom JavaScript -->
     <script src="<?php echo BASE_PATH; ?>/assets/js/main.js"></script>
     
