@@ -4,12 +4,6 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initializing investments.js');
-    
-    // Get base path from meta tag
-    const basePath = document.querySelector('meta[name="base-path"]') ? 
-        document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
-    
     // Initialize investment value calculator
     initializeValueCalculator();
     
@@ -18,9 +12,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize portfolio analyzer
     initializePortfolioAnalyzer();
-    
-    // Initialize button handlers
-    initializeButtonHandlers();
 });
 
 /**
@@ -94,7 +85,6 @@ function initializeValueCalculator() {
                         </div>
                     </div>
                 `;
-                calculatorDiv.style.display = 'block';
             } else {
                 calculatorDiv.innerHTML = '';
             }
@@ -488,202 +478,6 @@ function generateRecommendations(portfolioData, diversificationScore, riskScore)
 }
 
 /**
- * Initialize button handlers
- * Sets up event listeners for edit, delete, and update price buttons
- */
-function initializeButtonHandlers() {
-    console.log('Initializing investment button handlers');
-    
-    // Get base path from meta tag
-    const basePath = document.querySelector('meta[name="base-path"]') ? 
-        document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
-    
-    // Handle edit investment button clicks
-    document.querySelectorAll('.edit-investment').forEach(button => {
-        button.addEventListener('click', function() {
-            try {
-                console.log('Edit button clicked for investment:', this.getAttribute('data-investment-id'));
-                const investmentId = this.getAttribute('data-investment-id');
-                
-                // Reset form validation
-                const form = document.getElementById('editInvestmentModal').querySelector('form');
-                if (form) {
-                    form.classList.remove('was-validated');
-                }
-                
-                // Set investment ID
-                document.getElementById('edit_investment_id').value = investmentId;
-                
-                // Show modal
-                const modal = new bootstrap.Modal(document.getElementById('editInvestmentModal'));
-                modal.show();
-                
-                // Show loading spinner
-                const modalBody = document.querySelector('#editInvestmentModal .modal-body');
-                modalBody.innerHTML = `
-                    <div class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="mt-3">Loading investment data...</p>
-                    </div>
-                `;
-                
-                // Fetch investment data
-                fetch(`${basePath}/investments?action=get_investment&investment_id=${investmentId}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok: ' + response.status);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('Investment data received:', data);
-                        
-                        if (data.success) {
-                            // Restore modal content
-                            modalBody.innerHTML = `
-                                <div class="mb-3">
-                                    <label for="edit_type_id" class="form-label">Investment Type</label>
-                                    <select class="form-select" id="edit_type_id" name="type_id" required>
-                                        ${Array.from(document.getElementById('type_id').options).map(option => 
-                                            `<option value="${option.value}" data-risk="${option.getAttribute('data-risk')}">${option.textContent}</option>`
-                                        ).join('')}
-                                    </select>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="edit_name" class="form-label">Investment Name</label>
-                                    <input type="text" class="form-control" id="edit_name" name="name" required>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="edit_ticker_symbol" class="form-label">Ticker Symbol (Optional)</label>
-                                    <input type="text" class="form-control" id="edit_ticker_symbol" name="ticker_symbol">
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="edit_purchase_date" class="form-label">Purchase Date</label>
-                                    <input type="date" class="form-control" id="edit_purchase_date" name="purchase_date" required>
-                                </div>
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="edit_purchase_price" class="form-label">Purchase Price</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text">$</span>
-                                            <input type="number" class="form-control" id="edit_purchase_price" name="purchase_price" step="0.01" min="0" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="edit_quantity" class="form-label">Quantity</label>
-                                        <input type="number" class="form-control" id="edit_quantity" name="quantity" step="0.000001" min="0" required>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="edit_current_price" class="form-label">Current Price</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">$</span>
-                                        <input type="number" class="form-control" id="edit_current_price" name="current_price" step="0.01" min="0" required>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="edit_notes" class="form-label">Notes (Optional)</label>
-                                    <textarea class="form-control" id="edit_notes" name="notes" rows="3"></textarea>
-                                </div>
-                            `;
-                            
-                            // Populate form fields
-                            document.getElementById('edit_type_id').value = data.investment.type_id;
-                            document.getElementById('edit_name').value = data.investment.name;
-                            document.getElementById('edit_ticker_symbol').value = data.investment.ticker_symbol || '';
-                            document.getElementById('edit_purchase_date').value = data.investment.purchase_date;
-                            document.getElementById('edit_purchase_price').value = data.investment.purchase_price;
-                            document.getElementById('edit_quantity').value = data.investment.quantity;
-                            document.getElementById('edit_current_price').value = data.investment.current_price;
-                            document.getElementById('edit_notes').value = data.investment.notes || '';
-                            
-                            // Reinitialize risk visualization
-                            initializeRiskVisualization();
-                            
-                            // Reinitialize value calculator
-                            initializeValueCalculator();
-                            
-                            // Trigger change to show risk level
-                            document.getElementById('edit_type_id').dispatchEvent(new Event('change'));
-                        } else {
-                            // Show error
-                            showNotification('Failed to load investment data: ' + (data.message || 'Unknown error'), 'danger');
-                            modal.hide();
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching investment data:', error);
-                        showNotification('An error occurred while loading investment data: ' + error.message, 'danger');
-                        modal.hide();
-                    });
-            } catch (error) {
-                console.error('Error in edit button click handler:', error);
-                showNotification('An unexpected error occurred', 'danger');
-            }
-        });
-    });
-
-    // Handle delete investment button clicks
-    document.querySelectorAll('.delete-investment').forEach(button => {
-        button.addEventListener('click', function() {
-            try {
-                console.log('Delete button clicked for investment:', this.getAttribute('data-investment-id'));
-                const investmentId = this.getAttribute('data-investment-id');
-                const deleteForm = document.querySelector('#deleteInvestmentModal form');
-                
-                if (deleteForm) {
-                    const hiddenInput = deleteForm.querySelector('input[name="investment_id"]');
-                    if (hiddenInput) {
-                        hiddenInput.value = investmentId;
-                    } else {
-                        console.error('Could not find investment_id input in delete form');
-                    }
-                }
-                
-                // Show modal
-                const modal = new bootstrap.Modal(document.getElementById('deleteInvestmentModal'));
-                modal.show();
-            } catch (error) {
-                console.error('Error in delete button click handler:', error);
-                showNotification('An unexpected error occurred', 'danger');
-            }
-        });
-    });
-
-    // Handle update price button clicks
-    document.querySelectorAll('.update-price').forEach(button => {
-        button.addEventListener('click', function() {
-            try {
-                console.log('Update price button clicked for investment:', this.getAttribute('data-investment-id'));
-                const investmentId = this.getAttribute('data-investment-id');
-                const currentPrice = this.getAttribute('data-current-price');
-                
-                document.getElementById('update_investment_id').value = investmentId;
-                document.getElementById('update_current_price').value = currentPrice;
-                
-                // Show modal
-                const modal = new bootstrap.Modal(document.getElementById('updatePriceModal'));
-                modal.show();
-            } catch (error) {
-                console.error('Error in update price button click handler:', error);
-                showNotification('An unexpected error occurred', 'danger');
-            }
-        });
-    });
-
-    // Print init status
-    console.log('Investment button handlers initialized');
-}
-
-/**
  * Get color class based on diversification score
  * @param {number} score - Diversification score
  * @returns {string} Color class
@@ -750,73 +544,4 @@ function getRiskMessage(score) {
  */
 function formatNumber(num) {
     return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-/**
- * Show notification
- * @param {string} message - Message to display
- * @param {string} type - Notification type (success, info, warning, danger)
- * @param {number} duration - Duration in milliseconds
- */
-function showNotification(message, type = 'info', duration = 3000) {
-    // Check if notification container exists
-    let container = document.getElementById('notification-container');
-    
-    if (!container) {
-        // Create container
-        container = document.createElement('div');
-        container.id = 'notification-container';
-        container.style.position = 'fixed';
-        container.style.top = '20px';
-        container.style.right = '20px';
-        container.style.zIndex = '9999';
-        container.style.width = '300px';
-        document.body.appendChild(container);
-    }
-    
-    // Create notification
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type} alert-dismissible fade show`;
-    notification.style.marginBottom = '10px';
-    notification.style.boxShadow = '0 0.25rem 0.75rem rgba(0, 0, 0, 0.1)';
-    
-    // Add content
-    notification.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    `;
-    
-    // Add to container
-    container.appendChild(notification);
-    
-    // Initialize Bootstrap alert
-    try {
-        const bsAlert = new bootstrap.Alert(notification);
-        
-        // Auto close after duration
-        setTimeout(() => {
-            bsAlert.close();
-        }, duration);
-        
-        // Remove from DOM after closing animation
-        notification.addEventListener('closed.bs.alert', () => {
-            notification.remove();
-            
-            // Remove container if empty
-            if (container.children.length === 0) {
-                container.remove();
-            }
-        });
-    } catch (e) {
-        // Fallback if bootstrap alert fails
-        console.error('Error initializing Bootstrap alert:', e);
-        setTimeout(() => {
-            notification.remove();
-            
-            // Remove container if empty
-            if (container.children.length === 0) {
-                container.remove();
-            }
-        }, duration);
-    }
 }

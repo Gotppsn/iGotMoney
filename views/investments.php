@@ -4,28 +4,15 @@ $page_title = 'Investment Management - iGotMoney';
 $current_page = 'investments';
 
 // Additional JS
-$additional_js = [
-    '/assets/js/investments.js',
-    '/assets/js/investment-performance.js'
-];
+$additional_js = ['/assets/js/investments.js'];
 
 // Include header
 require_once 'includes/header.php';
 ?>
-<!-- Add base path meta tag for JavaScript -->
-<meta name="base-path" content="<?php echo BASE_PATH; ?>">
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Investment Management</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <div class="btn-group me-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="refreshInvestmentData">
-                <i class="fas fa-sync-alt me-1"></i> Refresh
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="exportInvestmentData">
-                <i class="fas fa-file-export me-1"></i> Export
-            </button>
-        </div>
         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addInvestmentModal">
             <i class="fas fa-plus"></i> Add Investment
         </button>
@@ -36,30 +23,8 @@ require_once 'includes/header.php';
 <div class="row mb-4">
     <div class="col-lg-4">
         <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <div class="card-header py-3">
                 <h6 class="m-0 font-weight-bold text-primary">Portfolio Summary</h6>
-                <div class="dropdown no-arrow">
-                    <a class="dropdown-toggle" href="#" role="button" id="portfolioDropdown" 
-                       data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-end shadow animated--fade-in" 
-                         aria-labelledby="portfolioDropdown">
-                        <a class="dropdown-item" href="#" id="analyzePortfolioBtn">
-                            <i class="fas fa-chart-pie fa-sm fa-fw me-2 text-gray-400"></i>
-                            Analyze Portfolio
-                        </a>
-                        <a class="dropdown-item" href="#" id="setInvestmentGoalsBtn">
-                            <i class="fas fa-bullseye fa-sm fa-fw me-2 text-gray-400"></i>
-                            Set Investment Goals
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#" id="portfolioSettingsBtn">
-                            <i class="fas fa-cogs fa-sm fa-fw me-2 text-gray-400"></i>
-                            Portfolio Settings
-                        </a>
-                    </div>
-                </div>
             </div>
             <div class="card-body">
                 <?php
@@ -104,206 +69,269 @@ require_once 'includes/header.php';
     
     <div class="col-lg-8">
         <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Portfolio Performance</h6>
-                <div class="dropdown no-arrow">
-                    <a class="dropdown-toggle" href="#" role="button" id="performanceDropdown" 
-                       data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-end shadow animated--fade-in" 
-                         aria-labelledby="performanceDropdown">
-                        <a class="dropdown-item" href="#" id="compareToMarketBtn">
-                            <i class="fas fa-exchange-alt fa-sm fa-fw me-2 text-gray-400"></i>
-                            Compare to Market
-                        </a>
-                        <a class="dropdown-item" href="#" id="showProjectionsBtn">
-                            <i class="fas fa-chart-line fa-sm fa-fw me-2 text-gray-400"></i>
-                            Show Projections
-                        </a>
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Portfolio Allocation</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <canvas id="investmentTypeChart"></canvas>
+                        </div>
+                        <div class="text-center mt-2">
+                            <small class="text-muted">By Investment Type</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <canvas id="riskLevelChart"></canvas>
+                        </div>
+                        <div class="text-center mt-2">
+                            <small class="text-muted">By Risk Level</small>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="card-body">
-                <div id="performanceChartContainer" style="height: 300px;">
-                    <!-- Performance chart will be rendered here -->
-                </div>
-            </div>
         </div>
     </div>
 </div>
 
-<!-- ROI Analysis -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">ROI Analysis</h6>
-            </div>
-            <div class="card-body" id="roiCalculatorContainer">
-                <!-- ROI calculator will be rendered here -->
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Portfolio Allocation -->
+<!-- Top & Bottom Performers -->
 <div class="row mb-4">
     <div class="col-lg-6">
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Allocation by Type</h6>
+                <h6 class="m-0 font-weight-bold text-primary">Top Performers</h6>
             </div>
             <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="investmentTypeChart"></canvas>
-                </div>
-                <div class="text-center mt-2">
-                    <small class="text-muted">Portfolio Distribution by Investment Type</small>
-                </div>
+                <?php if (isset($investment_summary['top_performers']) && !empty($investment_summary['top_performers'])): ?>
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Return</th>
+                                    <th>Current Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($investment_summary['top_performers'] as $investment): ?>
+                                    <tr>
+                                        <td>
+                                            <?php echo htmlspecialchars($investment['name']); ?>
+                                            <?php if (!empty($investment['ticker'])): ?>
+                                                <small class="text-muted">(<?php echo htmlspecialchars($investment['ticker']); ?>)</small>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($investment['type']); ?></td>
+                                        <td class="<?php echo $investment['percent_gain_loss'] >= 0 ? 'text-success' : 'text-danger'; ?>">
+                                            <?php echo number_format($investment['percent_gain_loss'], 2); ?>%
+                                        </td>
+                                        <td>$<?php echo number_format($investment['current'], 2); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php else: ?>
+                    <div class="text-center py-4">
+                        <p>No investment data available.</p>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
+    
     <div class="col-lg-6">
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Allocation by Risk</h6>
+                <h6 class="m-0 font-weight-bold text-primary">Worst Performers</h6>
             </div>
             <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="riskLevelChart"></canvas>
-                </div>
-                <div class="text-center mt-2">
-                    <small class="text-muted">Portfolio Distribution by Risk Level</small>
-                </div>
+                <?php if (isset($investment_summary['worst_performers']) && !empty($investment_summary['worst_performers'])): ?>
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Return</th>
+                                    <th>Current Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($investment_summary['worst_performers'] as $investment): ?>
+                                    <tr>
+                                        <td>
+                                            <?php echo htmlspecialchars($investment['name']); ?>
+                                            <?php if (!empty($investment['ticker'])): ?>
+                                                <small class="text-muted">(<?php echo htmlspecialchars($investment['ticker']); ?>)</small>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($investment['type']); ?></td>
+                                        <td class="<?php echo $investment['percent_gain_loss'] >= 0 ? 'text-success' : 'text-danger'; ?>">
+                                            <?php echo number_format($investment['percent_gain_loss'], 2); ?>%
+                                        </td>
+                                        <td>$<?php echo number_format($investment['current'], 2); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php else: ?>
+                    <div class="text-center py-4">
+                        <p>No investment data available.</p>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Stock Buy/Sell Analysis -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Stock Buy/Sell Analysis</h6>
-            </div>
-            <div class="card-body" id="stockAnalysisContainer">
-                <!-- Stock analysis will be rendered here -->
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Investment Table -->
+<!-- Investment List -->
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
         <h6 class="m-0 font-weight-bold text-primary">Your Investments</h6>
-        <div class="dropdown no-arrow">
-            <a class="dropdown-toggle" href="#" role="button" id="investmentTableDropdown" 
-               data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-            </a>
-            <div class="dropdown-menu dropdown-menu-end shadow animated--fade-in" 
-                 aria-labelledby="investmentTableDropdown">
-                <a class="dropdown-item" href="#" id="filterInvestmentsBtn">
-                    <i class="fas fa-filter fa-sm fa-fw me-2 text-gray-400"></i>
-                    Filter
-                </a>
-                <a class="dropdown-item" href="#" id="sortInvestmentsBtn">
-                    <i class="fas fa-sort fa-sm fa-fw me-2 text-gray-400"></i>
-                    Sort
-                </a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="#" id="updateAllPricesBtn">
-                    <i class="fas fa-sync fa-sm fa-fw me-2 text-gray-400"></i>
-                    Update All Prices
-                </a>
-            </div>
+        <div class="input-group input-group-sm" style="width: 250px;">
+            <input type="text" class="form-control" placeholder="Search investments..." id="investmentSearch" data-table-search="investmentTable">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
         </div>
     </div>
     <div class="card-body">
-        <div class="mb-3">
-            <div class="input-group">
-                <span class="input-group-text">
-                    <i class="fas fa-search"></i>
-                </span>
-                <input type="text" class="form-control" id="investmentSearch" placeholder="Search investments...">
-            </div>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-bordered" id="investmentTable" width="100%" cellspacing="0">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Purchase Date</th>
-                        <th>Purchase Price</th>
-                        <th>Quantity</th>
-                        <th>Current Price</th>
-                        <th>Current Value</th>
-                        <th>Gain/Loss</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php 
-                    if ($investments && $investments->num_rows > 0): 
-                        while ($investment = $investments->fetch_assoc()): 
-                            $purchase_value = $investment['purchase_price'] * $investment['quantity'];
-                            $current_value = $investment['current_price'] * $investment['quantity'];
+        <?php if (isset($investments) && $investments->num_rows > 0): ?>
+            <div class="table-responsive">
+                <table class="table table-bordered data-table" id="investmentTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Purchase Date</th>
+                            <th>Purchase Price</th>
+                            <th>Quantity</th>
+                            <th>Current Price</th>
+                            <th>Current Value</th>
+                            <th>Gain/Loss</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($investment_item = $investments->fetch_assoc()): ?>
+                            <?php
+                            $purchase_value = $investment_item['purchase_price'] * $investment_item['quantity'];
+                            $current_value = $investment_item['current_price'] * $investment_item['quantity'];
                             $gain_loss = $current_value - $purchase_value;
-                            $percent_change = $purchase_value > 0 ? ($gain_loss / $purchase_value) * 100 : 0;
+                            $percent_gain_loss = $purchase_value > 0 ? ($gain_loss / $purchase_value) * 100 : 0;
                             
                             $gain_loss_class = $gain_loss >= 0 ? 'text-success' : 'text-danger';
-                            $gain_loss_arrow = $gain_loss >= 0 ? 'up' : 'down';
-                    ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($investment['name']); ?></td>
-                            <td>
-                                <?php echo htmlspecialchars($investment['type_name']); ?>
-                                <span class="badge bg-<?php echo getRiskBadgeClass($investment['risk_level']); ?>">
-                                    <?php echo ucfirst($investment['risk_level']); ?>
-                                </span>
-                            </td>
-                            <td><?php echo htmlspecialchars($investment['purchase_date']); ?></td>
-                            <td>$<?php echo number_format($investment['purchase_price'], 2); ?></td>
-                            <td><?php echo number_format($investment['quantity'], 6); ?></td>
-                            <td>$<?php echo number_format($investment['current_price'], 2); ?></td>
-                            <td>$<?php echo number_format($current_value, 2); ?></td>
-                            <td class="<?php echo $gain_loss_class; ?>">
-                                <i class="fas fa-arrow-<?php echo $gain_loss_arrow; ?> me-1"></i>
-                                $<?php echo number_format(abs($gain_loss), 2); ?> 
-                                (<?php echo number_format(abs($percent_change), 2); ?>%)
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-primary update-price" 
-                                        data-investment-id="<?php echo $investment['investment_id']; ?>"
-                                        data-current-price="<?php echo $investment['current_price']; ?>">
-                                    <i class="fas fa-dollar-sign"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-info edit-investment" 
-                                        data-investment-id="<?php echo $investment['investment_id']; ?>">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-danger delete-investment" 
-                                        data-investment-id="<?php echo $investment['investment_id']; ?>">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    <?php 
-                        endwhile; 
-                    else: 
-                    ?>
-                        <tr>
-                            <td colspan="9" class="text-center py-4">
-                                <p class="mb-0">No investments found. Add your first investment to get started.</p>
-                            </td>
-                        </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                            $gain_loss_icon = $gain_loss >= 0 ? 'arrow-up' : 'arrow-down';
+                            ?>
+                            <tr>
+                                <td>
+                                    <?php echo htmlspecialchars($investment_item['name']); ?>
+                                    <?php if (!empty($investment_item['ticker_symbol'])): ?>
+                                        <small class="text-muted">(<?php echo htmlspecialchars($investment_item['ticker_symbol']); ?>)</small>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php echo htmlspecialchars($investment_item['type_name']); ?>
+                                    <span class="badge 
+                                        <?php
+                                        switch ($investment_item['risk_level']) {
+                                            case 'very low':
+                                                echo 'bg-success';
+                                                break;
+                                            case 'low':
+                                                echo 'bg-info';
+                                                break;
+                                            case 'moderate':
+                                                echo 'bg-primary';
+                                                break;
+                                            case 'high':
+                                                echo 'bg-warning';
+                                                break;
+                                            case 'very high':
+                                                echo 'bg-danger';
+                                                break;
+                                            default:
+                                                echo 'bg-secondary';
+                                        }
+                                        ?>">
+                                        <?php echo ucfirst($investment_item['risk_level']); ?>
+                                    </span>
+                                </td>
+                                <td><?php echo date('M j, Y', strtotime($investment_item['purchase_date'])); ?></td>
+                                <td>$<?php echo number_format($investment_item['purchase_price'], 2); ?></td>
+                                <td><?php echo number_format($investment_item['quantity'], 6); ?></td>
+                                <td>
+                                    $<?php echo number_format($investment_item['current_price'], 2); ?>
+                                    <button class="btn btn-sm btn-outline-primary ms-2 update-price" 
+                                           data-investment-id="<?php echo $investment_item['investment_id']; ?>"
+                                           data-current-price="<?php echo $investment_item['current_price']; ?>">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </td>
+                                <td>$<?php echo number_format($current_value, 2); ?></td>
+                                <td class="<?php echo $gain_loss_class; ?>">
+                                    <i class="fas fa-<?php echo $gain_loss_icon; ?> me-1"></i>
+                                    $<?php echo number_format(abs($gain_loss), 2); ?>
+                                    <small>(<?php echo number_format($percent_gain_loss, 2); ?>%)</small>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-info edit-investment" data-investment-id="<?php echo $investment_item['investment_id']; ?>">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger delete-investment" data-investment-id="<?php echo $investment_item['investment_id']; ?>">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php else: ?>
+            <div class="text-center py-4">
+                <p>No investments recorded yet.</p>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addInvestmentModal">
+                    <i class="fas fa-plus"></i> Add Your First Investment
+                </button>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- Investment Tips -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Investment Tips</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card border-left-info h-100 py-2">
+                    <div class="card-body">
+                        <h5 class="card-title">Diversification</h5>
+                        <p class="card-text">Spread your investments across different asset classes to reduce risk and increase potential returns.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-left-warning h-100 py-2">
+                    <div class="card-body">
+                        <h5 class="card-title">Risk Assessment</h5>
+                        <p class="card-text">Assess your risk tolerance based on your age, financial goals, and time horizon before making investment decisions.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-left-success h-100 py-2">
+                    <div class="card-body">
+                        <h5 class="card-title">Regular Contributions</h5>
+                        <p class="card-text">Consistent investing, even in small amounts, can lead to significant growth over time due to compound interest.</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -316,19 +344,14 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="addInvestmentModalLabel">Add Investment</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/investments" method="post">
+            <form action="/investments" method="post">
                 <input type="hidden" name="action" value="add">
                 
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="type_id" class="form-label">Investment Type</label>
                         <select class="form-select" id="type_id" name="type_id" required>
-                            <?php 
-                            // Reset the pointer to the beginning of the result set
-                            $investment_types->data_seek(0);
-                            
-                            while ($type = $investment_types->fetch_assoc()): 
-                            ?>
+                            <?php while ($type = $investment_types->fetch_assoc()): ?>
                                 <option value="<?php echo $type['type_id']; ?>" data-risk="<?php echo $type['risk_level']; ?>">
                                     <?php echo htmlspecialchars($type['name']); ?> (<?php echo ucfirst($type['risk_level']); ?> Risk)
                                 </option>
@@ -343,12 +366,7 @@ require_once 'includes/header.php';
                     
                     <div class="mb-3">
                         <label for="ticker_symbol" class="form-label">Ticker Symbol (Optional)</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="ticker_symbol" name="ticker_symbol">
-                            <button class="btn btn-outline-secondary" type="button" id="lookupTickerBtn">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
+                        <input type="text" class="form-control" id="ticker_symbol" name="ticker_symbol">
                         <div class="form-text">For stocks and ETFs (e.g., AAPL, VOO)</div>
                     </div>
                     
@@ -372,13 +390,10 @@ require_once 'includes/header.php';
                     </div>
                     
                     <div class="mb-3">
-                        <label for="current_price" class="form-label">Current Price</label>
+                        <label for="current_price" class="form-label">Current Price (Optional)</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
                             <input type="number" class="form-control" id="current_price" name="current_price" step="0.01" min="0">
-                            <button class="btn btn-outline-secondary" type="button" id="fetchPriceBtn" disabled>
-                                <i class="fas fa-sync-alt"></i>
-                            </button>
                         </div>
                         <div class="form-text">Leave blank to use purchase price as current price</div>
                     </div>
@@ -406,17 +421,66 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="editInvestmentModalLabel">Edit Investment</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/investments" method="post">
+            <form action="/investments" method="post">
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="investment_id" id="edit_investment_id">
                 
                 <div class="modal-body">
-                    <!-- Content will be dynamically loaded -->
-                    <div class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
+                    <div class="mb-3">
+                        <label for="edit_type_id" class="form-label">Investment Type</label>
+                        <select class="form-select" id="edit_type_id" name="type_id" required>
+                            <?php 
+                            // Reset the investment types result pointer
+                            $investment_types->data_seek(0);
+                            while ($type = $investment_types->fetch_assoc()): 
+                            ?>
+                                <option value="<?php echo $type['type_id']; ?>" data-risk="<?php echo $type['risk_level']; ?>">
+                                    <?php echo htmlspecialchars($type['name']); ?> (<?php echo ucfirst($type['risk_level']); ?> Risk)
+                                </option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_name" class="form-label">Investment Name</label>
+                        <input type="text" class="form-control" id="edit_name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_ticker_symbol" class="form-label">Ticker Symbol (Optional)</label>
+                        <input type="text" class="form-control" id="edit_ticker_symbol" name="ticker_symbol">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_purchase_date" class="form-label">Purchase Date</label>
+                        <input type="date" class="form-control" id="edit_purchase_date" name="purchase_date" required>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit_purchase_price" class="form-label">Purchase Price</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="edit_purchase_price" name="purchase_price" step="0.01" min="0" required>
+                            </div>
                         </div>
-                        <p class="mt-3">Loading investment data...</p>
+                        <div class="col-md-6">
+                            <label for="edit_quantity" class="form-label">Quantity</label>
+                            <input type="number" class="form-control" id="edit_quantity" name="quantity" step="0.000001" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_current_price" class="form-label">Current Price</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="edit_current_price" name="current_price" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_notes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="edit_notes" name="notes" rows="3"></textarea>
                     </div>
                 </div>
                 
@@ -442,7 +506,7 @@ require_once 'includes/header.php';
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="<?php echo BASE_PATH; ?>/investments" method="post">
+                <form action="/investments" method="post">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="investment_id" id="delete_investment_id">
                     <button type="submit" class="btn btn-danger">Delete</button>
@@ -460,7 +524,7 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="updatePriceModalLabel">Update Current Price</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/investments" method="post">
+            <form action="/investments" method="post">
                 <input type="hidden" name="action" value="update_price">
                 <input type="hidden" name="investment_id" id="update_investment_id">
                 
@@ -483,68 +547,7 @@ require_once 'includes/header.php';
     </div>
 </div>
 
-<!-- Stock Lookup Modal -->
-<div class="modal fade" id="stockLookupModal" tabindex="-1" aria-labelledby="stockLookupModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="stockLookupModalLabel">Stock Symbol Lookup</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="companySearchInput" class="form-label">Search for a company</label>
-                    <input type="text" class="form-control" id="companySearchInput" placeholder="Enter company name...">
-                </div>
-                <div id="lookupResults" class="mt-3">
-                    <div class="alert alert-info">
-                        Enter a company name to search for its stock symbol.
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Portfolio Analysis Modal -->
-<div class="modal fade" id="portfolioAnalysisModal" tabindex="-1" aria-labelledby="portfolioAnalysisModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="portfolioAnalysisModalLabel">Portfolio Analysis</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-3">Analyzing your portfolio...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <?php
-// Helper function to get risk badge class
-function getRiskBadgeClass($risk_level) {
-    switch ($risk_level) {
-        case 'very low':
-            return 'success';
-        case 'low':
-            return 'info';
-        case 'moderate':
-            return 'primary';
-        case 'high':
-            return 'warning';
-        case 'very high':
-            return 'danger';
-        default:
-            return 'secondary';
-    }
-}
-
 // Chart data
 $typeChartData = [];
 $typeChartLabels = [];
@@ -663,299 +666,122 @@ var riskLevelChart = new Chart(riskChartCtx, {
     }
 });
 
-// Add event listeners for investment management
-
-// Export data button
-document.getElementById('exportInvestmentData').addEventListener('click', function() {
-    // Simulate export functionality
-    alert('Exporting investment data...');
-    // In a real implementation, this would generate a CSV or Excel file
-});
-
-// Refresh data button
-document.getElementById('refreshInvestmentData').addEventListener('click', function() {
-    // Show loading indicator
-    this.innerHTML = '<i class=\"fas fa-spinner fa-spin me-1\"></i> Refreshing...';
-    this.disabled = true;
-    
-    // Simulate data refresh
-    setTimeout(() => {
-        window.location.reload();
-    }, 1000);
-});
-
-// Stock lookup button
-document.getElementById('lookupTickerBtn').addEventListener('click', function() {
-    // Show stock lookup modal
-    var modal = new bootstrap.Modal(document.getElementById('stockLookupModal'));
-    modal.show();
-});
-
-// Company search input
-const companySearchInput = document.getElementById('companySearchInput');
-if (companySearchInput) {
-    companySearchInput.addEventListener('input', function() {
-        const searchTerm = this.value.trim();
+// Handle edit investment button
+document.querySelectorAll('.edit-investment').forEach(button => {
+    button.addEventListener('click', function() {
+        const investmentId = this.getAttribute('data-investment-id');
         
-        if (searchTerm.length < 2) {
-            document.getElementById('lookupResults').innerHTML = `
-                <div class=\"alert alert-info\">
-                    Enter a company name to search for its stock symbol.
-                </div>
-            `;
-            return;
-        }
+        // Show loading spinner
+        showSpinner(document.querySelector('#editInvestmentModal .modal-body'));
         
-        // Show loading indicator
-        document.getElementById('lookupResults').innerHTML = `
-            <div class=\"text-center py-3\">
-                <div class=\"spinner-border text-primary\" role=\"status\">
-                    <span class=\"visually-hidden\">Loading...</span>
-                </div>
-                <p class=\"mt-2\">Searching...</p>
-            </div>
-        `;
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('editInvestmentModal'));
+        modal.show();
         
-        // Simulate API call to search for company
-        setTimeout(() => {
-            // Mock results (in a real app, this would come from an API)
-            const results = [
-                { symbol: 'AAPL', name: 'Apple Inc.', exchange: 'NASDAQ' },
-                { symbol: 'MSFT', name: 'Microsoft Corporation', exchange: 'NASDAQ' },
-                { symbol: 'GOOGL', name: 'Alphabet Inc.', exchange: 'NASDAQ' },
-                { symbol: 'AMZN', name: 'Amazon.com Inc.', exchange: 'NASDAQ' },
-                { symbol: 'META', name: 'Meta Platforms Inc.', exchange: 'NASDAQ' }
-            ].filter(company => 
-                company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                company.symbol.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            
-            if (results.length === 0) {
-                document.getElementById('lookupResults').innerHTML = `
-                    <div class=\"alert alert-warning\">
-                        No companies found matching your search.
-                    </div>
-                `;
-                return;
-            }
-            
-            let resultsHTML = `
-                <div class=\"table-responsive\">
-                    <table class=\"table table-hover\">
-                        <thead>
-                            <tr>
-                                <th>Symbol</th>
-                                <th>Company Name</th>
-                                <th>Exchange</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-            
-            results.forEach(company => {
-                resultsHTML += `
-                    <tr>
-                        <td><strong>${company.symbol}</strong></td>
-                        <td>${company.name}</td>
-                        <td>${company.exchange}</td>
-                        <td>
-                            <button type=\"button\" class=\"btn btn-sm btn-primary select-symbol\" 
-                                data-symbol=\"${company.symbol}\" 
-                                data-company=\"${company.name}\">
-                                Select
-                            </button>
-                        </td>
-                    </tr>
-                `;
+        // Fetch investment data
+        fetch('/investments?action=get_investment&investment_id=' + investmentId)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Populate form fields
+                    document.getElementById('edit_investment_id').value = data.investment.investment_id;
+                    document.getElementById('edit_type_id').value = data.investment.type_id;
+                    document.getElementById('edit_name').value = data.investment.name;
+                    document.getElementById('edit_ticker_symbol').value = data.investment.ticker_symbol || '';
+                    document.getElementById('edit_purchase_date').value = data.investment.purchase_date;
+                    document.getElementById('edit_purchase_price').value = data.investment.purchase_price;
+                    document.getElementById('edit_quantity').value = data.investment.quantity;
+                    document.getElementById('edit_current_price').value = data.investment.current_price;
+                    document.getElementById('edit_notes').value = data.investment.notes || '';
+                    
+                    // Remove spinner
+                    hideSpinner(document.querySelector('#editInvestmentModal .modal-body'));
+                } else {
+                    // Show error
+                    alert('Failed to load investment data: ' + data.message);
+                    modal.hide();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching investment data:', error);
+                alert('An error occurred while loading investment data.');
+                modal.hide();
             });
-            
-            resultsHTML += `
-                        </tbody>
-                    </table>
+    });
+});
+
+// Handle delete investment button
+document.querySelectorAll('.delete-investment').forEach(button => {
+    button.addEventListener('click', function() {
+        const investmentId = this.getAttribute('data-investment-id');
+        document.getElementById('delete_investment_id').value = investmentId;
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('deleteInvestmentModal'));
+        modal.show();
+    });
+});
+
+// Handle update price button
+document.querySelectorAll('.update-price').forEach(button => {
+    button.addEventListener('click', function() {
+        const investmentId = this.getAttribute('data-investment-id');
+        const currentPrice = this.getAttribute('data-current-price');
+        
+        document.getElementById('update_investment_id').value = investmentId;
+        document.getElementById('update_current_price').value = currentPrice;
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('updatePriceModal'));
+        modal.show();
+    });
+});
+
+// Calculate investment value
+function calculateInvestmentValue() {
+    const purchasePrice = parseFloat(document.getElementById('purchase_price').value) || 0;
+    const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+    const currentPrice = parseFloat(document.getElementById('current_price').value) || purchasePrice;
+    
+    const purchaseValue = purchasePrice * quantity;
+    const currentValue = currentPrice * quantity;
+    const gainLoss = currentValue - purchaseValue;
+    const percentGainLoss = purchaseValue > 0 ? (gainLoss / purchaseValue) * 100 : 0;
+    
+    // Display calculated values
+    const valueDisplay = document.getElementById('calculated_values');
+    if (valueDisplay) {
+        if (purchaseValue > 0) {
+            valueDisplay.innerHTML = `
+                <div class='alert alert-info mt-3'>
+                    <div><strong>Initial Investment:</strong> $${purchaseValue.toFixed(2)}</div>
+                    <div><strong>Current Value:</strong> $${currentValue.toFixed(2)}</div>
+                    <div class='${gainLoss >= 0 ? 'text-success' : 'text-danger'}'>
+                        <strong>Gain/Loss:</strong> $${Math.abs(gainLoss).toFixed(2)} (${gainLoss >= 0 ? '+' : '-'}${Math.abs(percentGainLoss).toFixed(2)}%)
+                    </div>
                 </div>
             `;
-            
-            document.getElementById('lookupResults').innerHTML = resultsHTML;
-            
-            // Add event listeners to select buttons
-            document.querySelectorAll('.select-symbol').forEach(button => {
-                button.addEventListener('click', function() {
-                    const symbol = this.getAttribute('data-symbol');
-                    const company = this.getAttribute('data-company');
-                    
-                    // Fill ticker symbol input
-                    document.getElementById('ticker_symbol').value = symbol;
-                    
-                    // If name field is empty, fill it too
-                    if (!document.getElementById('name').value) {
-                        document.getElementById('name').value = company;
-                    }
-                    
-                    // Enable fetch price button
-                    document.getElementById('fetchPriceBtn').disabled = false;
-                    
-                    // Close modal
-                    bootstrap.Modal.getInstance(document.getElementById('stockLookupModal')).hide();
-                });
-            });
-        }, 800);
-    });
-}
-
-// Initialize fetch price button
-const fetchPriceBtn = document.getElementById('fetchPriceBtn');
-if (fetchPriceBtn) {
-    fetchPriceBtn.addEventListener('click', function() {
-        const ticker = document.getElementById('ticker_symbol').value;
-        
-        if (!ticker) {
-            alert('Please enter a ticker symbol first.');
-            return;
+        } else {
+            valueDisplay.innerHTML = '';
         }
-        
-        // Show loading state
-        this.disabled = true;
-        this.innerHTML = '<i class=\"fas fa-spinner fa-spin\"></i>';
-        
-        // Simulate fetching current price
-        setTimeout(() => {
-            // Generate a random price for demo
-            const randomPrice = (Math.random() * 100 + 50).toFixed(2);
-            document.getElementById('current_price').value = randomPrice;
-            
-            // Reset button
-            this.disabled = false;
-            this.innerHTML = '<i class=\"fas fa-sync-alt\"></i>';
-        }, 1000);
-    });
-}
-
-// Initialize search functionality
-const investmentSearch = document.getElementById('investmentSearch');
-if (investmentSearch) {
-    investmentSearch.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        const table = document.getElementById('investmentTable');
-        const rows = table.querySelectorAll('tbody tr');
-        
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            const match = text.includes(searchTerm);
-            row.style.display = match ? '' : 'none';
-        });
-    });
-}
-
-// Initialize portfolio analysis button
-document.getElementById('analyzePortfolioBtn').addEventListener('click', function() {
-    const modal = new bootstrap.Modal(document.getElementById('portfolioAnalysisModal'));
-    modal.show();
-    
-    // Load analysis content after delay (simulating calculation)
-    setTimeout(() => {
-        document.querySelector('#portfolioAnalysisModal .modal-body').innerHTML = `
-            <div class=\"card border-primary mb-3\">
-                <div class=\"card-header bg-primary text-white\">
-                    <h5 class=\"mb-0\">Portfolio Analysis Results</h5>
-                </div>
-                <div class=\"card-body\">
-                    <div class=\"row mb-3\">
-                        <div class=\"col-md-6\">
-                            <div class=\"card border-0 shadow-sm\">
-                                <div class=\"card-body text-center\">
-                                    <h6 class=\"card-title\">Diversification Score</h6>
-                                    <div class=\"display-4 text-primary\">7/10</div>
-                                    <p class=\"text-muted\">Well diversified portfolio</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class=\"col-md-6\">
-                            <div class=\"card border-0 shadow-sm\">
-                                <div class=\"card-body text-center\">
-                                    <h6 class=\"card-title\">Risk Assessment</h6>
-                                    <div class=\"display-4 text-warning\">Moderate</div>
-                                    <p class=\"text-muted\">Balanced risk profile</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <h6 class=\"mb-3\">Recommendations</h6>
-                    <ul class=\"list-group mb-3\">
-                        <li class=\"list-group-item\">
-                            <i class=\"fas fa-lightbulb text-warning me-2\"></i>
-                            Consider adding more fixed income investments to better balance your portfolio.
-                        </li>
-                        <li class=\"list-group-item\">
-                            <i class=\"fas fa-lightbulb text-warning me-2\"></i>
-                            Your portfolio is heavily concentrated in technology stocks. Consider diversifying into other sectors.
-                        </li>
-                        <li class=\"list-group-item\">
-                            <i class=\"fas fa-lightbulb text-warning me-2\"></i>
-                            Regular rebalancing can help maintain your target asset allocation.
-                        </li>
-                    </ul>
-                    
-                    <div class=\"alert alert-info\">
-                        <i class=\"fas fa-info-circle me-2\"></i>
-                        <small>This analysis is based on current portfolio data and general investment principles. 
-                        For personalized financial advice, consult with a qualified financial advisor.</small>
-                    </div>
-                </div>
-            </div>
-        `;
-    }, 1500);
-});
-
-// Initialize investment goals button
-document.getElementById('setInvestmentGoalsBtn').addEventListener('click', function() {
-    alert('Setting investment goals functionality will be implemented in the next update.');
-});
-
-// Initialize portfolio settings button
-document.getElementById('portfolioSettingsBtn').addEventListener('click', function() {
-    alert('Portfolio settings functionality will be implemented in the next update.');
-});
-
-// Initialize compare to market button
-document.getElementById('compareToMarketBtn').addEventListener('click', function() {
-    alert('Market comparison functionality will be implemented in the next update.');
-});
-
-// Initialize show projections button
-document.getElementById('showProjectionsBtn').addEventListener('click', function() {
-    alert('Investment projections functionality will be implemented in the next update.');
-});
-
-// Initialize filter investments button
-document.getElementById('filterInvestmentsBtn').addEventListener('click', function() {
-    alert('Investment filtering functionality will be implemented in the next update.');
-});
-
-// Initialize sort investments button
-document.getElementById('sortInvestmentsBtn').addEventListener('click', function() {
-    alert('Investment sorting functionality will be implemented in the next update.');
-});
-
-// Initialize update all prices button
-document.getElementById('updateAllPricesBtn').addEventListener('click', function() {
-    if (confirm('Do you want to update prices for all investments with ticker symbols?')) {
-        this.innerHTML = '<i class=\"fas fa-spinner fa-spin me-1\"></i> Updating...';
-        this.disabled = true;
-        
-        // Simulate updating prices
-        setTimeout(() => {
-            this.innerHTML = '<i class=\"fas fa-sync fa-sm fa-fw me-2 text-gray-400\"></i> Update All Prices';
-            this.disabled = false;
-            alert('All prices have been updated successfully.');
-            window.location.reload();
-        }, 2000);
     }
-});
+}
 
-// Log chart initialization
-console.log('Charts initialized');
+// Add event listeners for calculation
+const priceInput = document.getElementById('purchase_price');
+const quantityInput = document.getElementById('quantity');
+const currentPriceInput = document.getElementById('current_price');
+
+if (priceInput && quantityInput && currentPriceInput) {
+    priceInput.addEventListener('input', calculateInvestmentValue);
+    quantityInput.addEventListener('input', calculateInvestmentValue);
+    currentPriceInput.addEventListener('input', calculateInvestmentValue);
+    
+    // Add calculated values container after the inputs
+    const container = document.createElement('div');
+    container.id = 'calculated_values';
+    currentPriceInput.parentNode.parentNode.insertAdjacentElement('afterend', container);
+}
 ";
 
 // Function to adjust color brightness
