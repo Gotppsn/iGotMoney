@@ -312,8 +312,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Output JSON response for AJAX requests
     if ($isAjax) {
+        // Ensure proper JSON encoding
         header('Content-Type: application/json');
-        echo json_encode($response);
+        echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
         exit();
     }
     

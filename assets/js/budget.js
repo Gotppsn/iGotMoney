@@ -236,9 +236,27 @@ function initializeBudgetRecommendations() {
             // Submit form with AJAX
             fetch(formAction, {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                return response.text(); // First get text response
+            })
+            .then(text => {
+                // Try to parse JSON, but handle potential syntax errors
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.error('JSON parse error:', e);
+                    console.log('Server response:', text);
+                    throw new Error('Invalid JSON response from server');
+                }
+            })
             .then(data => {
                 if (data.success) {
                     showNotification(data.message, 'success');
@@ -255,7 +273,7 @@ function initializeBudgetRecommendations() {
             })
             .catch(error => {
                 console.error('Error adopting recommendations:', error);
-                showNotification('An error occurred', 'danger');
+                showNotification('An error occurred: ' + error.message, 'danger');
                 adoptAllBtn.innerHTML = '<i class="fas fa-check"></i> Adopt All Recommendations';
                 adoptAllBtn.disabled = false;
             });
@@ -286,9 +304,27 @@ function initializeBudgetRecommendations() {
             // Send AJAX request
             fetch(formAction, {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                return response.text(); // First get text response
+            })
+            .then(text => {
+                // Try to parse JSON, but handle potential syntax errors
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.error('JSON parse error:', e);
+                    console.log('Server response:', text);
+                    throw new Error('Invalid JSON response from server');
+                }
+            })
             .then(data => {
                 if (data.success) {
                     showNotification(data.message || 'Budget added successfully!', 'success');
@@ -305,7 +341,7 @@ function initializeBudgetRecommendations() {
             })
             .catch(error => {
                 console.error('Error adopting recommendation:', error);
-                showNotification('An error occurred', 'danger');
+                showNotification('An error occurred: ' + error.message, 'danger');
                 this.innerHTML = '<i class="fas fa-check"></i> Adopt';
                 this.disabled = false;
             });
@@ -543,17 +579,29 @@ function submitFormWithAjax(form) {
     // Send AJAX request
     fetch(formAction, {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
     })
     .then(response => {
         console.log('Response status:', response.status);
         if (!response.ok) {
             throw new Error(`HTTP error ${response.status}`);
         }
-        return response.json();
+        return response.text(); // First get text response
+    })
+    .then(text => {
+        // Try to parse JSON, but handle potential syntax errors
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.error('JSON parse error:', e);
+            console.log('Server response:', text);
+            throw new Error('Invalid JSON response from server');
+        }
     })
     .then(data => {
-        console.log('Response data:', data);
         if (data.success) {
             // Close modal if we're in one
             const modal = form.closest('.modal');
@@ -582,7 +630,7 @@ function submitFormWithAjax(form) {
     })
     .catch(error => {
         console.error('Error submitting form:', error);
-        showNotification('Network error occurred: ' + error.message, 'danger');
+        showNotification('Error: ' + error.message, 'danger');
         
         // Reset button
         submitButton.disabled = false;
@@ -631,7 +679,17 @@ function fetchBudgetData(budgetId) {
         if (!response.ok) {
             throw new Error(`HTTP error ${response.status}`);
         }
-        return response.json();
+        return response.text(); // First get text response
+    })
+    .then(text => {
+        // Try to parse JSON, but handle potential syntax errors
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.error('JSON parse error:', e);
+            console.log('Server response:', text);
+            throw new Error('Invalid JSON response from server');
+        }
     })
     .then(data => {
         console.log('Budget data:', data);

@@ -30,7 +30,9 @@ class Budget {
     
     // Destructor
     public function __destruct() {
-        closeDB($this->conn);
+        if ($this->conn) {
+            closeDB($this->conn);
+        }
     }
     
     // Create new budget
@@ -129,7 +131,7 @@ class Budget {
             // Get result
             $result = $stmt->get_result();
             
-            if ($result->num_rows > 0) {
+            if ($result && $result->num_rows > 0) {
                 $row = $result->fetch_assoc();
                 
                 // Set properties
@@ -284,6 +286,10 @@ class Budget {
             
             // Get result
             $budgets = $stmt->get_result();
+            if (!$budgets) {
+                error_log("No result from budget query: " . $stmt->error);
+                return array();
+            }
             
             // Loop through budgets
             while ($budget = $budgets->fetch_assoc()) {
@@ -303,6 +309,12 @@ class Budget {
                 $expense_stmt->bind_param("iis", $user_id, $budget['category_id'], $current_month);
                 $expense_stmt->execute();
                 $expense_result = $expense_stmt->get_result();
+                
+                if (!$expense_result) {
+                    error_log("No result from expense query: " . $expense_stmt->error);
+                    continue;
+                }
+                
                 $expense_row = $expense_result->fetch_assoc();
                 
                 $spent = $expense_row['spent'] ?? 0;
@@ -349,6 +361,11 @@ class Budget {
             $categories_stmt->execute();
             $categories = $categories_stmt->get_result();
             
+            if (!$categories) {
+                error_log("No result from categories query: " . $categories_stmt->error);
+                return array();
+            }
+            
             // Get spending patterns for the past 3 months
             $three_months_ago = date('Y-m-d', strtotime('-3 months'));
             $expense_query = "SELECT category_id, SUM(amount) as total, COUNT(*) as count
@@ -365,6 +382,11 @@ class Budget {
             $expense_stmt->bind_param("is", $user_id, $three_months_ago);
             $expense_stmt->execute();
             $expenses = $expense_stmt->get_result();
+            
+            if (!$expenses) {
+                error_log("No result from expenses query: " . $expense_stmt->error);
+                return array();
+            }
             
             // Create expenses map
             $expense_map = array();
