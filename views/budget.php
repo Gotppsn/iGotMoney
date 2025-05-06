@@ -500,8 +500,8 @@ if (!empty($budget_status)) {
     }
 }
 
-// Include Chart.js library directly
-echo '<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>';
+// Add meta tag for base path
+echo '<meta name="base-path" content="' . BASE_PATH . '">';
 
 // JavaScript for budget page
 $page_scripts = "
@@ -583,13 +583,6 @@ document.addEventListener('DOMContentLoaded', function() {
             chartContainer.innerHTML = '<div class=\"alert alert-danger\">Error initializing chart: ' + e.message + '</div>';
         }
     }
-    
-    // Add event handlers for AJAX form submission
-    document.querySelectorAll('form').forEach(function(form) {
-        form.addEventListener('submit', function(e) {
-            // Let the JS handle the form validation and submission
-        });
-    });
 });";
 
 // Include footer

@@ -4,7 +4,11 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initializing budget.js');
+    // Get base path from meta tag
+    const basePath = document.querySelector('meta[name="base-path"]') ? 
+        document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
+    
+    console.log('Initializing budget.js with base path:', basePath);
     
     // Initialize budget date validation
     initializeDateValidation();
@@ -21,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize budget chart
     initializeBudgetChart();
     
-    // Initialize button handlers - THIS WAS MISSING!
+    // Initialize button handlers
     initializeButtonHandlers();
 });
 
@@ -214,6 +218,10 @@ function initializeCategorySelection() {
  * Handle recommendation adoption and highlighting
  */
 function initializeBudgetRecommendations() {
+    // Get base path from meta tag
+    const basePath = document.querySelector('meta[name="base-path"]') ? 
+        document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
+    
     // Highlight recommendations that differ significantly from current budgets
     highlightRecommendations();
     
@@ -227,27 +235,20 @@ function initializeBudgetRecommendations() {
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Applying...';
             this.disabled = true;
             
-            // Create form and submit
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = window.location.pathname;
+            // Create form data
+            const formData = new FormData();
+            formData.append('action', 'generate_plan');
+            formData.append('replace_existing', '1');
             
-            const actionInput = document.createElement('input');
-            actionInput.type = 'hidden';
-            actionInput.name = 'action';
-            actionInput.value = 'generate_plan';
-            
-            const replaceInput = document.createElement('input');
-            replaceInput.type = 'hidden';
-            replaceInput.name = 'replace_existing';
-            replaceInput.value = '1';
-            
-            form.appendChild(actionInput);
-            form.appendChild(replaceInput);
+            // Convert FormData to URL encoded string
+            const params = new URLSearchParams();
+            for (const pair of formData.entries()) {
+                params.append(pair[0], pair[1]);
+            }
             
             // Add AJAX handling
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', window.location.pathname, true);
+            xhr.open('POST', basePath + '/budget', true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
             xhr.onload = function() {
@@ -263,31 +264,25 @@ function initializeBudgetRecommendations() {
                             }, 1000);
                         } else {
                             showNotification(response.message || 'An error occurred', 'danger');
-                            adoptAllBtn.innerHTML = 'Adopt All Recommendations';
+                            adoptAllBtn.innerHTML = '<i class="fas fa-check"></i> Adopt All Recommendations';
                             adoptAllBtn.disabled = false;
                         }
                     } catch (e) {
                         showNotification('Invalid response from server', 'danger');
-                        adoptAllBtn.innerHTML = 'Adopt All Recommendations';
+                        adoptAllBtn.innerHTML = '<i class="fas fa-check"></i> Adopt All Recommendations';
                         adoptAllBtn.disabled = false;
                     }
                 } else {
                     showNotification('Failed to process request: ' + xhr.status, 'danger');
-                    adoptAllBtn.innerHTML = 'Adopt All Recommendations';
+                    adoptAllBtn.innerHTML = '<i class="fas fa-check"></i> Adopt All Recommendations';
                     adoptAllBtn.disabled = false;
                 }
             };
             xhr.onerror = function() {
                 showNotification('Network error occurred', 'danger');
-                adoptAllBtn.innerHTML = 'Adopt All Recommendations';
+                adoptAllBtn.innerHTML = '<i class="fas fa-check"></i> Adopt All Recommendations';
                 adoptAllBtn.disabled = false;
             };
-            
-            const formData = new FormData(form);
-            const params = new URLSearchParams();
-            for (const pair of formData.entries()) {
-                params.append(pair[0], pair[1]);
-            }
             
             xhr.send(params.toString());
         }
@@ -319,7 +314,7 @@ function initializeBudgetRecommendations() {
             
             // Send AJAX request
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', window.location.pathname, true);
+            xhr.open('POST', basePath + '/budget', true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
             xhr.onload = () => {
@@ -382,7 +377,7 @@ function highlightRecommendations() {
         
         if (categoryCell && budgetCell) {
             const category = categoryCell.textContent.trim();
-            const budget = parseFloat(budgetCell.textContent.replace('$', '').replace(',', ''));
+            const budget = parseFloat(budgetCell.textContent.replace('$', '').replace(/,/g, ''));
             
             currentBudgets[category] = budget;
         }
@@ -431,6 +426,12 @@ function highlightRecommendations() {
  * Validates form inputs before submission
  */
 function initializeFormValidation() {
+    // Get base path from meta tag
+    const basePath = document.querySelector('meta[name="base-path"]') ? 
+        document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
+    
+    console.log('Base path for forms:', basePath);
+    
     // Add form submit handlers
     const addForm = document.querySelector('#addBudgetModal form');
     if (addForm) {
@@ -443,8 +444,20 @@ function initializeFormValidation() {
         });
     }
     
+    // Handle edit form using button click instead of form submit
     const editForm = document.querySelector('#editBudgetModal form');
-    if (editForm) {
+    const saveEditButton = document.querySelector('#saveEditBudget');
+    
+    if (editForm && saveEditButton) {
+        saveEditButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            if (validateBudgetForm(editForm)) {
+                submitFormWithAjax(editForm);
+            }
+        });
+    } else if (editForm) {
+        // Fallback for original button structure
         editForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -469,11 +482,16 @@ function initializeFormValidation() {
  * Sets up event listeners for edit and delete buttons
  */
 function initializeButtonHandlers() {
-    console.log('Initializing button handlers for budget actions', 'budget.js:470');
+    // Get base path from meta tag
+    const basePath = document.querySelector('meta[name="base-path"]') ? 
+        document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
+    
+    console.log('Initializing button handlers for budget actions');
+    
     // Handle edit budget button clicks
     document.querySelectorAll('.edit-budget').forEach(button => {
         button.addEventListener('click', function() {
-            console.log('Edit budget button clicked', this.getAttribute('data-budget-id'), 'budget.js:474');
+            console.log('Edit budget button clicked', this.getAttribute('data-budget-id'));
             const budgetId = this.getAttribute('data-budget-id');
             document.getElementById('edit_budget_id').value = budgetId;
             
@@ -582,8 +600,13 @@ function showValidationError(element, message) {
  * @param {HTMLFormElement} form - The form to submit
  */
 function submitFormWithAjax(form) {
+    // Get base path from meta tag
+    const basePath = document.querySelector('meta[name="base-path"]') ? 
+        document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
+    
     // Get submit button
-    const submitButton = form.querySelector('button[type="submit"]');
+    const submitButton = form.querySelector('button[type="submit"]') || 
+                          form.querySelector('button:last-child');
     const originalButtonText = submitButton.innerHTML;
     
     // Disable button and show loading
@@ -601,7 +624,12 @@ function submitFormWithAjax(form) {
     
     // Send AJAX request
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', form.action || window.location.pathname, true);
+    
+    // Use absolute URL with base path - IMPORTANT FIX
+    const url = basePath + '/budget';
+    console.log('Submitting form to:', url);
+    
+    xhr.open('POST', url, true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
     
@@ -672,6 +700,10 @@ function submitFormWithAjax(form) {
  * @param {string} budgetId - Budget ID to fetch
  */
 function fetchBudgetData(budgetId) {
+    // Get base path from meta tag
+    const basePath = document.querySelector('meta[name="base-path"]') ? 
+        document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
+    
     // Get form and modal elements
     const form = document.querySelector('#editBudgetModal form');
     const modal = document.getElementById('editBudgetModal');
@@ -683,7 +715,12 @@ function fetchBudgetData(budgetId) {
     
     // Create and send request
     const xhr = new XMLHttpRequest();
-    xhr.open('GET', `${window.location.pathname}?action=get_budget&budget_id=${budgetId}`, true);
+    
+    // Use proper URL with base path
+    const url = `${basePath}/budget?action=get_budget&budget_id=${budgetId}`;
+    console.log('Fetching budget data from:', url);
+    
+    xhr.open('GET', url, true);
     xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
     
     xhr.onload = function() {
@@ -810,64 +847,7 @@ function initializeBudgetChart() {
         }
     }
     
-    console.log('Chart initialized successfully', 'budget.js:1137');
-}
-
-/**
- * Show spinner in container
- * @param {HTMLElement} container - Container to show spinner in
- */
-function showSpinner(container) {
-    if (!container) return;
-    
-    container.innerHTML = `
-        <div class="text-center py-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-3">Loading...</p>
-        </div>
-    `;
-}
-
-/**
- * Hide spinner and restore content
- * @param {HTMLElement} container - Container with spinner
- */
-function hideSpinner(container) {
-    if (!container) return;
-    
-    // For edit form modal, restore the form fields
-    if (container.closest('#editBudgetModal')) {
-        container.innerHTML = `
-            <div class="mb-3">
-                <label for="edit_category_id" class="form-label">Category</label>
-                <select class="form-select" id="edit_category_id" name="category_id" required>
-                    ${Array.from(document.getElementById('category_id').options).map(option => 
-                        `<option value="${option.value}">${option.textContent}</option>`
-                    ).join('')}
-                </select>
-            </div>
-            
-            <div class="mb-3">
-                <label for="edit_amount" class="form-label">Budget Amount</label>
-                <div class="input-group">
-                    <span class="input-group-text">$</span>
-                    <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0" required>
-                </div>
-            </div>
-            
-            <div class="mb-3">
-                <label for="edit_start_date" class="form-label">Start Date</label>
-                <input type="date" class="form-control" id="edit_start_date" name="start_date" required>
-            </div>
-            
-            <div class="mb-3">
-                <label for="edit_end_date" class="form-label">End Date</label>
-                <input type="date" class="form-control" id="edit_end_date" name="end_date" required>
-            </div>
-        `;
-    }
+    console.log('Chart initialized successfully');
 }
 
 /**
