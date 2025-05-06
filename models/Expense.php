@@ -409,16 +409,26 @@ class Expense {
         }
     }
     
-    // Get monthly total expenses
+    // Get monthly total expenses - FIXED VERSION
     public function getMonthlyTotal($user_id) {
         $monthly_total = 0;
         
         try {
+            // Add debug logging
+            error_log("Calculating monthly expenses for user_id: $user_id");
+            
             // Get current month expenses (one-time)
             $current_month = date('Y-m');
+            
+            // Check if user_id is valid
+            if (!is_numeric($user_id) || $user_id <= 0) {
+                error_log("Invalid user_id: $user_id");
+                return 0;
+            }
+            
+            // Get one-time expenses for current month
             $query = "SELECT SUM(amount) as total FROM " . $this->table . " 
-                      WHERE user_id = ? AND frequency = 'one-time' 
-                      AND DATE_FORMAT(expense_date, '%Y-%m') = ?";
+                      WHERE user_id = ? AND DATE_FORMAT(expense_date, '%Y-%m') = ?";
             
             // Prepare statement
             $stmt = $this->conn->prepare($query);
@@ -435,7 +445,12 @@ class Expense {
             // Get result
             $result = $stmt->get_result();
             $row = $result->fetch_assoc();
-            $monthly_total += $row['total'] ?? 0;
+            
+            // Add one-time expenses
+            $one_time_total = $row['total'] ?? 0;
+            $monthly_total += $one_time_total;
+            
+            error_log("One-time expenses total: $one_time_total");
             
             // Get recurring expenses
             $query = "SELECT * FROM " . $this->table . " 
@@ -456,29 +471,41 @@ class Expense {
             // Get result
             $result = $stmt->get_result();
             
+            $recurring_total = 0;
+            
             while ($row = $result->fetch_assoc()) {
                 // Calculate monthly equivalent based on frequency
+                $recurring_amount = 0;
+                
                 switch ($row['frequency']) {
                     case 'daily':
-                        $monthly_total += $row['amount'] * 30; // Approximate days in a month
+                        $recurring_amount = $row['amount'] * 30; // Approximate days in a month
                         break;
                     case 'weekly':
-                        $monthly_total += $row['amount'] * 4.33; // Approximate weeks in a month
+                        $recurring_amount = $row['amount'] * 4.33; // Approximate weeks in a month
                         break;
                     case 'bi-weekly':
-                        $monthly_total += $row['amount'] * 2.17; // Approximate bi-weeks in a month
+                        $recurring_amount = $row['amount'] * 2.17; // Approximate bi-weeks in a month
                         break;
                     case 'monthly':
-                        $monthly_total += $row['amount'];
+                        $recurring_amount = $row['amount'];
                         break;
                     case 'quarterly':
-                        $monthly_total += $row['amount'] / 3;
+                        $recurring_amount = $row['amount'] / 3;
                         break;
                     case 'annually':
-                        $monthly_total += $row['amount'] / 12;
+                        $recurring_amount = $row['amount'] / 12;
                         break;
                 }
+                
+                $recurring_total += $recurring_amount;
+                
+                error_log("Recurring expense: {$row['description']}, Frequency: {$row['frequency']}, Amount: {$row['amount']}, Monthly equivalent: $recurring_amount");
             }
+            
+            $monthly_total += $recurring_total;
+            error_log("Recurring expenses total: $recurring_total");
+            error_log("Final monthly total: $monthly_total");
             
             return $monthly_total;
         } catch (Exception $e) {
@@ -487,16 +514,24 @@ class Expense {
         }
     }
     
-    // Get yearly total expenses
+    // Get yearly total expenses - FIXED VERSION
     public function getYearlyTotal($user_id) {
         $yearly_total = 0;
         
         try {
+            // Add debug logging
+            error_log("Calculating yearly expenses for user_id: $user_id");
+            
+            // Check if user_id is valid
+            if (!is_numeric($user_id) || $user_id <= 0) {
+                error_log("Invalid user_id: $user_id");
+                return 0;
+            }
+            
             // Get current year expenses (one-time)
             $current_year = date('Y');
             $query = "SELECT SUM(amount) as total FROM " . $this->table . " 
-                      WHERE user_id = ? AND frequency = 'one-time' 
-                      AND YEAR(expense_date) = ?";
+                      WHERE user_id = ? AND YEAR(expense_date) = ?";
             
             // Prepare statement
             $stmt = $this->conn->prepare($query);
@@ -513,7 +548,12 @@ class Expense {
             // Get result
             $result = $stmt->get_result();
             $row = $result->fetch_assoc();
-            $yearly_total += $row['total'] ?? 0;
+            
+            // Add one-time expenses
+            $one_time_total = $row['total'] ?? 0;
+            $yearly_total += $one_time_total;
+            
+            error_log("One-time expenses yearly total: $one_time_total");
             
             // Get recurring expenses
             $query = "SELECT * FROM " . $this->table . " 
@@ -534,29 +574,41 @@ class Expense {
             // Get result
             $result = $stmt->get_result();
             
+            $recurring_total = 0;
+            
             while ($row = $result->fetch_assoc()) {
                 // Calculate yearly equivalent based on frequency
+                $recurring_amount = 0;
+                
                 switch ($row['frequency']) {
                     case 'daily':
-                        $yearly_total += $row['amount'] * 365;
+                        $recurring_amount = $row['amount'] * 365;
                         break;
                     case 'weekly':
-                        $yearly_total += $row['amount'] * 52;
+                        $recurring_amount = $row['amount'] * 52;
                         break;
                     case 'bi-weekly':
-                        $yearly_total += $row['amount'] * 26;
+                        $recurring_amount = $row['amount'] * 26;
                         break;
                     case 'monthly':
-                        $yearly_total += $row['amount'] * 12;
+                        $recurring_amount = $row['amount'] * 12;
                         break;
                     case 'quarterly':
-                        $yearly_total += $row['amount'] * 4;
+                        $recurring_amount = $row['amount'] * 4;
                         break;
                     case 'annually':
-                        $yearly_total += $row['amount'];
+                        $recurring_amount = $row['amount'];
                         break;
                 }
+                
+                $recurring_total += $recurring_amount;
+                
+                error_log("Recurring expense (yearly): {$row['description']}, Frequency: {$row['frequency']}, Amount: {$row['amount']}, Yearly equivalent: $recurring_amount");
             }
+            
+            $yearly_total += $recurring_total;
+            error_log("Recurring expenses yearly total: $recurring_total");
+            error_log("Final yearly total: $yearly_total");
             
             return $yearly_total;
         } catch (Exception $e) {

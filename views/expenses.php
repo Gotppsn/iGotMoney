@@ -3,8 +3,8 @@
 $page_title = 'Expense Management - iGotMoney';
 $current_page = 'expenses';
 
-// Additional JS
-$additional_js = ['/assets/js/chart.js', '/assets/js/expenses.js'];
+// Additional JS - UPDATED to use CDN for Chart.js instead of local file
+$additional_js = ['/assets/js/expenses.js'];
 
 // Include header
 require_once 'includes/header.php';
@@ -404,6 +404,9 @@ echo '<meta name="base-path" content="' . BASE_PATH . '">';
 echo '<meta name="chart-labels" content="' . htmlspecialchars(json_encode($chart_labels)) . '">';
 echo '<meta name="chart-data" content="' . htmlspecialchars(json_encode($chart_data)) . '">';
 echo '<meta name="chart-colors" content="' . htmlspecialchars(json_encode(array_slice($chart_colors, 0, count($chart_data)))) . '">';
+
+// Load Chart.js from CDN (added this line)
+echo '<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>';
 
 // Add page-specific script for Chart.js initialization
 $page_scripts = "

@@ -122,7 +122,7 @@ if (isset($_GET['action'])) {
         $start_date = null;
         $end_date = null;
         
-        $now = new Date();
+        $now = new DateTime(); // FIXED: Changed from new Date() to new DateTime()
         
         switch ($period) {
             case 'current-month':
