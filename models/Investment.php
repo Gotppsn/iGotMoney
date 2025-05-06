@@ -39,6 +39,190 @@ class Investment {
         closeDB($this->conn);
     }
     
+    // Create a new investment
+    public function create() {
+        try {
+            // Validate required fields
+            if (empty($this->user_id) || empty($this->type_id) || empty($this->name) || 
+                empty($this->purchase_date) || empty($this->purchase_price) || empty($this->quantity)) {
+                error_log("Investment create: Missing required fields");
+                return false;
+            }
+            
+            // Prepare query
+            $query = "INSERT INTO " . $this->table . " 
+                    (user_id, type_id, name, ticker_symbol, purchase_date, purchase_price, 
+                    quantity, current_price, notes)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            
+            // Prepare statement
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                error_log("Database prepare error: " . $this->conn->error);
+                return false;
+            }
+            
+            // Sanitize inputs
+            $this->user_id = htmlspecialchars(strip_tags($this->user_id));
+            $this->type_id = htmlspecialchars(strip_tags($this->type_id));
+            $this->name = htmlspecialchars(strip_tags($this->name));
+            $this->ticker_symbol = htmlspecialchars(strip_tags($this->ticker_symbol));
+            $this->purchase_date = htmlspecialchars(strip_tags($this->purchase_date));
+            $this->notes = htmlspecialchars(strip_tags($this->notes));
+            
+            // Convert price and quantity to proper numeric format
+            $this->purchase_price = floatval($this->purchase_price);
+            $this->quantity = floatval($this->quantity);
+            $this->current_price = floatval($this->current_price);
+            
+            // If current price is not set, use purchase price
+            if (!$this->current_price) {
+                $this->current_price = $this->purchase_price;
+            }
+            
+            // Bind parameters
+            $stmt->bind_param(
+                "iisssddds", 
+                $this->user_id, 
+                $this->type_id, 
+                $this->name, 
+                $this->ticker_symbol, 
+                $this->purchase_date, 
+                $this->purchase_price, 
+                $this->quantity, 
+                $this->current_price, 
+                $this->notes
+            );
+            
+            // Execute query
+            if (!$stmt->execute()) {
+                error_log("Execute error: " . $stmt->error);
+                return false;
+            }
+            
+            // Set the newly created investment ID
+            $this->investment_id = $this->conn->insert_id;
+            
+            // Add to transactions table
+            $this->addToTransactions();
+            
+            return true;
+        } catch (Exception $e) {
+            error_log("Error in create: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    // Update an investment
+    public function update() {
+        try {
+            // Validate required fields
+            if (empty($this->investment_id) || empty($this->user_id)) {
+                error_log("Investment update: Missing required fields");
+                return false;
+            }
+            
+            // Prepare query
+            $query = "UPDATE " . $this->table . " 
+                      SET type_id = ?, name = ?, ticker_symbol = ?, purchase_date = ?, 
+                          purchase_price = ?, quantity = ?, current_price = ?, notes = ? 
+                      WHERE investment_id = ? AND user_id = ?";
+            
+            // Prepare statement
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                error_log("Database prepare error: " . $this->conn->error);
+                return false;
+            }
+            
+            // Sanitize inputs
+            $this->type_id = htmlspecialchars(strip_tags($this->type_id));
+            $this->name = htmlspecialchars(strip_tags($this->name));
+            $this->ticker_symbol = htmlspecialchars(strip_tags($this->ticker_symbol));
+            $this->purchase_date = htmlspecialchars(strip_tags($this->purchase_date));
+            $this->notes = htmlspecialchars(strip_tags($this->notes));
+            
+            // Convert price and quantity to proper numeric format
+            $this->purchase_price = floatval($this->purchase_price);
+            $this->quantity = floatval($this->quantity);
+            $this->current_price = floatval($this->current_price);
+            
+            // Bind parameters
+            $stmt->bind_param(
+                "isssdddsii", 
+                $this->type_id, 
+                $this->name, 
+                $this->ticker_symbol, 
+                $this->purchase_date, 
+                $this->purchase_price, 
+                $this->quantity, 
+                $this->current_price, 
+                $this->notes,
+                $this->investment_id,
+                $this->user_id
+            );
+            
+            // Execute query
+            if (!$stmt->execute()) {
+                error_log("Execute error: " . $stmt->error);
+                return false;
+            }
+            
+            return $stmt->affected_rows > 0;
+        } catch (Exception $e) {
+            error_log("Error in update: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    // Delete an investment
+    public function delete($investment_id, $user_id) {
+        try {
+            // Validate inputs
+            $investment_id = intval($investment_id);
+            $user_id = intval($user_id);
+            
+            if ($investment_id <= 0 || $user_id <= 0) {
+                return false;
+            }
+            
+            // Delete associated transactions first
+            $query = "DELETE FROM " . $this->transactions_table . " 
+                      WHERE investment_id = ? AND user_id = ?";
+                      
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                error_log("Database prepare error: " . $this->conn->error);
+                return false;
+            }
+            
+            $stmt->bind_param("ii", $investment_id, $user_id);
+            $stmt->execute();
+            
+            // Now delete the investment
+            $query = "DELETE FROM " . $this->table . " 
+                      WHERE investment_id = ? AND user_id = ?";
+            
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                error_log("Database prepare error: " . $this->conn->error);
+                return false;
+            }
+            
+            $stmt->bind_param("ii", $investment_id, $user_id);
+            
+            if (!$stmt->execute()) {
+                error_log("Execute error: " . $stmt->error);
+                return false;
+            }
+            
+            return $stmt->affected_rows > 0;
+        } catch (Exception $e) {
+            error_log("Error in delete: " . $e->getMessage());
+            return false;
+        }
+    }
+    
     // Get investment by ID - Fixed error handling
     public function getById($investment_id, $user_id) {
         try {
@@ -342,6 +526,56 @@ class Investment {
                 'top_performers' => [],
                 'worst_performers' => []
             ];
+        }
+    }
+    
+    /**
+     * Add investment to transactions table
+     * @return boolean True if successful, false otherwise
+     */
+    private function addToTransactions() {
+        try {
+            // Calculate total amount
+            $amount = $this->purchase_price * $this->quantity;
+            
+            // Create transaction query
+            $query = "INSERT INTO " . $this->transactions_table . " 
+                     (user_id, type, amount, description, transaction_date, investment_id)
+                     VALUES (?, 'investment', ?, ?, ?, ?)";
+            
+            // Prepare statement
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                error_log("Database prepare error: " . $this->conn->error);
+                return false;
+            }
+            
+            // Create description
+            $description = "Investment in " . $this->name;
+            if (!empty($this->ticker_symbol)) {
+                $description .= " (" . $this->ticker_symbol . ")";
+            }
+            
+            // Bind parameters
+            $stmt->bind_param(
+                "idssi", 
+                $this->user_id, 
+                $amount, 
+                $description, 
+                $this->purchase_date, 
+                $this->investment_id
+            );
+            
+            // Execute query
+            if (!$stmt->execute()) {
+                error_log("Execute error for transaction: " . $stmt->error);
+                return false;
+            }
+            
+            return true;
+        } catch (Exception $e) {
+            error_log("Error in addToTransactions: " . $e->getMessage());
+            return false;
         }
     }
 }
