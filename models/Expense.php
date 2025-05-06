@@ -38,24 +38,27 @@ class Expense {
     
     // Create new expense
     public function create() {
-        // Validate input
-        if (!$this->validateInputs()) {
-            return false;
-        }
-        
         try {
             // Begin transaction
             $this->conn->begin_transaction();
             
+            // Validate input
+            if (!$this->validateInputs()) {
+                $this->conn->rollback();
+                return false;
+            }
+            
             // SQL query
             $query = "INSERT INTO " . $this->table . " 
-                      (user_id, category_id, amount, description, expense_date, frequency, is_recurring, next_due_date) 
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    (user_id, category_id, amount, description, expense_date, frequency, is_recurring, next_due_date) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             
             // Prepare statement
             $stmt = $this->conn->prepare($query);
             if (!$stmt) {
-                throw new Exception("Query preparation failed: " . $this->conn->error);
+                error_log("Query preparation failed: " . $this->conn->error);
+                $this->conn->rollback();
+                return false;
             }
             
             // Calculate next due date for recurring expenses
@@ -63,37 +66,45 @@ class Expense {
             
             // Bind parameters
             if (!$stmt->bind_param("iidssiss", 
-                              $this->user_id, 
-                              $this->category_id, 
-                              $this->amount, 
-                              $this->description, 
-                              $this->expense_date, 
-                              $this->frequency, 
-                              $this->is_recurring, 
-                              $this->next_due_date)) {
-                throw new Exception("Parameter binding failed: " . $stmt->error);
+                            $this->user_id, 
+                            $this->category_id, 
+                            $this->amount, 
+                            $this->description, 
+                            $this->expense_date, 
+                            $this->frequency, 
+                            $this->is_recurring, 
+                            $this->next_due_date)) {
+                error_log("Parameter binding failed: " . $stmt->error);
+                $this->conn->rollback();
+                return false;
             }
             
             // Execute query
             if (!$stmt->execute()) {
-                throw new Exception("Query execution failed: " . $stmt->error);
+                error_log("Query execution failed: " . $stmt->error);
+                $this->conn->rollback();
+                return false;
             }
             
+            // Get the inserted expense ID
             $this->expense_id = $this->conn->insert_id;
             
             // Record transaction
             if (!$this->recordTransaction()) {
-                throw new Exception("Failed to record transaction");
+                $this->conn->rollback();
+                return false;
             }
             
             // Commit transaction
             $this->conn->commit();
-            
             return true;
+            
         } catch (Exception $e) {
-            // Rollback transaction on error
-            $this->conn->rollback();
-            error_log("Create expense failed: " . $e->getMessage());
+            // Roll back the transaction on error
+            if ($this->conn->connect_errno) {
+                $this->conn->rollback();
+            }
+            error_log("Error creating expense: " . $e->getMessage());
             return false;
         }
     }
@@ -124,24 +135,6 @@ class Expense {
         // If not recurring, force frequency to be one-time
         if (!$this->is_recurring) {
             $this->frequency = 'one-time';
-        }
-        
-        // Validate category exists
-        $cat_query = "SELECT COUNT(*) as count FROM " . $this->categories_table . " WHERE category_id = ?";
-        $cat_stmt = $this->conn->prepare($cat_query);
-        if (!$cat_stmt) {
-            error_log("Category validation query preparation failed: " . $this->conn->error);
-            return false;
-        }
-        
-        $cat_stmt->bind_param("i", $this->category_id);
-        $cat_stmt->execute();
-        $result = $cat_stmt->get_result();
-        $row = $result->fetch_assoc();
-        
-        if ($row['count'] == 0) {
-            error_log("Expense validation failed: Category does not exist");
-            return false;
         }
         
         // Sanitize inputs
@@ -246,69 +239,74 @@ class Expense {
     
     // Get expense by ID
     public function getById($expense_id, $user_id) {
-        // SQL query
-        $query = "SELECT e.*, c.name as category_name 
-                  FROM " . $this->table . " e
-                  JOIN " . $this->categories_table . " c ON e.category_id = c.category_id
-                  WHERE e.expense_id = ? AND e.user_id = ?";
-        
-        // Prepare statement
-        $stmt = $this->conn->prepare($query);
-        if (!$stmt) {
-            error_log("Get expense by ID query preparation failed: " . $this->conn->error);
+        try {
+            // SQL query
+            $query = "SELECT e.*, c.name as category_name 
+                    FROM " . $this->table . " e
+                    JOIN " . $this->categories_table . " c ON e.category_id = c.category_id
+                    WHERE e.expense_id = ? AND e.user_id = ?";
+            
+            // Prepare statement
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Get expense by ID query preparation failed: " . $this->conn->error);
+            }
+            
+            // Bind parameters
+            $stmt->bind_param("ii", $expense_id, $user_id);
+            
+            // Execute query
+            $stmt->execute();
+            
+            // Get result
+            $result = $stmt->get_result();
+            
+            if ($result->num_rows > 0) {
+                $row = $result->fetch_assoc();
+                
+                // Set properties
+                $this->expense_id = $row['expense_id'];
+                $this->user_id = $row['user_id'];
+                $this->category_id = $row['category_id'];
+                $this->amount = $row['amount'];
+                $this->description = $row['description'];
+                $this->expense_date = $row['expense_date'];
+                $this->frequency = $row['frequency'];
+                $this->is_recurring = $row['is_recurring'];
+                $this->next_due_date = $row['next_due_date'];
+                $this->created_at = $row['created_at'];
+                $this->updated_at = $row['updated_at'];
+                
+                return true;
+            }
+            
+            return false;
+        } catch (Exception $e) {
+            error_log("Error getting expense by ID: " . $e->getMessage());
             return false;
         }
-        
-        // Bind parameters
-        $stmt->bind_param("ii", $expense_id, $user_id);
-        
-        // Execute query
-        $stmt->execute();
-        
-        // Get result
-        $result = $stmt->get_result();
-        
-        if ($result->num_rows > 0) {
-            $row = $result->fetch_assoc();
-            
-            // Set properties
-            $this->expense_id = $row['expense_id'];
-            $this->user_id = $row['user_id'];
-            $this->category_id = $row['category_id'];
-            $this->amount = $row['amount'];
-            $this->description = $row['description'];
-            $this->expense_date = $row['expense_date'];
-            $this->frequency = $row['frequency'];
-            $this->is_recurring = $row['is_recurring'];
-            $this->next_due_date = $row['next_due_date'];
-            $this->created_at = $row['created_at'];
-            $this->updated_at = $row['updated_at'];
-            
-            return true;
-        }
-        
-        return false;
     }
     
     // Update expense
     public function update() {
-        // Validate input
-        if (!$this->validateInputs()) {
-            return false;
-        }
-        
         try {
             // Begin transaction
             $this->conn->begin_transaction();
+            
+            // Validate input
+            if (!$this->validateInputs()) {
+                $this->conn->rollback();
+                return false;
+            }
             
             // Calculate next due date for recurring expenses
             $this->calculateNextDueDate();
             
             // SQL query
             $query = "UPDATE " . $this->table . " 
-                      SET category_id = ?, amount = ?, description = ?, 
-                          expense_date = ?, frequency = ?, is_recurring = ?, next_due_date = ? 
-                      WHERE expense_id = ? AND user_id = ?";
+                    SET category_id = ?, amount = ?, description = ?, 
+                        expense_date = ?, frequency = ?, is_recurring = ?, next_due_date = ? 
+                    WHERE expense_id = ? AND user_id = ?";
             
             // Prepare statement
             $stmt = $this->conn->prepare($query);
@@ -318,15 +316,15 @@ class Expense {
             
             // Bind parameters
             if (!$stmt->bind_param("idsssissi", 
-                              $this->category_id, 
-                              $this->amount, 
-                              $this->description, 
-                              $this->expense_date, 
-                              $this->frequency, 
-                              $this->is_recurring, 
-                              $this->next_due_date, 
-                              $this->expense_id, 
-                              $this->user_id)) {
+                            $this->category_id, 
+                            $this->amount, 
+                            $this->description, 
+                            $this->expense_date, 
+                            $this->frequency, 
+                            $this->is_recurring, 
+                            $this->next_due_date, 
+                            $this->expense_id, 
+                            $this->user_id)) {
                 throw new Exception("Update parameter binding failed: " . $stmt->error);
             }
             
@@ -337,17 +335,20 @@ class Expense {
             
             // Update related transaction
             if (!$this->updateTransaction()) {
-                throw new Exception("Failed to update transaction");
+                $this->conn->rollback();
+                return false;
             }
             
             // Commit transaction
             $this->conn->commit();
-            
             return true;
+            
         } catch (Exception $e) {
-            // Rollback transaction on error
-            $this->conn->rollback();
-            error_log("Update expense failed: " . $e->getMessage());
+            // Roll back the transaction on error
+            if ($this->conn->connect_errno) {
+                $this->conn->rollback();
+            }
+            error_log("Error updating expense: " . $e->getMessage());
             return false;
         }
     }
@@ -368,7 +369,9 @@ class Expense {
             }
             
             $stmt->bind_param("ii", $expense_id, $user_id);
-            $stmt->execute();
+            if (!$stmt->execute()) {
+                throw new Exception("Delete transaction execution failed: " . $stmt->error);
+            }
             
             // Now delete the expense
             $query = "DELETE FROM " . $this->table . " 
@@ -384,7 +387,9 @@ class Expense {
             $stmt->bind_param("ii", $expense_id, $user_id);
             
             // Execute query
-            $stmt->execute();
+            if (!$stmt->execute()) {
+                throw new Exception("Delete expense execution failed: " . $stmt->error);
+            }
             
             // Check if any rows were affected
             if ($stmt->affected_rows == 0) {
@@ -396,7 +401,9 @@ class Expense {
             return true;
         } catch (Exception $e) {
             // Rollback transaction on error
-            $this->conn->rollback();
+            if ($this->conn->connect_errno) {
+                $this->conn->rollback();
+            }
             error_log("Delete failed: " . $e->getMessage());
             return false;
         }
@@ -561,11 +568,14 @@ class Expense {
     // Get top expense categories
     public function getTopCategories($user_id, $limit = 5) {
         try {
-            // SQL query
+            // Get current month
+            $current_month = date('Y-m');
+            
+            // SQL query for current month
             $query = "SELECT c.name as category_name, SUM(e.amount) as total 
                       FROM " . $this->table . " e
                       JOIN " . $this->categories_table . " c ON e.category_id = c.category_id
-                      WHERE e.user_id = ? 
+                      WHERE e.user_id = ? AND DATE_FORMAT(e.expense_date, '%Y-%m') = ?
                       GROUP BY e.category_id 
                       ORDER BY total DESC 
                       LIMIT ?";
@@ -577,13 +587,43 @@ class Expense {
             }
             
             // Bind parameters
-            $stmt->bind_param("ii", $user_id, $limit);
+            $stmt->bind_param("isi", $user_id, $current_month, $limit);
             
             // Execute query
             $stmt->execute();
             
             // Get result
             $result = $stmt->get_result();
+            
+            // If no results for current month, try the last 3 months
+            if ($result->num_rows === 0) {
+                // Get date 3 months ago
+                $three_months_ago = date('Y-m-d', strtotime('-3 months'));
+                
+                // SQL query for last 3 months
+                $query = "SELECT c.name as category_name, SUM(e.amount) as total 
+                          FROM " . $this->table . " e
+                          JOIN " . $this->categories_table . " c ON e.category_id = c.category_id
+                          WHERE e.user_id = ? AND e.expense_date >= ?
+                          GROUP BY e.category_id 
+                          ORDER BY total DESC 
+                          LIMIT ?";
+                
+                // Prepare statement
+                $stmt = $this->conn->prepare($query);
+                if (!$stmt) {
+                    throw new Exception("Top categories query preparation failed: " . $this->conn->error);
+                }
+                
+                // Bind parameters
+                $stmt->bind_param("isi", $user_id, $three_months_ago, $limit);
+                
+                // Execute query
+                $stmt->execute();
+                
+                // Get result
+                $result = $stmt->get_result();
+            }
             
             return $result;
         } catch (Exception $e) {
@@ -681,25 +721,6 @@ class Expense {
     // Update transaction for expense
     private function updateTransaction() {
         try {
-            // Check if transaction exists
-            $check_query = "SELECT COUNT(*) as count FROM " . $this->transactions_table . " 
-                          WHERE expense_id = ? AND user_id = ? AND type = 'expense'";
-            
-            $check_stmt = $this->conn->prepare($check_query);
-            if (!$check_stmt) {
-                throw new Exception("Transaction check query preparation failed: " . $this->conn->error);
-            }
-            
-            $check_stmt->bind_param("ii", $this->expense_id, $this->user_id);
-            $check_stmt->execute();
-            $result = $check_stmt->get_result();
-            $row = $result->fetch_assoc();
-            
-            if ($row['count'] == 0) {
-                // No transaction exists, create a new one
-                return $this->recordTransaction();
-            }
-            
             // Get category name
             $category_query = "SELECT name FROM " . $this->categories_table . " WHERE category_id = ?";
             $category_stmt = $this->conn->prepare($category_query);
@@ -716,31 +737,49 @@ class Expense {
             // Set description
             $full_description = "Expense: " . $this->description . " (Category: " . $category_name . ")";
             
-            // SQL query
-            $query = "UPDATE " . $this->transactions_table . " 
-                      SET amount = ?, description = ?, transaction_date = ?, category_id = ?
-                      WHERE expense_id = ? AND user_id = ? AND type = 'expense'";
-            
-            // Prepare statement
-            $stmt = $this->conn->prepare($query);
-            if (!$stmt) {
-                throw new Exception("Transaction update preparation failed: " . $this->conn->error);
+            // Check if transaction exists
+            $check_query = "SELECT COUNT(*) as count FROM " . $this->transactions_table . " 
+                           WHERE expense_id = ? AND user_id = ? AND type = 'expense'";
+            $check_stmt = $this->conn->prepare($check_query);
+            if (!$check_stmt) {
+                throw new Exception("Transaction check query preparation failed: " . $this->conn->error);
             }
             
-            // Bind parameters
-            if (!$stmt->bind_param("dssiii", 
-                              $this->amount, 
-                              $full_description, 
-                              $this->expense_date, 
-                              $this->category_id, 
-                              $this->expense_id,
-                              $this->user_id)) {
-                throw new Exception("Transaction update parameter binding failed: " . $stmt->error);
-            }
+            $check_stmt->bind_param("ii", $this->expense_id, $this->user_id);
+            $check_stmt->execute();
+            $check_result = $check_stmt->get_result();
+            $check_row = $check_result->fetch_assoc();
             
-            // Execute query
-            if (!$stmt->execute()) {
-                throw new Exception("Transaction update execution failed: " . $stmt->error);
+            if ($check_row['count'] > 0) {
+                // Update existing transaction
+                $query = "UPDATE " . $this->transactions_table . " 
+                          SET amount = ?, description = ?, transaction_date = ?, category_id = ?
+                          WHERE expense_id = ? AND user_id = ? AND type = 'expense'";
+                
+                // Prepare statement
+                $stmt = $this->conn->prepare($query);
+                if (!$stmt) {
+                    throw new Exception("Transaction update preparation failed: " . $this->conn->error);
+                }
+                
+                // Bind parameters
+                if (!$stmt->bind_param("dssiii", 
+                                  $this->amount, 
+                                  $full_description, 
+                                  $this->expense_date, 
+                                  $this->category_id, 
+                                  $this->expense_id,
+                                  $this->user_id)) {
+                    throw new Exception("Transaction update parameter binding failed: " . $stmt->error);
+                }
+                
+                // Execute query
+                if (!$stmt->execute()) {
+                    throw new Exception("Transaction update execution failed: " . $stmt->error);
+                }
+            } else {
+                // Create new transaction record
+                return $this->recordTransaction();
             }
             
             return true;
