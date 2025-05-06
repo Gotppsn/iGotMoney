@@ -531,11 +531,9 @@ function validateBudgetForm(form) {
  * @param {HTMLFormElement} form - The form to submit
  */
 function submitFormWithAjax(form) {
-    // Get the base URL for the application
-    const basePath = window.location.pathname.split('/')[1]; // Get the first part of the path (igotmoney)
-    const formAction = `/${basePath}/budget`; // Construct the correct URL
+    // Use the form's action attribute directly instead of trying to construct it
+    const formAction = form.getAttribute('action');
     
-    console.log('Base path:', basePath);
     console.log('Form action URL:', formAction);
     
     // Get submit button
