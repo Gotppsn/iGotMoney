@@ -291,7 +291,7 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="addBudgetModalLabel">Add Budget</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/budget" method="post">
+            <form action="<?php echo BASE_PATH; ?>/budget" method="post" id="addBudgetForm">
                 <input type="hidden" name="action" value="add">
                 
                 <div class="modal-body">
@@ -356,7 +356,7 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="editBudgetModalLabel">Edit Budget</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/budget" method="post">
+            <form action="<?php echo BASE_PATH; ?>/budget" method="post" id="editBudgetForm">
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="budget_id" id="edit_budget_id">
                 
@@ -364,6 +364,7 @@ require_once 'includes/header.php';
                     <div class="mb-3">
                         <label for="edit_category_id" class="form-label">Category</label>
                         <select class="form-select" id="edit_category_id" name="category_id" required>
+                            <option value="">Select a category</option>
                             <?php 
                             // Check if categories exist
                             if (isset($categories) && $categories->num_rows > 0) {
@@ -421,17 +422,19 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="deleteBudgetModalLabel">Delete Budget</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this budget? This action cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="<?php echo BASE_PATH; ?>/budget" method="post">
-                    <input type="hidden" name="action" value="delete">
-                    <input type="hidden" name="budget_id" id="delete_budget_id">
+            <form action="<?php echo BASE_PATH; ?>/budget" method="post" id="deleteBudgetForm">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="budget_id" id="delete_budget_id">
+                
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this budget? This action cannot be undone.</p>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -444,7 +447,7 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="generateBudgetModalLabel">Auto-Generate Budget</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/budget" method="post">
+            <form action="<?php echo BASE_PATH; ?>/budget" method="post" id="generateBudgetForm">
                 <input type="hidden" name="action" value="generate_plan">
                 <input type="hidden" name="replace_existing" value="1">
                 
@@ -502,6 +505,9 @@ if (!empty($budget_status)) {
 
 // Include Chart.js library directly
 echo '<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>';
+
+// Add BASE_PATH as a global JavaScript variable to use in AJAX requests
+echo '<script>const BASE_PATH = "' . BASE_PATH . '";</script>';
 
 // JavaScript for budget page
 $page_scripts = "

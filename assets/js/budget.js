@@ -230,12 +230,20 @@ function initializeBudgetRecommendations() {
             formData.append('action', 'generate_plan');
             formData.append('replace_existing', '1');
             
+            // Get the base path for the application
+            const basePath = window.location.pathname.split('/').slice(0, -1).join('/') + '/budget';
+            
             // Submit form with AJAX
-            fetch(window.location.pathname, {
+            fetch(basePath, {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     showNotification(data.message, 'success');
@@ -277,12 +285,20 @@ function initializeBudgetRecommendations() {
             formData.append('start_date', new Date().toISOString().split('T')[0]);
             formData.append('end_date', new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0]);
             
+            // Get the base path for the application
+            const basePath = window.location.pathname.split('/').slice(0, -1).join('/') + '/budget';
+            
             // Send AJAX request
-            fetch(window.location.pathname, {
+            fetch(basePath, {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     showNotification(data.message || 'Budget added successfully!', 'success');
@@ -328,7 +344,7 @@ function highlightRecommendations() {
         
         if (categoryCell && budgetCell) {
             const category = categoryCell.textContent.trim();
-            const budget = parseFloat(budgetCell.textContent.replace('$', '').replace(',', ''));
+            const budget = parseFloat(budgetCell.textContent.replace('$', '').replace(/,/g, ''));
             
             currentBudgets[category] = budget;
         }
@@ -407,6 +423,14 @@ function initializeFormValidation() {
             submitFormWithAjax(this);
         });
     }
+    
+    const generateForm = document.querySelector('#generateBudgetModal form');
+    if (generateForm) {
+        generateForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitFormWithAjax(this);
+        });
+    }
 }
 
 /**
@@ -466,28 +490,24 @@ function validateBudgetForm(form) {
     // Validate category
     if (!categoryId.value) {
         categoryId.classList.add('is-invalid');
-        showValidationError(categoryId, 'Please select a category');
         isValid = false;
     }
     
     // Validate amount
     if (!amount.value || parseFloat(amount.value) <= 0) {
         amount.classList.add('is-invalid');
-        showValidationError(amount, 'Please enter an amount greater than zero');
         isValid = false;
     }
     
     // Validate start date
     if (!startDate.value) {
         startDate.classList.add('is-invalid');
-        showValidationError(startDate, 'Please select a start date');
         isValid = false;
     }
     
     // Validate end date
     if (!endDate.value) {
         endDate.classList.add('is-invalid');
-        showValidationError(endDate, 'Please select an end date');
         isValid = false;
     }
     
@@ -498,7 +518,7 @@ function validateBudgetForm(form) {
         
         if (end < start) {
             endDate.classList.add('is-invalid');
-            showValidationError(endDate, 'End date must be after start date');
+            showNotification('End date must be after start date', 'warning');
             isValid = false;
         }
     }
@@ -507,30 +527,16 @@ function validateBudgetForm(form) {
 }
 
 /**
- * Show validation error message
- * @param {HTMLElement} element - The element with error
- * @param {string} message - Error message
- */
-function showValidationError(element, message) {
-    // Create or update feedback element
-    let feedback = element.nextElementSibling;
-    
-    if (!feedback || !feedback.classList.contains('invalid-feedback')) {
-        feedback = document.createElement('div');
-        feedback.className = 'invalid-feedback';
-        element.parentNode.insertBefore(feedback, element.nextSibling);
-    }
-    
-    feedback.textContent = message;
-}
-
-/**
  * Submit form with AJAX
  * @param {HTMLFormElement} form - The form to submit
  */
 function submitFormWithAjax(form) {
-    // Get the base path for the application
-    const basePath = form.action || window.location.pathname;
+    // Get the base URL for the application
+    const basePath = window.location.pathname.split('/')[1]; // Get the first part of the path (igotmoney)
+    const formAction = `/${basePath}/budget`; // Construct the correct URL
+    
+    console.log('Base path:', basePath);
+    console.log('Form action URL:', formAction);
     
     // Get submit button
     const submitButton = form.querySelector('button[type="submit"]');
@@ -543,18 +549,24 @@ function submitFormWithAjax(form) {
     // Create form data
     const formData = new FormData(form);
     
+    // For debugging
+    console.log('Form data action:', formData.get('action'));
+    console.log('Form data budget_id:', formData.get('budget_id'));
+    
     // Send AJAX request
-    fetch(basePath, {
+    fetch(formAction, {
         method: 'POST',
         body: formData
     })
     .then(response => {
+        console.log('Response status:', response.status);
         if (!response.ok) {
             throw new Error(`HTTP error ${response.status}`);
         }
         return response.json();
     })
     .then(data => {
+        console.log('Response data:', data);
         if (data.success) {
             // Close modal if we're in one
             const modal = form.closest('.modal');
@@ -604,6 +616,7 @@ function fetchBudgetData(budgetId) {
     
     // Show loading indicator
     const modalBody = modal.querySelector('.modal-body');
+    const originalContent = modalBody.innerHTML;
     modalBody.innerHTML = `
         <div class="text-center py-4">
             <div class="spinner-border text-primary" role="status">
@@ -616,49 +629,26 @@ function fetchBudgetData(budgetId) {
     // Set budget ID to form
     document.getElementById('edit_budget_id').value = budgetId;
     
-    // Use the current URL path but add query parameters
-    const currentPath = window.location.pathname;
-    const requestUrl = `${currentPath}?action=get_budget&budget_id=${budgetId}`;
+    // Get the base path for the application
+    const basePath = window.location.pathname.split('/')[1]; // Get the first part of the path (igotmoney)
+    const requestUrl = `/${basePath}/budget?action=get_budget&budget_id=${budgetId}`;
+    
+    console.log('Fetching budget data from:', requestUrl);
     
     // Send request
     fetch(requestUrl)
     .then(response => {
+        console.log('Response status:', response.status);
         if (!response.ok) {
             throw new Error(`HTTP error ${response.status}`);
         }
         return response.json();
     })
     .then(data => {
+        console.log('Budget data:', data);
         if (data.success === true && data.budget) {
-            // Restore form fields
-            modalBody.innerHTML = `
-                <div class="mb-3">
-                    <label for="edit_category_id" class="form-label">Category</label>
-                    <select class="form-select" id="edit_category_id" name="category_id" required>
-                        ${Array.from(document.getElementById('category_id').options).map(option => 
-                            `<option value="${option.value}">${option.textContent}</option>`
-                        ).join('')}
-                    </select>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="edit_amount" class="form-label">Budget Amount</label>
-                    <div class="input-group">
-                        <span class="input-group-text">$</span>
-                        <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0.01" required>
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="edit_start_date" class="form-label">Start Date</label>
-                    <input type="date" class="form-control" id="edit_start_date" name="start_date" required>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="edit_end_date" class="form-label">End Date</label>
-                    <input type="date" class="form-control" id="edit_end_date" name="end_date" required>
-                </div>
-            `;
+            // Restore original form content
+            modalBody.innerHTML = originalContent;
             
             // Populate form fields
             document.getElementById('edit_category_id').value = data.budget.category_id;
@@ -670,20 +660,16 @@ function fetchBudgetData(budgetId) {
             const event = new Event('change');
             document.getElementById('edit_category_id').dispatchEvent(event);
         } else {
-            showNotification('Failed to load budget data', 'danger');
-            const bsModal = bootstrap.Modal.getInstance(modal);
-            if (bsModal) {
-                bsModal.hide();
-            }
+            showNotification(data.message || 'Failed to load budget data', 'danger');
+            // Restore original content in case of error
+            modalBody.innerHTML = originalContent;
         }
     })
     .catch(error => {
         console.error('Error fetching budget data:', error);
         showNotification('Error: ' + error.message, 'danger');
-        const bsModal = bootstrap.Modal.getInstance(modal);
-        if (bsModal) {
-            bsModal.hide();
-        }
+        // Restore original content in case of error
+        modalBody.innerHTML = originalContent;
     });
 }
 
@@ -692,28 +678,8 @@ function fetchBudgetData(budgetId) {
  * Creates and configures the budget vs actual chart
  */
 function initializeBudgetChart() {
-    const chartCanvas = document.getElementById('budgetVsActualChart');
-    if (!chartCanvas) {
-        console.error('Budget chart canvas not found');
-        return;
-    }
-    
-    // The chart initialization is now handled in the page_scripts section
-    // This function is kept to maintain compatibility with existing code
-    
-    // Add a safety check for chart initialization errors
-    if (typeof Chart === 'undefined') {
-        console.error('Chart.js is not available. Make sure it is properly loaded.');
-        const chartContainer = chartCanvas.closest('.chart-container');
-        if (chartContainer) {
-            chartContainer.innerHTML = `
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Chart cannot be displayed: Chart.js library not available
-                </div>
-            `;
-        }
-    }
+    // The chart initialization is handled in the page_scripts section
+    // This function is kept for code organization
 }
 
 /**
