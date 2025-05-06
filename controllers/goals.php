@@ -7,7 +7,7 @@
 
 // Check if user is logged in
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header('Location: /login');
+    header("Location: " . BASE_PATH . "/login");
     exit();
 }
 
@@ -24,7 +24,7 @@ $income = new Income();
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
+    $action = isset($_POST['action']) ? $_POST['action'] : '';
     
     if ($action === 'add') {
         // Validate inputs
@@ -339,4 +339,3 @@ if (!isset($recommended_goals) && $goal_count < 1) {
 
 // Include view
 require_once 'views/goals.php';
-?>

@@ -17,17 +17,13 @@ Header set X-XSS-Protection "1; mode=block"
 Options -Indexes
 
 # Handle 404 errors
-ErrorDocument 404 /404.html
+ErrorDocument 404 /igotmoney/index.php
 
 # Enable URL rewriting
 RewriteEngine On
 
-# Base path setting (comment out if installed in root directory)
-# RewriteBase /igotmoney
-
-# Redirect to HTTPS if not already
-RewriteCond %{HTTPS} !=on
-RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# Base path setting - uncommented and properly set
+RewriteBase /igotmoney
 
 # If the request is for a real file or directory, skip the rewrite rules
 RewriteCond %{REQUEST_FILENAME} -f [OR]
