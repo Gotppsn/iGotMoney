@@ -4,6 +4,8 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing budget.js');
+    
     // Initialize budget date validation
     initializeDateValidation();
     
@@ -18,6 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize budget chart
     initializeBudgetChart();
+    
+    // Initialize button handlers - THIS WAS MISSING!
+    initializeButtonHandlers();
 });
 
 /**
@@ -426,34 +431,6 @@ function highlightRecommendations() {
  * Validates form inputs before submission
  */
 function initializeFormValidation() {
-    // Add event listeners to edit and delete buttons
-    document.querySelectorAll('.edit-budget').forEach(button => {
-        button.addEventListener('click', function() {
-            const budgetId = this.getAttribute('data-budget-id');
-            
-            // Show loading spinner
-            showSpinner(document.querySelector('#editBudgetModal .modal-body'));
-            
-            // Show modal
-            const modal = new bootstrap.Modal(document.getElementById('editBudgetModal'));
-            modal.show();
-            
-            // Fetch budget data
-            fetchBudgetData(budgetId);
-        });
-    });
-    
-    document.querySelectorAll('.delete-budget').forEach(button => {
-        button.addEventListener('click', function() {
-            const budgetId = this.getAttribute('data-budget-id');
-            document.getElementById('delete_budget_id').value = budgetId;
-            
-            // Show modal
-            const modal = new bootstrap.Modal(document.getElementById('deleteBudgetModal'));
-            modal.show();
-        });
-    });
-    
     // Add form submit handlers
     const addForm = document.querySelector('#addBudgetModal form');
     if (addForm) {
@@ -485,6 +462,41 @@ function initializeFormValidation() {
             submitFormWithAjax(this);
         });
     }
+}
+
+/**
+ * Initialize button handlers
+ * Sets up event listeners for edit and delete buttons
+ */
+function initializeButtonHandlers() {
+    console.log('Initializing button handlers for budget actions', 'budget.js:470');
+    // Handle edit budget button clicks
+    document.querySelectorAll('.edit-budget').forEach(button => {
+        button.addEventListener('click', function() {
+            console.log('Edit budget button clicked', this.getAttribute('data-budget-id'), 'budget.js:474');
+            const budgetId = this.getAttribute('data-budget-id');
+            document.getElementById('edit_budget_id').value = budgetId;
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('editBudgetModal'));
+            modal.show();
+            
+            // Fetch budget data
+            fetchBudgetData(budgetId);
+        });
+    });
+    
+    document.querySelectorAll('.delete-budget').forEach(button => {
+        button.addEventListener('click', function() {
+            console.log('Delete budget button clicked', this.getAttribute('data-budget-id'));
+            const budgetId = this.getAttribute('data-budget-id');
+            document.getElementById('delete_budget_id').value = budgetId;
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('deleteBudgetModal'));
+            modal.show();
+        });
+    });
 }
 
 /**
@@ -666,7 +678,7 @@ function fetchBudgetData(budgetId) {
     
     if (!form || !modal) return;
     
-    // Set budget ID
+    // Set budget ID to form
     document.getElementById('edit_budget_id').value = budgetId;
     
     // Create and send request
@@ -677,9 +689,45 @@ function fetchBudgetData(budgetId) {
     xhr.onload = function() {
         if (xhr.status === 200) {
             try {
-                const response = JSON.parse(xhr.responseText);
+                // Try to parse the response as JSON
+                const responseText = xhr.responseText;
+                console.log('Raw response:', responseText);
                 
-                if (response.success) {
+                const response = JSON.parse(responseText);
+                console.log('Budget data received:', response);
+                
+                if (response && response.success === true && response.budget) {
+                    // Restore the form fields to ensure they exist
+                    const modalBody = modal.querySelector('.modal-body');
+                    modalBody.innerHTML = `
+                        <div class="mb-3">
+                            <label for="edit_category_id" class="form-label">Category</label>
+                            <select class="form-select" id="edit_category_id" name="category_id" required>
+                                ${Array.from(document.getElementById('category_id').options).map(option => 
+                                    `<option value="${option.value}">${option.textContent}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit_amount" class="form-label">Budget Amount</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit_start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="edit_start_date" name="start_date" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit_end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="edit_end_date" name="end_date" required>
+                        </div>
+                    `;
+                    
                     // Populate form fields
                     document.getElementById('edit_category_id').value = response.budget.category_id;
                     document.getElementById('edit_amount').value = response.budget.amount;
@@ -689,12 +737,10 @@ function fetchBudgetData(budgetId) {
                     // Trigger category change event to update suggestions
                     const event = new Event('change');
                     document.getElementById('edit_category_id').dispatchEvent(event);
-                    
-                    // Hide spinner
-                    hideSpinner(modal.querySelector('.modal-body'));
                 } else {
-                    // Show error and close modal
-                    showNotification(response.message || 'Failed to load budget data', 'danger');
+                    // Response doesn't have the expected structure
+                    console.error('Unexpected response structure:', response);
+                    showNotification('Invalid budget data structure received', 'danger');
                     
                     const bsModal = bootstrap.Modal.getInstance(modal);
                     if (bsModal) {
@@ -702,8 +748,9 @@ function fetchBudgetData(budgetId) {
                     }
                 }
             } catch (e) {
-                console.error('Invalid response:', xhr.responseText);
-                showNotification('Invalid response from server', 'danger');
+                // Error parsing the JSON response
+                console.error('Error parsing response:', e, 'Response text:', xhr.responseText);
+                showNotification('Error processing server response', 'danger');
                 
                 const bsModal = bootstrap.Modal.getInstance(modal);
                 if (bsModal) {
@@ -711,7 +758,8 @@ function fetchBudgetData(budgetId) {
                 }
             }
         } else {
-            console.error('Server error:', xhr.status);
+            // Non-200 status code
+            console.error('Server error:', xhr.status, xhr.responseText);
             showNotification('Server error: ' + xhr.status, 'danger');
             
             const bsModal = bootstrap.Modal.getInstance(modal);
@@ -722,7 +770,7 @@ function fetchBudgetData(budgetId) {
     };
     
     xhr.onerror = function() {
-        console.error('Request failed');
+        console.error('Request failed to connect');
         showNotification('Network error occurred', 'danger');
         
         const bsModal = bootstrap.Modal.getInstance(modal);
@@ -761,6 +809,8 @@ function initializeBudgetChart() {
             `;
         }
     }
+    
+    console.log('Chart initialized successfully', 'budget.js:1137');
 }
 
 /**
