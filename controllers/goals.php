@@ -1,6 +1,6 @@
 <?php
 /**
- * Goals Controller
+ * Goals Controller - Fixed to include BASE_PATH in redirects
  * 
  * Handles financial goals functionality
  */
@@ -65,6 +65,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'goal_id' => $goal->goal_id
                     ]);
                     exit();
+                } else {
+                    // If not AJAX, redirect with proper BASE_PATH
+                    header("Location: " . BASE_PATH . "/goals");
+                    exit();
                 }
             } else {
                 $error = 'Failed to add financial goal.';
@@ -122,6 +126,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'message' => $success
                         ]);
                         exit();
+                    } else {
+                        // If not AJAX, redirect with proper BASE_PATH
+                        header("Location: " . BASE_PATH . "/goals");
+                        exit();
                     }
                 } else {
                     $error = 'Failed to update financial goal.';
@@ -165,6 +173,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'success' => true,
                     'message' => $success
                 ]);
+                exit();
+            } else {
+                // If not AJAX, redirect with proper BASE_PATH
+                header("Location: " . BASE_PATH . "/goals");
                 exit();
             }
         } else {
@@ -222,6 +234,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'progress_percentage' => $goal->calculateProgressPercentage()
                         ]
                     ]);
+                    exit();
+                } else {
+                    // If not AJAX, redirect with proper BASE_PATH
+                    header("Location: " . BASE_PATH . "/goals");
                     exit();
                 }
             } else {

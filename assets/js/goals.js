@@ -4,6 +4,10 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Get base path from meta tag or data attribute
+    const basePath = document.querySelector('meta[name="base-path"]') ? 
+        document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
+    
     // Initialize goal visualization
     initializeGoalVisualization();
     
@@ -11,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeDateValidation();
     
     // Initialize progress tracking
-    initializeProgressTracking();
+    initializeProgressTracking(basePath);
     
     // Initialize form validation
     initializeFormValidation();
@@ -143,8 +147,9 @@ function validateDates(startDateInput, targetDateInput) {
 /**
  * Initialize progress tracking
  * Adds functionality for tracking progress toward goals
+ * @param {string} basePath - The base path of the application
  */
-function initializeProgressTracking() {
+function initializeProgressTracking(basePath) {
     // Add progress visuals to cards
     addProgressVisuals();
     
@@ -157,8 +162,8 @@ function initializeProgressTracking() {
             const goalId = this.getAttribute('data-goal-id');
             document.getElementById('progress_goal_id').value = goalId;
             
-            // Fetch goal data with error handling
-            fetch(`/goals?action=get_goal&goal_id=${goalId}`)
+            // Fetch goal data with error handling - using basePath
+            fetch(`${basePath}/goals?action=get_goal&goal_id=${goalId}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
@@ -573,11 +578,11 @@ function initializeFormValidation() {
     }
     
     // Handle adopt recommended goal
-    document.querySelectorAll('.adopt-recommendation').forEach(button => {
+    document.querySelectorAll('.adopt-goal').forEach(button => {
         button.addEventListener('click', function() {
             const name = this.getAttribute('data-name');
             const description = this.getAttribute('data-description');
-            const targetAmount = this.getAttribute('data-amount');
+            const targetAmount = this.getAttribute('data-target');
             const priority = this.getAttribute('data-priority');
             const timeline = this.getAttribute('data-timeline');
             

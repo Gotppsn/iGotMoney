@@ -359,7 +359,7 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="addGoalModalLabel">Add Financial Goal</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/goals" method="post">
+            <form action="<?php echo BASE_PATH; ?>/goals" method="post">
                 <input type="hidden" name="action" value="add">
                 
                 <div class="modal-body">
@@ -440,7 +440,7 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="editGoalModalLabel">Edit Financial Goal</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/goals" method="post">
+            <form action="<?php echo BASE_PATH; ?>/goals" method="post">
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="goal_id" id="edit_goal_id">
                 
@@ -532,7 +532,7 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="updateProgressModalLabel">Update Goal Progress</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/goals" method="post">
+            <form action="<?php echo BASE_PATH; ?>/goals" method="post">
                 <input type="hidden" name="action" value="update_progress">
                 <input type="hidden" name="goal_id" id="progress_goal_id">
                 
@@ -590,7 +590,7 @@ require_once 'includes/header.php';
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="/goals" method="post">
+                <form action="<?php echo BASE_PATH; ?>/goals" method="post">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="goal_id" id="delete_goal_id">
                     <button type="submit" class="btn btn-danger">Delete</button>
@@ -655,7 +655,7 @@ require_once 'includes/header.php';
                         </table>
                     </div>
                 <?php else: ?>
-                    <form action="/goals" method="post">
+                    <form action="<?php echo BASE_PATH; ?>/goals" method="post">
                         <input type="hidden" name="action" value="recommend_goals">
                         
                         <div class="alert alert-info">
