@@ -230,11 +230,11 @@ function initializeBudgetRecommendations() {
             formData.append('action', 'generate_plan');
             formData.append('replace_existing', '1');
             
-            // Get the base path for the application
-            const basePath = window.location.pathname.split('/').slice(0, -1).join('/') + '/budget';
+            // Get the correct form action URL
+            const formAction = BASE_PATH + '/budget';
             
             // Submit form with AJAX
-            fetch(basePath, {
+            fetch(formAction, {
                 method: 'POST',
                 body: formData
             })
@@ -285,11 +285,11 @@ function initializeBudgetRecommendations() {
             formData.append('start_date', new Date().toISOString().split('T')[0]);
             formData.append('end_date', new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0]);
             
-            // Get the base path for the application
-            const basePath = window.location.pathname.split('/').slice(0, -1).join('/') + '/budget';
+            // Get the correct form action URL
+            const formAction = BASE_PATH + '/budget';
             
             // Send AJAX request
-            fetch(basePath, {
+            fetch(formAction, {
                 method: 'POST',
                 body: formData
             })
@@ -531,8 +531,9 @@ function validateBudgetForm(form) {
  * @param {HTMLFormElement} form - The form to submit
  */
 function submitFormWithAjax(form) {
-    // Use the form's action attribute directly instead of trying to construct it
-    const formAction = form.getAttribute('action');
+    // Use the globally defined BASE_PATH variable which should be defined in the footer
+    // If BASE_PATH is not available, fall back to a direct path
+    const formAction = typeof BASE_PATH !== 'undefined' ? BASE_PATH + '/budget' : '/igotmoney/budget';
     
     console.log('Form action URL:', formAction);
     
@@ -593,7 +594,7 @@ function submitFormWithAjax(form) {
     })
     .catch(error => {
         console.error('Error submitting form:', error);
-        showNotification('Network error occurred: ' + error.message, 'danger');
+        showNotification('Network error occurred. Please try again.', 'danger');
         
         // Reset button
         submitButton.disabled = false;
@@ -627,9 +628,8 @@ function fetchBudgetData(budgetId) {
     // Set budget ID to form
     document.getElementById('edit_budget_id').value = budgetId;
     
-    // Get the base path for the application
-    const basePath = window.location.pathname.split('/')[1]; // Get the first part of the path (igotmoney)
-    const requestUrl = `/${basePath}/budget?action=get_budget&budget_id=${budgetId}`;
+    // Use the globally defined BASE_PATH
+    const requestUrl = BASE_PATH + '/budget?action=get_budget&budget_id=' + budgetId;
     
     console.log('Fetching budget data from:', requestUrl);
     
