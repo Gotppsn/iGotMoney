@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize progress tracking
     initializeProgressTracking();
+    
+    // Initialize form validation
+    initializeFormValidation();
 });
 
 /**
@@ -43,52 +46,50 @@ function enhanceGoalVisualization(goalItem) {
     const progress = goalItem.querySelector('.progress');
     
     if (progress) {
+        // Remove any existing milestone markers
+        progress.querySelectorAll('.milestone-marker').forEach(marker => marker.remove());
+        
         // Add milestone markers (25%, 50%, 75%)
         const milestones = [25, 50, 75];
         
         milestones.forEach(milestone => {
-            if (milestone < progressValue || isCompleted) {
-                const marker = document.createElement('div');
-                marker.className = 'milestone-marker milestone-reached';
-                marker.style.left = `${milestone}%`;
-                marker.setAttribute('data-bs-toggle', 'tooltip');
-                marker.setAttribute('title', `${milestone}% Complete`);
-                progress.appendChild(marker);
-                
-                // Initialize tooltip
+            const marker = document.createElement('div');
+            marker.className = 'milestone-marker ' + (milestone < progressValue || isCompleted ? 'milestone-reached' : '');
+            marker.style.left = `${milestone}%`;
+            marker.setAttribute('data-bs-toggle', 'tooltip');
+            marker.setAttribute('title', `${milestone}% ${milestone < progressValue || isCompleted ? 'Complete' : 'Milestone'}`);
+            progress.appendChild(marker);
+            
+            // Initialize tooltip
+            try {
                 new bootstrap.Tooltip(marker);
-            } else {
-                const marker = document.createElement('div');
-                marker.className = 'milestone-marker';
-                marker.style.left = `${milestone}%`;
-                marker.setAttribute('data-bs-toggle', 'tooltip');
-                marker.setAttribute('title', `${milestone}% Milestone`);
-                progress.appendChild(marker);
-                
-                // Initialize tooltip
-                new bootstrap.Tooltip(marker);
+            } catch (e) {
+                console.error('Error initializing tooltip:', e);
             }
         });
         
         // Add styles for milestone markers
-        const styleEl = document.createElement('style');
-        styleEl.textContent = `
-            .progress {
-                position: relative;
-            }
-            .milestone-marker {
-                position: absolute;
-                top: 0;
-                width: 2px;
-                height: 100%;
-                background-color: rgba(0, 0, 0, 0.2);
-                z-index: 1;
-            }
-            .milestone-marker.milestone-reached {
-                background-color: rgba(255, 255, 255, 0.7);
-            }
-        `;
-        document.head.appendChild(styleEl);
+        if (!document.getElementById('milestone-styles')) {
+            const styleEl = document.createElement('style');
+            styleEl.id = 'milestone-styles';
+            styleEl.textContent = `
+                .progress {
+                    position: relative;
+                }
+                .milestone-marker {
+                    position: absolute;
+                    top: 0;
+                    width: 2px;
+                    height: 100%;
+                    background-color: rgba(0, 0, 0, 0.2);
+                    z-index: 1;
+                }
+                .milestone-marker.milestone-reached {
+                    background-color: rgba(255, 255, 255, 0.7);
+                }
+            `;
+            document.head.appendChild(styleEl);
+        }
     }
 }
 
@@ -119,14 +120,23 @@ function initializeDateValidation() {
  * @param {HTMLElement} targetDateInput - The target date input element
  */
 function validateDates(startDateInput, targetDateInput) {
-    if (!startDateInput || !targetDateInput) return;
+    if (!startDateInput || !targetDateInput || !targetDateInput.value) return;
     
     const startDate = new Date(startDateInput.value);
     const targetDate = new Date(targetDateInput.value);
     
     if (targetDate <= startDate) {
-        alert('Target date must be after start date.');
-        targetDateInput.value = '';
+        // Show validation message
+        targetDateInput.setCustomValidity('Target date must be after start date.');
+        targetDateInput.reportValidity();
+        
+        // Clear the input
+        setTimeout(() => {
+            targetDateInput.value = '';
+            targetDateInput.setCustomValidity('');
+        }, 1500);
+    } else {
+        targetDateInput.setCustomValidity('');
     }
 }
 
@@ -140,6 +150,88 @@ function initializeProgressTracking() {
     
     // Add progress projection to cards
     addProgressProjection();
+    
+    // Handle update progress button clicks
+    document.querySelectorAll('.update-progress').forEach(button => {
+        button.addEventListener('click', function() {
+            const goalId = this.getAttribute('data-goal-id');
+            document.getElementById('progress_goal_id').value = goalId;
+            
+            // Fetch goal data with error handling
+            fetch(`/goals?action=get_goal&goal_id=${goalId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Populate form fields
+                        document.getElementById('progress_goal_name').textContent = data.goal.name;
+                        document.getElementById('progress_current_amount').textContent = '$' + formatNumber(data.goal.current_amount);
+                        document.getElementById('progress_target_amount').textContent = '$' + formatNumber(data.goal.target_amount);
+                        
+                        // Update progress bar
+                        const progressBar = document.getElementById('progress_bar');
+                        const progress = (data.goal.current_amount / data.goal.target_amount) * 100;
+                        progressBar.style.width = Math.min(100, progress) + '%';
+                        progressBar.textContent = progress.toFixed(0) + '%';
+                        
+                        // Clear amount input
+                        document.getElementById('progress_amount').value = '';
+                        
+                        // Hide completion alert
+                        const completionAlert = document.getElementById('progress_completion_alert');
+                        if (completionAlert) {
+                            completionAlert.classList.add('d-none');
+                        }
+                        
+                        // Add event listener to amount input
+                        const amountInput = document.getElementById('progress_amount');
+                        amountInput.addEventListener('input', function() {
+                            const amount = parseFloat(this.value) || 0;
+                            const currentAmount = parseFloat(data.goal.current_amount);
+                            const targetAmount = parseFloat(data.goal.target_amount);
+                            
+                            // Check if this contribution would complete the goal
+                            if (completionAlert) {
+                                if (currentAmount + amount >= targetAmount) {
+                                    completionAlert.classList.remove('d-none');
+                                } else {
+                                    completionAlert.classList.add('d-none');
+                                }
+                            }
+                        });
+                    } else {
+                        showNotification('Failed to load goal data: ' + (data.message || 'Unknown error'), 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching goal data:', error);
+                    showNotification('An error occurred while loading goal data.', 'danger');
+                });
+        });
+    });
+    
+    // Handle progress form submission
+    const progressForm = document.querySelector('#updateProgressModal form');
+    if (progressForm) {
+        progressForm.addEventListener('submit', function(e) {
+            const amountInput = document.getElementById('progress_amount');
+            const amount = parseFloat(amountInput.value);
+            
+            if (isNaN(amount) || amount <= 0) {
+                e.preventDefault();
+                amountInput.classList.add('is-invalid');
+                showNotification('Please enter a valid positive amount', 'warning');
+                return false;
+            }
+            
+            amountInput.classList.remove('is-invalid');
+            return true;
+        });
+    }
 }
 
 /**
@@ -152,7 +244,9 @@ function addProgressVisuals() {
     goalCards.forEach(card => {
         // Get progress elements
         const progressBar = card.querySelector('.progress-bar');
-        const progressText = card.querySelector('.progress-bar').textContent.trim();
+        if (!progressBar) return;
+        
+        const progressText = progressBar.textContent.trim();
         const progressValue = parseFloat(progressText) || 0;
         
         // Get target elements
@@ -329,7 +423,6 @@ function addProgressProjection() {
             const projectionDiv = document.createElement('div');
             projectionDiv.className = 'projection-info mt-3';
             
-            let projectionHTML = '';
             let projectionClass = '';
             
             if (projectedPercentage >= 100) {
@@ -342,7 +435,7 @@ function addProgressProjection() {
                 projectionClass = 'danger';
             }
             
-            projectionHTML = `
+            projectionDiv.innerHTML = `
                 <div class="alert alert-${projectionClass} mb-0">
                     <h6 class="alert-heading mb-1">
                         <i class="fas fa-chart-pie me-1"></i> Projection
@@ -360,8 +453,6 @@ function addProgressProjection() {
                 </div>
             `;
             
-            projectionDiv.innerHTML = projectionHTML;
-            
             // Add to the card
             const cardBody = timeInfo.parentNode;
             
@@ -377,6 +468,163 @@ function addProgressProjection() {
 }
 
 /**
+ * Initialize form validation
+ */
+function initializeFormValidation() {
+    // Add form validation
+    const addForm = document.getElementById('addBudgetForm');
+    if (addForm) {
+        addForm.addEventListener('submit', function(event) {
+            if (!this.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            this.classList.add('was-validated');
+        });
+    }
+    
+    // Initialize goal calculator for add form
+    const targetAmountInput = document.getElementById('target_amount');
+    const currentAmountInput = document.getElementById('current_amount');
+    const startDateInput = document.getElementById('start_date');
+    const targetDateInput = document.getElementById('target_date');
+    const calculator = document.getElementById('goalCalculator');
+    const monthlyContribution = document.getElementById('monthlyContribution');
+    const timeToGoal = document.getElementById('timeToGoal');
+    
+    if (targetAmountInput && currentAmountInput && startDateInput && targetDateInput && calculator && monthlyContribution && timeToGoal) {
+        const updateCalculator = function() {
+            const targetAmount = parseFloat(targetAmountInput.value) || 0;
+            const currentAmount = parseFloat(currentAmountInput.value) || 0;
+            const startDate = new Date(startDateInput.value);
+            const targetDate = new Date(targetDateInput.value);
+            
+            // Check if we have valid values
+            if (targetAmount <= 0 || isNaN(startDate.getTime()) || isNaN(targetDate.getTime()) || startDate >= targetDate) {
+                calculator.classList.add('d-none');
+                return;
+            }
+            
+            // Show calculator
+            calculator.classList.remove('d-none');
+            
+            // Calculate months between dates
+            const monthsDiff = (targetDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                             (targetDate.getMonth() - startDate.getMonth());
+            
+            // Calculate monthly contribution
+            const remainingAmount = targetAmount - currentAmount;
+            const monthly = monthsDiff > 0 ? remainingAmount / monthsDiff : remainingAmount;
+            
+            // Update calculator display
+            monthlyContribution.textContent = '$' + formatNumber(monthly);
+            timeToGoal.textContent = monthsDiff + ' months';
+        };
+        
+        targetAmountInput.addEventListener('input', updateCalculator);
+        currentAmountInput.addEventListener('input', updateCalculator);
+        startDateInput.addEventListener('change', updateCalculator);
+        targetDateInput.addEventListener('change', updateCalculator);
+    }
+    
+    // Initialize goal calculator for edit form
+    const editTargetAmountInput = document.getElementById('edit_target_amount');
+    const editCurrentAmountInput = document.getElementById('edit_current_amount');
+    const editStartDateInput = document.getElementById('edit_start_date');
+    const editTargetDateInput = document.getElementById('edit_target_date');
+    const editCalculator = document.getElementById('editGoalCalculator');
+    const editMonthlyContribution = document.getElementById('editMonthlyContribution');
+    const editTimeToGoal = document.getElementById('editTimeToGoal');
+    
+    if (editTargetAmountInput && editCurrentAmountInput && editStartDateInput && editTargetDateInput && editCalculator && editMonthlyContribution && editTimeToGoal) {
+        const updateEditCalculator = function() {
+            const targetAmount = parseFloat(editTargetAmountInput.value) || 0;
+            const currentAmount = parseFloat(editCurrentAmountInput.value) || 0;
+            const startDate = new Date(editStartDateInput.value);
+            const targetDate = new Date(editTargetDateInput.value);
+            
+            // Check if we have valid values
+            if (targetAmount <= 0 || isNaN(startDate.getTime()) || isNaN(targetDate.getTime()) || startDate >= targetDate) {
+                editCalculator.classList.add('d-none');
+                return;
+            }
+            
+            // Show calculator
+            editCalculator.classList.remove('d-none');
+            
+            // Calculate months between dates
+            const monthsDiff = (targetDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                              (targetDate.getMonth() - startDate.getMonth());
+            
+            // Calculate monthly contribution
+            const remainingAmount = targetAmount - currentAmount;
+            const monthly = monthsDiff > 0 ? remainingAmount / monthsDiff : remainingAmount;
+            
+            // Update calculator display
+            editMonthlyContribution.textContent = '$' + formatNumber(monthly);
+            editTimeToGoal.textContent = monthsDiff + ' months';
+        };
+        
+        editTargetAmountInput.addEventListener('input', updateEditCalculator);
+        editCurrentAmountInput.addEventListener('input', updateEditCalculator);
+        editStartDateInput.addEventListener('change', updateEditCalculator);
+        editTargetDateInput.addEventListener('change', updateEditCalculator);
+    }
+    
+    // Handle adopt recommended goal
+    document.querySelectorAll('.adopt-recommendation').forEach(button => {
+        button.addEventListener('click', function() {
+            const name = this.getAttribute('data-name');
+            const description = this.getAttribute('data-description');
+            const targetAmount = this.getAttribute('data-amount');
+            const priority = this.getAttribute('data-priority');
+            const timeline = this.getAttribute('data-timeline');
+            
+            // Calculate target date based on timeline
+            const targetDate = new Date();
+            if (timeline.includes('month')) {
+                const months = parseInt(timeline);
+                targetDate.setMonth(targetDate.getMonth() + months);
+            } else if (timeline.includes('year')) {
+                const years = parseInt(timeline);
+                targetDate.setFullYear(targetDate.getFullYear() + years);
+            } else {
+                targetDate.setFullYear(targetDate.getFullYear() + 1); // Default to 1 year
+            }
+            
+            // Populate add goal form
+            document.getElementById('name').value = name;
+            document.getElementById('description').value = description;
+            document.getElementById('target_amount').value = targetAmount;
+            document.getElementById('current_amount').value = 0;
+            document.getElementById('start_date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('target_date').value = targetDate.toISOString().split('T')[0];
+            document.getElementById('priority').value = priority;
+            
+            // Close recommend modal and open add goal modal
+            bootstrap.Modal.getInstance(document.getElementById('recommendGoalsModal')).hide();
+            const addModal = new bootstrap.Modal(document.getElementById('addGoalModal'));
+            addModal.show();
+            
+            // Update calculator
+            if (typeof updateCalculator === 'function') {
+                updateCalculator();
+            }
+        });
+    });
+}
+
+/**
+ * Format number with commas and 2 decimal places
+ * @param {number} num - Number to format
+ * @returns {string} - Formatted number string
+ */
+function formatNumber(num) {
+    return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+/**
  * Format date to MMM D, YYYY
  * @param {Date} date - Date to format
  * @returns {string} - Formatted date string
@@ -387,28 +635,36 @@ function formatDate(date) {
 }
 
 /**
- * Format number with commas and 2 decimal places
- * @param {number} num - Number to format
- * @returns {string} - Formatted number string
+ * Show notification
+ * @param {string} message - Message to display
+ * @param {string} type - Message type (success, info, warning, danger)
+ * @param {number} duration - Duration in milliseconds
  */
-function formatNumber(num) {
-    return num.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
-}
-
-/**
- * Calculate the monthly contribution needed to reach a goal
- * @param {number} targetAmount - Target amount
- * @param {number} currentAmount - Current amount
- * @param {Date} startDate - Start date
- * @param {Date} targetDate - Target date
- * @returns {number} - Monthly contribution amount
- */
-function calculateMonthlyContribution(targetAmount, currentAmount, startDate, targetDate) {
-    // Calculate months between dates
-    const monthsDiff = (targetDate.getFullYear() - startDate.getFullYear()) * 12 + 
-                      (targetDate.getMonth() - startDate.getMonth());
+function showNotification(message, type = 'info', duration = 3000) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show notification-toast`;
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
     
-    // Calculate monthly contribution
-    const remainingAmount = targetAmount - currentAmount;
-    return monthsDiff > 0 ? remainingAmount / monthsDiff : remainingAmount;
+    // Style the notification
+    notification.style.position = 'fixed';
+    notification.style.top = '1rem';
+    notification.style.right = '1rem';
+    notification.style.zIndex = '1050';
+    notification.style.minWidth = '250px';
+    notification.style.boxShadow = '0 0.5rem 1rem rgba(0, 0, 0, 0.15)';
+    
+    // Add to document
+    document.body.appendChild(notification);
+    
+    // Auto-dismiss after duration
+    setTimeout(function() {
+        notification.classList.remove('show');
+        setTimeout(function() {
+            notification.remove();
+        }, 150);
+    }, duration);
 }

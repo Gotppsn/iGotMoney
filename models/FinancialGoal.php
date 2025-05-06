@@ -57,8 +57,8 @@ class FinancialGoal {
         $this->priority = htmlspecialchars(strip_tags($this->priority));
         $this->status = htmlspecialchars(strip_tags($this->status));
         
-        // Bind parameters
-        $stmt->bind_param("isddssss", 
+        // Bind parameters - Fixed parameter types string to match number of parameters
+        $stmt->bind_param("isddsssss", 
                           $this->user_id, 
                           $this->name, 
                           $this->target_amount, 
@@ -436,4 +436,3 @@ class FinancialGoal {
         return $recommended_goals;
     }
 }
-?>
