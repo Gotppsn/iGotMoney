@@ -6,8 +6,44 @@ $current_page = 'stocks';
 // Additional JS
 $additional_js = ['/assets/js/stocks.js'];
 
+// Additional CSS
+$additional_css = [];
+
+// Add custom CSS for stock page
+$custom_css = "
+<style>
+  .price-updated {
+    animation: price-flash 2s;
+  }
+  @keyframes price-flash {
+    0% { background-color: rgba(0,0,0,0); }
+    20% { background-color: rgba(255,255,0,0.3); }
+    100% { background-color: rgba(0,0,0,0); }
+  }
+  
+  .stock-chart-container {
+    height: 300px;
+    width: 100%;
+    margin-top: 1.5rem;
+  }
+  
+  .price-change {
+    font-size: 0.8rem;
+    animation: fade-in 0.5s;
+  }
+  
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+</style>
+";
+
 // Include header
 require_once 'includes/header.php';
+
+// Output custom CSS
+echo $custom_css;
 ?>
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
@@ -27,7 +63,7 @@ require_once 'includes/header.php';
                 <h6 class="m-0 font-weight-bold text-primary">Analyze Stock</h6>
             </div>
             <div class="card-body">
-                <form action="/stocks" method="post" id="analyzeStockForm">
+                <form action="<?php echo BASE_PATH; ?>/stocks" method="post" id="analyzeStockForm">
                     <input type="hidden" name="action" value="analyze_stock">
                     
                     <div class="mb-3">
@@ -124,7 +160,7 @@ require_once 'includes/header.php';
                         </div>
                         
                         <div class="stock-chart-container mt-4">
-                            <canvas id="stockPriceChart" class="stock-chart"></canvas>
+                            <canvas id="stockPriceChart" class="stock-chart" style="height: 300px;"></canvas>
                         </div>
                     </div>
                 <?php endif; ?>
@@ -142,7 +178,7 @@ require_once 'includes/header.php';
                 </div>
             </div>
             <div class="card-body">
-                <?php if (isset($watchlist) && $watchlist->num_rows > 0): ?>
+                <?php if (isset($watchlist) && $watchlist && $watchlist->num_rows > 0): ?>
                     <div class="table-responsive">
                         <table class="table table-bordered data-table" id="watchlistTable" width="100%" cellspacing="0">
                             <thead>
@@ -157,7 +193,7 @@ require_once 'includes/header.php';
                             </thead>
                             <tbody>
                                 <?php while ($stock = $watchlist->fetch_assoc()): ?>
-                                    <tr>
+                                    <tr data-notes="<?php echo htmlspecialchars($stock['notes'] ?? ''); ?>">
                                         <td><?php echo htmlspecialchars($stock['ticker_symbol']); ?></td>
                                         <td><?php echo htmlspecialchars($stock['company_name']); ?></td>
                                         <td>$<?php echo number_format($stock['current_price'], 2); ?></td>
@@ -267,13 +303,15 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="addToWatchlistModalLabel">Add Stock to Watchlist</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/stocks" method="post">
+            <form action="<?php echo BASE_PATH; ?>/stocks" method="post">
                 <input type="hidden" name="action" value="add_to_watchlist">
                 
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="ticker_symbol_watchlist" class="form-label">Ticker Symbol</label>
-                        <input type="text" class="form-control" id="ticker_symbol_watchlist" name="ticker_symbol" required>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="ticker_symbol_watchlist" name="ticker_symbol" required>
+                        </div>
                         <div class="form-text">Enter the stock's ticker symbol (e.g., AAPL for Apple Inc.)</div>
                     </div>
                     
@@ -335,7 +373,7 @@ require_once 'includes/header.php';
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="/stocks" method="post">
+                <form action="<?php echo BASE_PATH; ?>/stocks" method="post">
                     <input type="hidden" name="action" value="remove_from_watchlist">
                     <input type="hidden" name="watchlist_id" id="remove_watchlist_id">
                     <button type="submit" class="btn btn-danger">Remove</button>
@@ -346,25 +384,62 @@ require_once 'includes/header.php';
 </div>
 
 <?php
-// JavaScript for stock analysis page
-$page_scripts = "
-// Handle add to watchlist from analysis button
-document.querySelectorAll('.add-to-watchlist-from-analysis').forEach(button => {
-    button.addEventListener('click', function() {
-        const ticker = this.getAttribute('data-ticker');
-        const price = this.getAttribute('data-price');
-        
-        // Populate the add to watchlist form
-        document.getElementById('ticker_symbol_watchlist').value = ticker;
-        document.getElementById('current_price_watchlist').value = price;
-        document.getElementById('company_name').value = ticker + ' Inc.'; // Placeholder company name
-        
-        // Show the modal
-        const modal = new bootstrap.Modal(document.getElementById('addToWatchlistModal'));
-        modal.show();
+// Add JavaScript variables for the chart
+if (isset($stock_analysis) && $stock_analysis['status'] === 'success') {
+    $page_scripts = "
+    // Pass analysis values to the chart
+    const shortMaValue = " . $stock_analysis['short_ma'] . ";
+    const longMaValue = " . $stock_analysis['long_ma'] . ";
+    const supportValue = " . $stock_analysis['support'] . ";
+    const resistanceValue = " . $stock_analysis['resistance'] . ";
+    
+    // Stock price data for chart
+    const stockPriceData = " . json_encode($stockPriceData ?? null) . ";
+    
+    // Handle add to watchlist from analysis button
+    document.querySelectorAll('.add-to-watchlist-from-analysis').forEach(button => {
+        button.addEventListener('click', function() {
+            const ticker = this.getAttribute('data-ticker');
+            const price = this.getAttribute('data-price');
+            
+            // Populate the add to watchlist form
+            document.getElementById('ticker_symbol_watchlist').value = ticker;
+            document.getElementById('current_price_watchlist').value = price;
+            
+            // Fetch company name
+            fetchStockInfo(ticker, document.getElementById('company_name'), document.getElementById('current_price_watchlist'));
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('addToWatchlistModal'));
+            modal.show();
+        });
     });
-});
+    ";
+} else {
+    $page_scripts = "
+    // Handle add to watchlist from analysis button
+    document.querySelectorAll('.add-to-watchlist-from-analysis').forEach(button => {
+        button.addEventListener('click', function() {
+            const ticker = this.getAttribute('data-ticker');
+            const price = this.getAttribute('data-price');
+            
+            // Populate the add to watchlist form
+            document.getElementById('ticker_symbol_watchlist').value = ticker;
+            document.getElementById('current_price_watchlist').value = price;
+            
+            // Fetch company name
+            fetchStockInfo(ticker, document.getElementById('company_name'), document.getElementById('current_price_watchlist'));
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('addToWatchlistModal'));
+            modal.show();
+        });
+    });
+    ";
+}
 
+// Add general page scripts
+$page_scripts .= "
 // Handle analyze from watchlist button
 document.querySelectorAll('.analyze-from-watchlist').forEach(button => {
     button.addEventListener('click', function() {
@@ -388,75 +463,27 @@ document.querySelectorAll('.remove-from-watchlist').forEach(button => {
     });
 });
 
-// Initialize stock price chart if data is available
-if (typeof stockPriceData !== 'undefined' && document.getElementById('stockPriceChart')) {
-    const ctx = document.getElementById('stockPriceChart').getContext('2d');
-    
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: stockPriceData.dates,
-            datasets: [{
-                label: 'Stock Price',
-                data: stockPriceData.prices,
-                borderColor: 'rgba(78, 115, 223, 1)',
-                backgroundColor: 'rgba(78, 115, 223, 0.1)',
-                pointRadius: 3,
-                pointBackgroundColor: 'rgba(78, 115, 223, 1)',
-                pointBorderColor: 'rgba(78, 115, 223, 1)',
-                pointHoverRadius: 5,
-                pointHoverBackgroundColor: 'rgba(78, 115, 223, 1)',
-                pointHoverBorderColor: 'rgba(78, 115, 223, 1)',
-                pointHitRadius: 10,
-                pointBorderWidth: 2,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: {
-                    grid: {
-                        display: false
-                    }
-                },
-                y: {
-                    beginAtZero: false,
-                    ticks: {
-                        callback: function(value) {
-                            return '$' + value.toFixed(2);
-                        }
-                    }
+// Implement table search functionality
+document.querySelectorAll('input[data-table-search]').forEach(input => {
+    input.addEventListener('keyup', function() {
+        const tableId = this.getAttribute('data-table-search');
+        const searchText = this.value.toLowerCase();
+        const table = document.getElementById(tableId);
+        
+        if (!table) return;
+        
+        table.querySelectorAll('tbody tr').forEach(row => {
+            let found = false;
+            row.querySelectorAll('td').forEach(cell => {
+                if (cell.textContent.toLowerCase().indexOf(searchText) > -1) {
+                    found = true;
                 }
-            },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return 'Price: $' + context.raw.toFixed(2);
-                        }
-                    }
-                }
-            }
-        }
+            });
+            
+            row.style.display = found ? '' : 'none';
+        });
     });
-}
-
-// Prepare stock price data if analysis is available
-" . (isset($stock_analysis) && $stock_analysis['status'] === 'success' ? "
-// Mock data for demonstration
-const stockPriceData = {
-    dates: [" . implode(',', array_map(function($i) {
-        $date = date('M j', strtotime("-$i days"));
-        return "'$date'";
-    }, range(30, 0))) . "],
-    prices: [" . implode(',', array_map(function($i) use ($stock_analysis) {
-        $variation = rand(-500, 500) / 100;
-        return $stock_analysis['current_price'] + $variation;
-    }, range(30, 0))) . "]
-};
-" : "") . "
+});
 ";
 
 // Include footer
