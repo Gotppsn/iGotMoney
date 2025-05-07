@@ -10,9 +10,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up quick actions
     initializeQuickActions();
     
-    // Handle card interactions
-    initializeCardInteractions();
-    
     // Initialize tooltips
     initializeTooltips();
 });
@@ -21,44 +18,14 @@ document.addEventListener('DOMContentLoaded', function() {
  * Initialize dashboard components
  */
 function initializeDashboard() {
-    // Initialize refresh timer for auto-refresh
-    initializeRefreshTimer();
-    
     // Add animation for progress bars
     animateProgressBars();
     
     // Initialize chart interactions
     initializeChartInteractions();
-}
-
-/**
- * Initialize refresh timer for auto-refresh
- */
-function initializeRefreshTimer() {
-    // Refresh dashboard data every 30 minutes
-    const refreshInterval = 30 * 60 * 1000; // 30 minutes
     
-    setInterval(function() {
-        // Show refresh indicator
-        const refreshButton = document.getElementById('refreshDashboard');
-        if (refreshButton) {
-            const icon = refreshButton.querySelector('i');
-            if (icon) {
-                icon.classList.add('fa-spin');
-            }
-            
-            // Fetch fresh data
-            fetchDashboardData(function() {
-                // Stop spinner when done
-                if (icon) {
-                    icon.classList.remove('fa-spin');
-                }
-                
-                // Show notification
-                showNotification('Dashboard data updated', 'success');
-            });
-        }
-    }, refreshInterval);
+    // Add hover effects to cards
+    initializeCardInteractions();
 }
 
 /**
@@ -113,38 +80,123 @@ function initializeChartInteractions() {
                 // Show loading state
                 chartContainer.classList.add('loading');
                 
-                // Simulate fetching data for the selected time range
-                setTimeout(() => {
-                    // Update chart with new data (in a real app, this would fetch from server)
-                    updateChartForTimeRange(this.textContent.trim());
-                    
-                    // Remove loading state
-                    chartContainer.classList.remove('loading');
-                    
-                    // Show notification
-                    showNotification('Chart updated to show ' + this.textContent.trim() + ' data', 'info');
-                }, 800);
+                // Update chart with new data (in a real app, this would fetch from server)
+                updateChartForTimeRange(this.textContent.trim());
             });
         });
     }
 }
 
 /**
+ * Update chart for selected time range
+ * @param {string} timeRange - Selected time range
+ */
+function updateChartForTimeRange(timeRange) {
+    // In a real app, this would fetch data from the server
+    // Here we're just simulating different data for different time ranges
+    
+    if (!window.expenseCategoryChart) return;
+    
+    // Show loading indicator
+    const chartContainer = document.querySelector('.chart-container');
+    if (chartContainer) {
+        chartContainer.style.opacity = 0.5;
+        
+        // Create and append loading spinner
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner-overlay';
+        spinner.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        spinner.style.position = 'absolute';
+        spinner.style.top = '50%';
+        spinner.style.left = '50%';
+        spinner.style.transform = 'translate(-50%, -50%)';
+        spinner.style.fontSize = '1.5rem';
+        spinner.style.color = '#4e73df';
+        
+        chartContainer.appendChild(spinner);
+    }
+    
+    // Simulate API delay
+    setTimeout(() => {
+        let newData;
+        
+        switch(timeRange) {
+            case 'Last Month':
+                newData = generateRandomData(5, 100, 500);
+                break;
+            case 'Last 3 Months':
+                newData = generateRandomData(5, 300, 1500);
+                break;
+            case 'This Year':
+                newData = generateRandomData(5, 1000, 5000);
+                break;
+            default: // 'This Month'
+                // Keep existing data
+                if (chartContainer) {
+                    chartContainer.style.opacity = 1;
+                    chartContainer.removeChild(spinner);
+                }
+                return;
+        }
+        
+        // Update chart data
+        window.expenseCategoryChart.data.datasets[0].data = newData;
+        window.expenseCategoryChart.update();
+        
+        // Update top expenses list with new data
+        updateTopExpensesList(newData);
+        
+        // Remove loading indicator
+        if (chartContainer) {
+            chartContainer.style.opacity = 1;
+            chartContainer.removeChild(spinner);
+        }
+        
+        // Show notification
+        showNotification('Chart updated to show ' + timeRange + ' data', 'info');
+    }, 800);
+}
+
+/**
+ * Generate random data for chart simulation
+ */
+function generateRandomData(count, min, max) {
+    const data = [];
+    for (let i = 0; i < count; i++) {
+        data.push(Math.floor(Math.random() * (max - min + 1)) + min);
+    }
+    return data;
+}
+
+/**
+ * Update top expenses list with new data
+ */
+function updateTopExpensesList(newData) {
+    const expenseItems = document.querySelectorAll('.expense-item');
+    const totalExpenses = newData.reduce((sum, value) => sum + value, 0);
+    
+    expenseItems.forEach((item, index) => {
+        if (index < newData.length) {
+            const amountElement = item.querySelector('.expense-amount');
+            const progressBar = item.querySelector('.progress-bar');
+            
+            if (amountElement) {
+                amountElement.textContent = '$' + newData[index].toFixed(2);
+            }
+            
+            if (progressBar) {
+                const percentage = (newData[index] / totalExpenses) * 100;
+                progressBar.style.width = percentage + '%';
+                progressBar.setAttribute('aria-valuenow', percentage);
+            }
+        }
+    });
+}
+
+/**
  * Initialize card interactions for hover effects
  */
 function initializeCardInteractions() {
-    // Add hover effect to financial cards
-    const financialCards = document.querySelectorAll('.financial-card');
-    financialCards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-5px)';
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0)';
-        });
-    });
-    
     // Add hover effect to budget and expense items
     const hoverItems = document.querySelectorAll('.budget-item, .expense-item, .financial-goal-item, .advice-item');
     hoverItems.forEach(item => {
@@ -203,22 +255,6 @@ function initializeTooltips() {
  * Initialize quick actions
  */
 function initializeQuickActions() {
-    // Quick add expense button (if exists)
-    const quickAddExpenseBtn = document.getElementById('quickAddExpense');
-    if (quickAddExpenseBtn) {
-        quickAddExpenseBtn.addEventListener('click', function() {
-            window.location.href = '/expenses?action=add';
-        });
-    }
-    
-    // Quick add income button (if exists)
-    const quickAddIncomeBtn = document.getElementById('quickAddIncome');
-    if (quickAddIncomeBtn) {
-        quickAddIncomeBtn.addEventListener('click', function() {
-            window.location.href = '/income?action=add';
-        });
-    }
-    
     // Refresh dashboard button
     const refreshButton = document.getElementById('refreshDashboard');
     if (refreshButton) {
@@ -228,12 +264,14 @@ function initializeQuickActions() {
                 icon.classList.add('fa-spin');
             }
             
-            fetchDashboardData(() => {
-                // In a real app, this would fetch data via AJAX
-                setTimeout(() => {
-                    window.location.reload();
-                }, 800);
-            });
+            // Show loading indicator
+            showLoadingOverlay();
+            
+            // In a real app, this would fetch data via AJAX
+            // For demonstration, we're just reloading the page
+            setTimeout(() => {
+                window.location.reload();
+            }, 800);
         });
     }
     
@@ -253,17 +291,29 @@ function initializeQuickActions() {
             }, 1000);
         });
     }
+    
+    // Generate advice button
+    const generateAdviceBtn = document.getElementById('generateAdvice');
+    if (generateAdviceBtn) {
+        generateAdviceBtn.addEventListener('click', function() {
+            // Show loading state
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating...';
+            
+            // In a real app, this would make an AJAX call
+            // For now, just reload the page after a short delay
+            setTimeout(() => {
+                window.location.href = '?generate_advice=true';
+            }, 1000);
+        });
+    }
 }
 
 /**
- * Fetch dashboard data
- * @param {function} callback - Function to call when fetch is complete
+ * Show loading overlay
  */
-function fetchDashboardData(callback) {
-    // In a real implementation, this would make an AJAX request
-    // For demonstration, we're just simulating a delay
-    
-    // Show a loading indicator
+function showLoadingOverlay() {
+    // Create loading overlay
     const loadingOverlay = document.createElement('div');
     loadingOverlay.className = 'loading-overlay';
     loadingOverlay.style.position = 'fixed';
@@ -284,77 +334,12 @@ function fetchDashboardData(callback) {
     loadingOverlay.appendChild(spinner);
     document.body.appendChild(loadingOverlay);
     
-    // Simulate network request
-    setTimeout(function() {
-        // Remove loading overlay
-        document.body.removeChild(loadingOverlay);
-        
-        // Call callback function
-        if (callback && typeof callback === 'function') {
-            callback();
+    // Remove after 1 second (in a real app, this would be removed after data loads)
+    setTimeout(() => {
+        if (document.body.contains(loadingOverlay)) {
+            document.body.removeChild(loadingOverlay);
         }
     }, 1000);
-}
-
-/**
- * Update chart for selected time range
- * @param {string} timeRange - Selected time range
- */
-function updateChartForTimeRange(timeRange) {
-    // In a real app, this would fetch data from the server
-    // Here we're just simulating different data for different time ranges
-    
-    if (!window.expenseCategoryChart) return;
-    
-    let newData;
-    
-    switch(timeRange) {
-        case 'Last Month':
-            newData = [350, 280, 190, 140, 90];
-            break;
-        case 'Last 3 Months':
-            newData = [950, 780, 620, 450, 320];
-            break;
-        case 'This Year':
-            newData = [3200, 2800, 2100, 1700, 1200];
-            break;
-        default: // 'This Month'
-            // Keep existing data
-            return;
-    }
-    
-    // Update chart data
-    window.expenseCategoryChart.data.datasets[0].data = newData;
-    window.expenseCategoryChart.update();
-    
-    // Update top expenses list
-    updateTopExpensesList(newData);
-}
-
-/**
- * Update top expenses list with new data
- * @param {array} newData - New expense data
- */
-function updateTopExpensesList(newData) {
-    const expenseItems = document.querySelectorAll('.expense-item');
-    const totalExpenses = newData.reduce((sum, value) => sum + value, 0);
-    
-    expenseItems.forEach((item, index) => {
-        if (index < newData.length) {
-            const amountElement = item.querySelector('.expense-amount');
-            const progressBar = item.querySelector('.progress-bar');
-            
-            if (amountElement) {
-                amountElement.textContent = '$' + newData[index].toFixed(2);
-            }
-            
-            if (progressBar) {
-                const percentage = (newData[index] / totalExpenses) * 100;
-                progressBar.style.width = percentage + '%';
-                progressBar.setAttribute('aria-valuenow', percentage);
-            }
-        }
-    });
 }
 
 /**
@@ -449,60 +434,4 @@ function showNotification(message, type = 'info', duration = 3000) {
             }
         }, 300);
     }, duration);
-}
-
-/**
- * Update financial summary cards with new data
- * @param {object} summary - The summary data
- */
-function updateFinancialSummary(summary) {
-    // Update monthly income
-    updateCardValue('.income-card .card-value', summary.monthly_income);
-    
-    // Update monthly expenses
-    updateCardValue('.expenses-card .card-value', summary.monthly_expenses);
-    
-    // Update monthly net
-    updateCardValue('.savings-card .card-value', summary.monthly_net);
-    
-    // Update yearly projection
-    updateCardValue('.projection-card .card-value', summary.yearly_net);
-}
-
-/**
- * Update card value with animation
- * @param {string} selector - Element selector
- * @param {number} newValue - New value
- */
-function updateCardValue(selector, newValue) {
-    const element = document.querySelector(selector);
-    if (!element) return;
-    
-    // Get current value without formatting
-    const currentText = element.textContent;
-    const currentValue = parseFloat(currentText.replace(/[^0-9.-]+/g, ''));
-    
-    // Animate count up/down
-    animateValue(element, currentValue, newValue, 1000);
-}
-
-/**
- * Animate numeric value change
- * @param {Element} element - DOM element to update
- * @param {number} start - Start value
- * @param {number} end - End value
- * @param {number} duration - Animation duration in milliseconds
- */
-function animateValue(element, start, end, duration) {
-    let startTimestamp = null;
-    const step = (timestamp) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        const value = progress * (end - start) + start;
-        element.textContent = '$' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        if (progress < 1) {
-            window.requestAnimationFrame(step);
-        }
-    };
-    window.requestAnimationFrame(step);
 }
