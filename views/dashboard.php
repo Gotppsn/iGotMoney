@@ -3,15 +3,12 @@
 $page_title = 'Dashboard - iGotMoney';
 $current_page = 'dashboard';
 
-// Additional CSS and JS
-$additional_js = ['/assets/js/dashboard.js'];
-
 // Include header
 require_once 'includes/header.php';
 ?>
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Dashboard</h1>
+    <h1 class="h2">Financial Dashboard</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
             <button type="button" class="btn btn-sm btn-outline-secondary" id="refreshDashboard">
@@ -25,9 +22,9 @@ require_once 'includes/header.php';
 </div>
 
 <!-- Financial Summary Cards -->
-<div class="row">
+<div class="row mb-4">
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2 dashboard-card income">
+        <div class="card shadow h-100 py-2 border-left-primary">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
@@ -44,7 +41,7 @@ require_once 'includes/header.php';
     </div>
 
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-danger shadow h-100 py-2 dashboard-card expenses">
+        <div class="card shadow h-100 py-2 border-left-danger">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
@@ -61,7 +58,7 @@ require_once 'includes/header.php';
     </div>
 
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2 dashboard-card savings">
+        <div class="card shadow h-100 py-2 border-left-success">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
@@ -78,7 +75,7 @@ require_once 'includes/header.php';
     </div>
 
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2 dashboard-card investments">
+        <div class="card shadow h-100 py-2 border-left-info">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
@@ -102,22 +99,9 @@ require_once 'includes/header.php';
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Expenses by Category</h6>
-                <div class="dropdown no-arrow">
-                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
-                        aria-labelledby="dropdownMenuLink">
-                        <div class="dropdown-header">View Options:</div>
-                        <a class="dropdown-item" href="#">Monthly</a>
-                        <a class="dropdown-item" href="#">Quarterly</a>
-                        <a class="dropdown-item" href="#">Yearly</a>
-                    </div>
-                </div>
             </div>
             <div class="card-body">
-                <div class="chart-container">
+                <div class="chart-container mb-4">
                     <canvas id="expenseCategoryChart"></canvas>
                 </div>
                 
@@ -127,6 +111,7 @@ require_once 'includes/header.php';
                     <?php 
                     // Display top expense categories
                     if (isset($top_expenses) && $top_expenses->num_rows > 0):
+                        $top_expenses->data_seek(0);
                         while ($expense = $top_expenses->fetch_assoc()):
                     ?>
                     <div class="mb-2">
@@ -136,8 +121,8 @@ require_once 'includes/header.php';
                         </div>
                         <div class="progress">
                             <div class="progress-bar" role="progressbar" 
-                                style="width: <?php echo min(100, ($expense['total'] / $monthly_expenses) * 100); ?>%" 
-                                aria-valuenow="<?php echo ($expense['total'] / $monthly_expenses) * 100; ?>" 
+                                style="width: <?php echo min(100, ($expense['total'] / max(1, $monthly_expenses)) * 100); ?>%" 
+                                aria-valuenow="<?php echo ($expense['total'] / max(1, $monthly_expenses)) * 100; ?>" 
                                 aria-valuemin="0" aria-valuemax="100">
                             </div>
                         </div>
@@ -163,7 +148,7 @@ require_once 'includes/header.php';
                 <?php if (empty($budget_status)): ?>
                     <div class="text-center mb-4">
                         <p>No budget data available. Set up your first budget.</p>
-                        <a href="/budget" class="btn btn-primary">Create Budget</a>
+                        <a href="<?php echo BASE_PATH; ?>/budget" class="btn btn-primary">Create Budget</a>
                     </div>
                 <?php else: ?>
                     <?php foreach ($budget_status as $budget): ?>
@@ -195,7 +180,10 @@ require_once 'includes/header.php';
                     <h4 class="small font-weight-bold">Income vs Expenses</h4>
                     <div class="progress mb-4">
                         <?php 
-                        $expense_percentage = ($monthly_expenses / $monthly_income) * 100;
+                        $expense_percentage = 0;
+                        if (isset($monthly_income) && $monthly_income > 0) {
+                            $expense_percentage = ($monthly_expenses / $monthly_income) * 100;
+                        }
                         $progress_class = 'progress-bar-budget-safe';
                         if ($expense_percentage >= 90) {
                             $progress_class = 'progress-bar-budget-danger';
@@ -228,12 +216,15 @@ require_once 'includes/header.php';
                 <?php if (!isset($goals) || $goals->num_rows === 0): ?>
                     <div class="text-center">
                         <p>No financial goals set. Start planning your future!</p>
-                        <a href="/goals" class="btn btn-primary">Set Goals</a>
+                        <a href="<?php echo BASE_PATH; ?>/goals" class="btn btn-primary">Set Goals</a>
                     </div>
                 <?php else: ?>
                     <?php while ($goal = $goals->fetch_assoc()): ?>
                         <?php 
-                        $progress = ($goal['current_amount'] / $goal['target_amount']) * 100; 
+                        $progress = 0;
+                        if ($goal['target_amount'] > 0) {
+                            $progress = ($goal['current_amount'] / $goal['target_amount']) * 100; 
+                        }
                         $progress_class = 'bg-info';
                         if ($progress >= 100) {
                             $progress_class = 'bg-success';
@@ -261,7 +252,7 @@ require_once 'includes/header.php';
                         </div>
                     <?php endwhile; ?>
                     <div class="text-center mt-3">
-                        <a href="/goals" class="btn btn-sm btn-primary">View All Goals</a>
+                        <a href="<?php echo BASE_PATH; ?>/goals" class="btn btn-sm btn-primary">View All Goals</a>
                     </div>
                 <?php endif; ?>
             </div>
@@ -311,24 +302,39 @@ require_once 'includes/header.php';
 </div>
 
 <?php
-// JavaScript for charts
+// JavaScript for charts (simplified to avoid errors)
 $page_scripts = "
 // Expense Categories Chart
 var expenseCategoryCtx = document.getElementById('expenseCategoryChart').getContext('2d');
 var expenseCategoryData = {
-    labels: [" . (isset($top_expenses) && $top_expenses->num_rows > 0 ? 
-                $top_expenses->data_seek(0) && 
-                implode(',', array_map(function($row) { 
-                    return "'" . addslashes($row['category_name']) . "'"; 
-                }, iterator_to_array($top_expenses)))
-                : '') . "],
+    labels: [";
+    
+    // Add chart labels safely
+    if (isset($top_expenses) && $top_expenses->num_rows > 0) {
+        $top_expenses->data_seek(0);
+        $labels = [];
+        while ($row = $top_expenses->fetch_assoc()) {
+            $labels[] = "'" . addslashes($row['category_name']) . "'";
+        }
+        $page_scripts .= implode(',', $labels);
+        // Reset for next use
+        $top_expenses->data_seek(0);
+    }
+    
+    $page_scripts .= "],
     datasets: [{
-        data: [" . (isset($top_expenses) && $top_expenses->num_rows > 0 ? 
-                $top_expenses->data_seek(0) && 
-                implode(',', array_map(function($row) { 
-                    return $row['total']; 
-                }, iterator_to_array($top_expenses)))
-                : '') . "],
+        data: [";
+        
+        // Add chart data safely
+        if (isset($top_expenses) && $top_expenses->num_rows > 0) {
+            $values = [];
+            while ($row = $top_expenses->fetch_assoc()) {
+                $values[] = $row['total'];
+            }
+            $page_scripts .= implode(',', $values);
+        }
+        
+        $page_scripts .= "],
         backgroundColor: [
             '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
             '#6f42c1', '#fd7e14', '#20c9a6', '#5a5c69', '#858796'

@@ -1,18 +1,38 @@
 /**
  * iGotMoney - Dashboard JavaScript
- * Dashboard-specific functionality
+ * Enhanced dashboard functionality with modern interactions
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize dashboard refresh timer
-    initializeRefreshTimer();
+    // Initialize dashboard components
+    initializeDashboard();
     
     // Set up quick actions
     initializeQuickActions();
+    
+    // Handle card interactions
+    initializeCardInteractions();
+    
+    // Initialize tooltips
+    initializeTooltips();
 });
 
 /**
- * Initialize dashboard refresh timer
+ * Initialize dashboard components
+ */
+function initializeDashboard() {
+    // Initialize refresh timer for auto-refresh
+    initializeRefreshTimer();
+    
+    // Add animation for progress bars
+    animateProgressBars();
+    
+    // Initialize chart interactions
+    initializeChartInteractions();
+}
+
+/**
+ * Initialize refresh timer for auto-refresh
  */
 function initializeRefreshTimer() {
     // Refresh dashboard data every 30 minutes
@@ -35,48 +55,155 @@ function initializeRefreshTimer() {
                 }
                 
                 // Show notification
-                showNotification('Dashboard data updated', 'info', 2000);
+                showNotification('Dashboard data updated', 'success');
             });
         }
     }, refreshInterval);
 }
 
 /**
- * Fetch dashboard data
- * @param {function} callback - Function to call when fetch is complete
+ * Animate progress bars on load
  */
-function fetchDashboardData(callback) {
-    // This would normally make an AJAX request to get fresh data
-    // For demonstration, we're just reloading the page
+function animateProgressBars() {
+    const progressBars = document.querySelectorAll('.progress-bar');
     
-    // In a real implementation, we would do something like:
-    /*
-    ajaxRequest('/api/dashboard-data', 'GET', {}, function(response) {
-        // Update UI with new data
-        updateFinancialSummary(response.summary);
-        updateBudgetStatus(response.budgets);
-        updateExpenseChart(response.expenses);
-        updateGoals(response.goals);
-        updateAdvice(response.advice);
-        
-        if (callback) callback();
-    }, function(error) {
-        console.error('Failed to fetch dashboard data:', error);
-        if (callback) callback();
+    // Animate progress bars one by one with a slight delay
+    progressBars.forEach((bar, index) => {
+        setTimeout(() => {
+            const targetWidth = bar.getAttribute('aria-valuenow') + '%';
+            bar.style.width = targetWidth;
+        }, 100 + (index * 50)); // Staggered animation
     });
-    */
+}
+
+/**
+ * Initialize interactions for expense category chart
+ */
+function initializeChartInteractions() {
+    const chartContainer = document.querySelector('.chart-container');
+    if (!chartContainer) return;
     
-    // For the demo, just wait a bit then reload
-    setTimeout(function() {
-        window.location.reload();
-    }, 1000);
+    // Add hover effect to chart container
+    chartContainer.addEventListener('mouseenter', function() {
+        this.style.transform = 'scale(1.02)';
+        this.style.transition = 'transform 0.3s ease';
+    });
+    
+    chartContainer.addEventListener('mouseleave', function() {
+        this.style.transform = 'scale(1)';
+    });
+    
+    // Handle dropdown time range selection
+    const timeRangeDropdown = document.getElementById('dropdownTimeRange');
+    if (timeRangeDropdown) {
+        const timeRangeOptions = document.querySelectorAll('.dropdown-menu a.dropdown-item');
+        timeRangeOptions.forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Update dropdown button text
+                timeRangeDropdown.textContent = this.textContent;
+                
+                // Remove active class from all options
+                timeRangeOptions.forEach(opt => opt.classList.remove('active'));
+                
+                // Add active class to selected option
+                this.classList.add('active');
+                
+                // Show loading state
+                chartContainer.classList.add('loading');
+                
+                // Simulate fetching data for the selected time range
+                setTimeout(() => {
+                    // Update chart with new data (in a real app, this would fetch from server)
+                    updateChartForTimeRange(this.textContent.trim());
+                    
+                    // Remove loading state
+                    chartContainer.classList.remove('loading');
+                    
+                    // Show notification
+                    showNotification('Chart updated to show ' + this.textContent.trim() + ' data', 'info');
+                }, 800);
+            });
+        });
+    }
+}
+
+/**
+ * Initialize card interactions for hover effects
+ */
+function initializeCardInteractions() {
+    // Add hover effect to financial cards
+    const financialCards = document.querySelectorAll('.financial-card');
+    financialCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Add hover effect to budget and expense items
+    const hoverItems = document.querySelectorAll('.budget-item, .expense-item, .financial-goal-item, .advice-item');
+    hoverItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = 'var(--gray-100)';
+            this.style.borderRadius = '8px';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = 'transparent';
+        });
+    });
+}
+
+/**
+ * Initialize tooltips for interactive elements
+ */
+function initializeTooltips() {
+    // Initialize tooltips for milestone markers
+    const milestoneMarkers = document.querySelectorAll('.milestone-marker');
+    milestoneMarkers.forEach(marker => {
+        const title = marker.getAttribute('title');
+        if (title) {
+            // Create tooltip element
+            const tooltip = document.createElement('div');
+            tooltip.className = 'milestone-tooltip';
+            tooltip.textContent = title;
+            tooltip.style.position = 'absolute';
+            tooltip.style.display = 'none';
+            tooltip.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+            tooltip.style.color = 'white';
+            tooltip.style.padding = '5px 10px';
+            tooltip.style.borderRadius = '4px';
+            tooltip.style.fontSize = '12px';
+            tooltip.style.zIndex = '10';
+            tooltip.style.pointerEvents = 'none';
+            
+            document.body.appendChild(tooltip);
+            
+            // Show tooltip on hover
+            marker.addEventListener('mouseenter', function(e) {
+                const rect = this.getBoundingClientRect();
+                tooltip.style.display = 'block';
+                tooltip.style.left = rect.left + 'px';
+                tooltip.style.top = (rect.top - 30) + 'px';
+            });
+            
+            marker.addEventListener('mouseleave', function() {
+                tooltip.style.display = 'none';
+            });
+        }
+    });
 }
 
 /**
  * Initialize quick actions
  */
 function initializeQuickActions() {
-    // Quick add expense button
+    // Quick add expense button (if exists)
     const quickAddExpenseBtn = document.getElementById('quickAddExpense');
     if (quickAddExpenseBtn) {
         quickAddExpenseBtn.addEventListener('click', function() {
@@ -84,248 +211,298 @@ function initializeQuickActions() {
         });
     }
     
-    // Quick add income button
+    // Quick add income button (if exists)
     const quickAddIncomeBtn = document.getElementById('quickAddIncome');
     if (quickAddIncomeBtn) {
         quickAddIncomeBtn.addEventListener('click', function() {
             window.location.href = '/income?action=add';
         });
     }
+    
+    // Refresh dashboard button
+    const refreshButton = document.getElementById('refreshDashboard');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            if (icon) {
+                icon.classList.add('fa-spin');
+            }
+            
+            fetchDashboardData(() => {
+                // In a real app, this would fetch data via AJAX
+                setTimeout(() => {
+                    window.location.reload();
+                }, 800);
+            });
+        });
+    }
+    
+    // Print dashboard button
+    const printButton = document.getElementById('printDashboard');
+    if (printButton) {
+        printButton.addEventListener('click', function() {
+            // Prepare for printing
+            document.body.classList.add('printing');
+            
+            // Print the page
+            window.print();
+            
+            // Remove printing class after print dialog closes
+            setTimeout(() => {
+                document.body.classList.remove('printing');
+            }, 1000);
+        });
+    }
 }
 
 /**
- * Update financial summary cards
+ * Fetch dashboard data
+ * @param {function} callback - Function to call when fetch is complete
+ */
+function fetchDashboardData(callback) {
+    // In a real implementation, this would make an AJAX request
+    // For demonstration, we're just simulating a delay
+    
+    // Show a loading indicator
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.className = 'loading-overlay';
+    loadingOverlay.style.position = 'fixed';
+    loadingOverlay.style.top = '0';
+    loadingOverlay.style.left = '0';
+    loadingOverlay.style.width = '100%';
+    loadingOverlay.style.height = '100%';
+    loadingOverlay.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+    loadingOverlay.style.zIndex = '9999';
+    loadingOverlay.style.display = 'flex';
+    loadingOverlay.style.justifyContent = 'center';
+    loadingOverlay.style.alignItems = 'center';
+    
+    const spinner = document.createElement('div');
+    spinner.className = 'spinner';
+    spinner.innerHTML = '<i class="fas fa-circle-notch fa-spin fa-3x" style="color: var(--primary-color);"></i>';
+    
+    loadingOverlay.appendChild(spinner);
+    document.body.appendChild(loadingOverlay);
+    
+    // Simulate network request
+    setTimeout(function() {
+        // Remove loading overlay
+        document.body.removeChild(loadingOverlay);
+        
+        // Call callback function
+        if (callback && typeof callback === 'function') {
+            callback();
+        }
+    }, 1000);
+}
+
+/**
+ * Update chart for selected time range
+ * @param {string} timeRange - Selected time range
+ */
+function updateChartForTimeRange(timeRange) {
+    // In a real app, this would fetch data from the server
+    // Here we're just simulating different data for different time ranges
+    
+    if (!window.expenseCategoryChart) return;
+    
+    let newData;
+    
+    switch(timeRange) {
+        case 'Last Month':
+            newData = [350, 280, 190, 140, 90];
+            break;
+        case 'Last 3 Months':
+            newData = [950, 780, 620, 450, 320];
+            break;
+        case 'This Year':
+            newData = [3200, 2800, 2100, 1700, 1200];
+            break;
+        default: // 'This Month'
+            // Keep existing data
+            return;
+    }
+    
+    // Update chart data
+    window.expenseCategoryChart.data.datasets[0].data = newData;
+    window.expenseCategoryChart.update();
+    
+    // Update top expenses list
+    updateTopExpensesList(newData);
+}
+
+/**
+ * Update top expenses list with new data
+ * @param {array} newData - New expense data
+ */
+function updateTopExpensesList(newData) {
+    const expenseItems = document.querySelectorAll('.expense-item');
+    const totalExpenses = newData.reduce((sum, value) => sum + value, 0);
+    
+    expenseItems.forEach((item, index) => {
+        if (index < newData.length) {
+            const amountElement = item.querySelector('.expense-amount');
+            const progressBar = item.querySelector('.progress-bar');
+            
+            if (amountElement) {
+                amountElement.textContent = '$' + newData[index].toFixed(2);
+            }
+            
+            if (progressBar) {
+                const percentage = (newData[index] / totalExpenses) * 100;
+                progressBar.style.width = percentage + '%';
+                progressBar.setAttribute('aria-valuenow', percentage);
+            }
+        }
+    });
+}
+
+/**
+ * Show notification
+ * @param {string} message - Notification message
+ * @param {string} type - Notification type (success, info, warning, danger)
+ * @param {number} duration - Duration in milliseconds
+ */
+function showNotification(message, type = 'info', duration = 3000) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = 'dashboard-notification';
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.padding = '10px 20px';
+    notification.style.borderRadius = '4px';
+    notification.style.zIndex = '9999';
+    notification.style.boxShadow = '0 3px 6px rgba(0,0,0,0.16)';
+    notification.style.transform = 'translateX(120%)';
+    notification.style.transition = 'transform 0.3s ease';
+    
+    // Set background color based on type
+    switch(type) {
+        case 'success':
+            notification.style.backgroundColor = '#2ecc71';
+            notification.style.color = '#fff';
+            break;
+        case 'warning':
+            notification.style.backgroundColor = '#f39c12';
+            notification.style.color = '#fff';
+            break;
+        case 'danger':
+            notification.style.backgroundColor = '#e74c3c';
+            notification.style.color = '#fff';
+            break;
+        default: // info
+            notification.style.backgroundColor = '#3498db';
+            notification.style.color = '#fff';
+    }
+    
+    // Add icon based on type
+    let icon;
+    switch(type) {
+        case 'success':
+            icon = 'fa-check-circle';
+            break;
+        case 'warning':
+            icon = 'fa-exclamation-triangle';
+            break;
+        case 'danger':
+            icon = 'fa-exclamation-circle';
+            break;
+        default: // info
+            icon = 'fa-info-circle';
+    }
+    
+    notification.innerHTML = `<i class="fas ${icon} me-2"></i> ${message}`;
+    
+    // Add close button
+    const closeButton = document.createElement('span');
+    closeButton.innerHTML = '&times;';
+    closeButton.style.marginLeft = '10px';
+    closeButton.style.cursor = 'pointer';
+    closeButton.style.fontWeight = 'bold';
+    
+    closeButton.addEventListener('click', function() {
+        notification.style.transform = 'translateX(120%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    });
+    
+    notification.appendChild(closeButton);
+    
+    // Add to DOM
+    document.body.appendChild(notification);
+    
+    // Show notification with animation
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 10);
+    
+    // Auto-hide after duration
+    setTimeout(() => {
+        notification.style.transform = 'translateX(120%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, duration);
+}
+
+/**
+ * Update financial summary cards with new data
  * @param {object} summary - The summary data
  */
 function updateFinancialSummary(summary) {
     // Update monthly income
-    const monthlyIncomeElement = document.querySelector('.dashboard-card.income .h5');
-    if (monthlyIncomeElement && summary.monthly_income !== undefined) {
-        monthlyIncomeElement.textContent = formatCurrency(summary.monthly_income);
-    }
+    updateCardValue('.income-card .card-value', summary.monthly_income);
     
     // Update monthly expenses
-    const monthlyExpensesElement = document.querySelector('.dashboard-card.expenses .h5');
-    if (monthlyExpensesElement && summary.monthly_expenses !== undefined) {
-        monthlyExpensesElement.textContent = formatCurrency(summary.monthly_expenses);
-    }
+    updateCardValue('.expenses-card .card-value', summary.monthly_expenses);
     
     // Update monthly net
-    const monthlyNetElement = document.querySelector('.dashboard-card.savings .h5');
-    if (monthlyNetElement && summary.monthly_net !== undefined) {
-        monthlyNetElement.textContent = formatCurrency(summary.monthly_net);
-    }
+    updateCardValue('.savings-card .card-value', summary.monthly_net);
     
     // Update yearly projection
-    const yearlyNetElement = document.querySelector('.dashboard-card.investments .h5');
-    if (yearlyNetElement && summary.yearly_net !== undefined) {
-        yearlyNetElement.textContent = formatCurrency(summary.yearly_net);
-    }
+    updateCardValue('.projection-card .card-value', summary.yearly_net);
 }
 
 /**
- * Update budget status
- * @param {array} budgets - The budget status data
+ * Update card value with animation
+ * @param {string} selector - Element selector
+ * @param {number} newValue - New value
  */
-function updateBudgetStatus(budgets) {
-    const budgetContainer = document.querySelector('.card-body > .mt-4');
-    if (!budgetContainer) return;
+function updateCardValue(selector, newValue) {
+    const element = document.querySelector(selector);
+    if (!element) return;
     
-    let budgetHTML = '<h4 class="small font-weight-bold">Budget Status</h4>';
+    // Get current value without formatting
+    const currentText = element.textContent;
+    const currentValue = parseFloat(currentText.replace(/[^0-9.-]+/g, ''));
     
-    if (budgets.length === 0) {
-        budgetHTML += `
-            <div class="text-center mb-4">
-                <p>No budget data available. Set up your first budget.</p>
-                <a href="/budget" class="btn btn-primary">Create Budget</a>
-            </div>
-        `;
-    } else {
-        budgets.forEach(budget => {
-            let progressClass = 'progress-bar-budget-safe';
-            if (budget.percentage >= 90) {
-                progressClass = 'progress-bar-budget-danger';
-            } else if (budget.percentage >= 75) {
-                progressClass = 'progress-bar-budget-warning';
-            }
-            
-            budgetHTML += `
-                <h4 class="small font-weight-bold">
-                    ${budget.category_name}
-                    <span class="float-end">
-                        ${Math.round(budget.percentage)}%
-                    </span>
-                </h4>
-                <div class="progress mb-4">
-                    <div class="progress-bar ${progressClass}" role="progressbar" 
-                        style="width: ${Math.min(100, budget.percentage)}%" 
-                        aria-valuenow="${budget.percentage}" 
-                        aria-valuemin="0" aria-valuemax="100">
-                    </div>
-                </div>
-            `;
-        });
-    }
-    
-    budgetContainer.innerHTML = budgetHTML;
+    // Animate count up/down
+    animateValue(element, currentValue, newValue, 1000);
 }
 
 /**
- * Update expense category chart
- * @param {array} expenses - The expense data
+ * Animate numeric value change
+ * @param {Element} element - DOM element to update
+ * @param {number} start - Start value
+ * @param {number} end - End value
+ * @param {number} duration - Animation duration in milliseconds
  */
-function updateExpenseChart(expenses) {
-    if (!window.expenseCategoryChart) return;
-    
-    const labels = expenses.map(expense => expense.category_name);
-    const data = expenses.map(expense => expense.total);
-    
-    window.expenseCategoryChart.data.labels = labels;
-    window.expenseCategoryChart.data.datasets[0].data = data;
-    window.expenseCategoryChart.update();
-    
-    // Update top expenses list
-    const topExpensesContainer = document.querySelector('.mt-4');
-    if (!topExpensesContainer) return;
-    
-    let topExpensesHTML = '<h4 class="small font-weight-bold">Top Expenses<span class="float-end">Categories</span></h4>';
-    
-    if (expenses.length === 0) {
-        topExpensesHTML += '<p>No expense data available.</p>';
-    } else {
-        // Calculate total expenses
-        const totalExpenses = data.reduce((sum, value) => sum + value, 0);
-        
-        expenses.forEach(expense => {
-            const percentage = calculatePercentage(expense.total, totalExpenses);
-            
-            topExpensesHTML += `
-                <div class="mb-2">
-                    <div class="d-flex justify-content-between">
-                        <span>${expense.category_name}</span>
-                        <span>${formatCurrency(expense.total)}</span>
-                    </div>
-                    <div class="progress">
-                        <div class="progress-bar" role="progressbar" 
-                            style="width: ${percentage}%" 
-                            aria-valuenow="${percentage}" 
-                            aria-valuemin="0" aria-valuemax="100">
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-    }
-    
-    topExpensesContainer.innerHTML = topExpensesHTML;
-}
-
-/**
- * Update financial goals
- * @param {array} goals - The financial goals data
- */
-function updateGoals(goals) {
-    const goalsContainer = document.querySelector('.card-body');
-    if (!goalsContainer) return;
-    
-    let goalsHTML = '';
-    
-    if (goals.length === 0) {
-        goalsHTML += `
-            <div class="text-center">
-                <p>No financial goals set. Start planning your future!</p>
-                <a href="/goals" class="btn btn-primary">Set Goals</a>
-            </div>
-        `;
-    } else {
-        goals.forEach(goal => {
-            const progress = calculatePercentage(goal.current_amount, goal.target_amount);
-            let progressClass = 'bg-info';
-            
-            if (progress >= 100) {
-                progressClass = 'bg-success';
-            } else if (progress >= 75) {
-                progressClass = 'bg-warning';
-            }
-            
-            goalsHTML += `
-                <div class="d-flex align-items-center mb-3">
-                    <div class="flex-grow-1">
-                        <h4 class="small font-weight-bold">${goal.name} 
-                            <span class="float-end">${Math.round(progress)}%</span>
-                        </h4>
-                        <div class="progress">
-                            <div class="progress-bar ${progressClass}" role="progressbar" 
-                                style="width: ${Math.min(100, progress)}%" 
-                                aria-valuenow="${progress}" 
-                                aria-valuemin="0" aria-valuemax="100">
-                            </div>
-                        </div>
-                        <small>
-                            ${formatCurrency(goal.current_amount)} of 
-                            ${formatCurrency(goal.target_amount)}
-                        </small>
-                    </div>
-                </div>
-            `;
-        });
-        
-        goalsHTML += `
-            <div class="text-center mt-3">
-                <a href="/goals" class="btn btn-sm btn-primary">View All Goals</a>
-            </div>
-        `;
-    }
-    
-    goalsContainer.innerHTML = goalsHTML;
-}
-
-/**
- * Update financial advice
- * @param {array} advice - The financial advice data
- */
-function updateAdvice(advice) {
-    const adviceContainer = document.querySelector('.card-body');
-    if (!adviceContainer) return;
-    
-    let adviceHTML = '';
-    
-    if (advice.length === 0) {
-        adviceHTML += '<p>No financial advice available at this time.</p>';
-    } else {
-        adviceHTML += '<div class="list-group">';
-        
-        advice.forEach(item => {
-            let adviceClass = 'list-group-item-info';
-            let adviceIcon = 'info-circle';
-            
-            if (item.importance_level === 'high') {
-                adviceClass = 'list-group-item-danger';
-                adviceIcon = 'exclamation-circle';
-            } else if (item.importance_level === 'medium') {
-                adviceClass = 'list-group-item-warning';
-                adviceIcon = 'exclamation-triangle';
-            }
-            
-            const date = new Date(item.generated_at);
-            const formattedDate = `${date.toLocaleString('default', { month: 'short' })} ${date.getDate()}`;
-            
-            adviceHTML += `
-                <div class="list-group-item ${adviceClass} mb-2">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">
-                            <i class="fas fa-${adviceIcon} me-2"></i>
-                            ${item.title}
-                        </h5>
-                        <small>${formattedDate}</small>
-                    </div>
-                    <p class="mb-1">${item.content}</p>
-                </div>
-            `;
-        });
-        
-        adviceHTML += '</div>';
-    }
-    
-    adviceContainer.innerHTML = adviceHTML;
+function animateValue(element, start, end, duration) {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const value = progress * (end - start) + start;
+        element.textContent = '$' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+    window.requestAnimationFrame(step);
 }
