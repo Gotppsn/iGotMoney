@@ -1,547 +1,489 @@
 /**
- * iGotMoney - Investments JavaScript
- * Handles functionality for the investment management page
+ * iGotMoney - Investments Page JavaScript
+ * Enhanced investments functionality with modern interactions
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize investment value calculator
-    initializeValueCalculator();
-    
-    // Initialize risk level visualization
-    initializeRiskVisualization();
-    
-    // Initialize portfolio analyzer
-    initializePortfolioAnalyzer();
+    // Initialize components
+    initializeInvestmentForms();
+    initializeDataTables();
+    initializeSearchFilter();
+    initializeInvestmentActions();
+    initializeTooltips();
+    animateElements();
 });
 
 /**
- * Initialize investment value calculator
- * Dynamically calculates values as user enters data
+ * Get base path from meta tag
  */
-function initializeValueCalculator() {
-    // Add calculator to add investment form
-    const formGroups = document.querySelectorAll('.modal-body');
+function getBasePath() {
+    const metaTag = document.querySelector('meta[name="base-path"]');
+    return metaTag ? metaTag.content : '';
+}
+
+/**
+ * Initialize investment forms with validation and calculations
+ */
+function initializeInvestmentForms() {
+    // Add investment form calculator
+    initInvestmentCalculator('purchase_price', 'quantity', 'current_price', 'investment-calculator');
     
-    formGroups.forEach(formGroup => {
-        // Find relevant inputs
-        const purchasePriceInput = formGroup.querySelector('[id$="purchase_price"]');
-        const quantityInput = formGroup.querySelector('[id$="quantity"]');
-        const currentPriceInput = formGroup.querySelector('[id$="current_price"]');
-        
-        if (!purchasePriceInput || !quantityInput) return;
-        
-        // Create calculator container if not exists
-        let calculatorDiv = formGroup.querySelector('.investment-calculator');
-        if (!calculatorDiv) {
-            calculatorDiv = document.createElement('div');
-            calculatorDiv.className = 'investment-calculator mt-3';
-            
-            // Add after the current price input group
-            if (currentPriceInput) {
-                const inputGroup = currentPriceInput.closest('.mb-3');
-                if (inputGroup) {
-                    inputGroup.insertAdjacentElement('afterend', calculatorDiv);
-                }
-            } else if (quantityInput) {
-                const inputGroup = quantityInput.closest('.mb-3');
-                if (inputGroup) {
-                    inputGroup.insertAdjacentElement('afterend', calculatorDiv);
-                }
+    // Form validation for add investment
+    const addForm = document.querySelector('#addInvestmentModal form');
+    if (addForm) {
+        addForm.addEventListener('submit', function(e) {
+            if (!this.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
             }
-        }
+            this.classList.add('was-validated');
+        });
+    }
+    
+    // Form validation for edit investment
+    const editForm = document.querySelector('#editInvestmentModal form');
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            if (!this.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            this.classList.add('was-validated');
+        });
+    }
+}
+
+/**
+ * Initialize the investment calculator for form
+ */
+function initInvestmentCalculator(priceId, quantityId, currentPriceId, calculatorId) {
+    const purchasePrice = document.getElementById(priceId);
+    const quantity = document.getElementById(quantityId);
+    const currentPrice = document.getElementById(currentPriceId);
+    const calculator = document.getElementById(calculatorId);
+    
+    if (!purchasePrice || !quantity || !currentPrice || !calculator) return;
+    
+    const initialInvestment = calculator.querySelector('#initial-investment') || calculator.querySelector('[id$="initial-investment"]');
+    const currentValue = calculator.querySelector('#current-value') || calculator.querySelector('[id$="current-value"]');
+    const gainLoss = calculator.querySelector('#gain-loss') || calculator.querySelector('[id$="gain-loss"]');
+    const gainLossContainer = calculator.querySelector('#gain-loss-container') || calculator.querySelector('[id$="gain-loss-container"]');
+    
+    if (!initialInvestment || !currentValue) return;
+    
+    const updateCalculator = () => {
+        const price = parseFloat(purchasePrice.value) || 0;
+        const qty = parseFloat(quantity.value) || 0;
+        const current = parseFloat(currentPrice.value) || price;
         
-        // Add input event listeners
-        const updateCalculator = () => {
-            const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
-            const quantity = parseFloat(quantityInput.value) || 0;
-            const currentPrice = currentPriceInput ? (parseFloat(currentPriceInput.value) || purchasePrice) : purchasePrice;
-            
-            // Calculate values
-            const purchaseValue = purchasePrice * quantity;
-            const currentValue = currentPrice * quantity;
-            const gainLoss = currentValue - purchaseValue;
-            const percentGainLoss = purchaseValue > 0 ? (gainLoss / purchaseValue) * 100 : 0;
-            
-            // Format and display
-            if (purchaseValue > 0) {
-                calculatorDiv.innerHTML = `
-                    <div class="alert alert-info">
-                        <h6 class="alert-heading">Investment Summary</h6>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <strong>Initial Investment:</strong><br>
-                                $${formatNumber(purchaseValue)}
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Current Value:</strong><br>
-                                $${formatNumber(currentValue)}
-                            </div>
-                        </div>
-                        <hr>
-                        <div class="${gainLoss >= 0 ? 'text-success' : 'text-danger'}">
-                            <strong>Gain/Loss:</strong> 
-                            $${formatNumber(Math.abs(gainLoss))} 
-                            (${gainLoss >= 0 ? '+' : '-'}${Math.abs(percentGainLoss).toFixed(2)}%)
-                        </div>
-                    </div>
-                `;
+        const invested = price * qty;
+        const currentVal = current * qty;
+        const gainLossVal = currentVal - invested;
+        const gainLossPercent = invested > 0 ? (gainLossVal / invested) * 100 : 0;
+        
+        initialInvestment.textContent = '$' + invested.toFixed(2);
+        currentValue.textContent = '$' + currentVal.toFixed(2);
+        
+        if (gainLoss && gainLossContainer) {
+            if (current !== price) {
+                gainLossContainer.classList.remove('d-none');
+                gainLoss.textContent = '$' + Math.abs(gainLossVal).toFixed(2) + ' (' + gainLossPercent.toFixed(2) + '%)';
+                gainLoss.className = gainLossVal >= 0 ? 'text-success' : 'text-danger';
             } else {
-                calculatorDiv.innerHTML = '';
+                gainLossContainer.classList.add('d-none');
             }
-        };
-        
-        if (purchasePriceInput) purchasePriceInput.addEventListener('input', updateCalculator);
-        if (quantityInput) quantityInput.addEventListener('input', updateCalculator);
-        if (currentPriceInput) currentPriceInput.addEventListener('input', updateCalculator);
-        
-        // Initialize with current values
-        updateCalculator();
-    });
-}
-
-/**
- * Initialize risk level visualization
- * Provides visual cues based on investment risk level
- */
-function initializeRiskVisualization() {
-    const typeSelects = document.querySelectorAll('#type_id, #edit_type_id');
-    
-    typeSelects.forEach(select => {
-        select.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const riskLevel = selectedOption.getAttribute('data-risk');
-            
-            // Find parent form
-            const form = this.closest('form');
-            if (!form) return;
-            
-            // Add risk level indicator
-            let riskIndicator = form.querySelector('.risk-level-indicator');
-            if (!riskIndicator) {
-                riskIndicator = document.createElement('div');
-                riskIndicator.className = 'risk-level-indicator mt-2';
-                this.parentNode.appendChild(riskIndicator);
-            }
-            
-            // Set risk level color and message
-            let riskColor, riskMessage;
-            
-            switch (riskLevel) {
-                case 'very low':
-                    riskColor = 'success';
-                    riskMessage = 'Very low risk investments typically have lower returns but high stability.';
-                    break;
-                case 'low':
-                    riskColor = 'info';
-                    riskMessage = 'Low risk investments generally offer modest returns with good stability.';
-                    break;
-                case 'moderate':
-                    riskColor = 'primary';
-                    riskMessage = 'Moderate risk investments balance potential returns with acceptable risk levels.';
-                    break;
-                case 'high':
-                    riskColor = 'warning';
-                    riskMessage = 'High risk investments may offer greater returns but come with increased volatility.';
-                    break;
-                case 'very high':
-                    riskColor = 'danger';
-                    riskMessage = 'Very high risk investments can yield substantial returns but also significant losses.';
-                    break;
-                default:
-                    riskColor = 'secondary';
-                    riskMessage = 'Risk level not specified.';
-            }
-            
-            riskIndicator.innerHTML = `
-                <div class="alert alert-${riskColor} py-2">
-                    <small><i class="fas fa-info-circle me-1"></i> ${riskMessage}</small>
-                </div>
-            `;
-        });
-        
-        // Trigger change to show initial risk level
-        select.dispatchEvent(new Event('change'));
-    });
-}
-
-/**
- * Initialize portfolio analyzer
- * Provides portfolio analysis and recommendations
- */
-function initializePortfolioAnalyzer() {
-    // Create analyzer button in summary card
-    const summaryCard = document.querySelector('.card-body .text-center.mb-3');
-    if (!summaryCard) return;
-    
-    const analyzerButton = document.createElement('button');
-    analyzerButton.className = 'btn btn-sm btn-outline-primary mt-2';
-    analyzerButton.innerHTML = '<i class="fas fa-chart-pie me-1"></i> Analyze Portfolio';
-    analyzerButton.id = 'portfolioAnalyzerBtn';
-    
-    summaryCard.appendChild(analyzerButton);
-    
-    // Create analyzer container
-    const analyzerContainer = document.createElement('div');
-    analyzerContainer.id = 'portfolioAnalysis';
-    analyzerContainer.className = 'mt-3 d-none';
-    summaryCard.insertAdjacentElement('afterend', analyzerContainer);
-    
-    // Add click event to analyzer button
-    analyzerButton.addEventListener('click', function() {
-        const analysisDiv = document.getElementById('portfolioAnalysis');
-        
-        if (analysisDiv.classList.contains('d-none')) {
-            // Show loading indicator
-            analysisDiv.classList.remove('d-none');
-            analysisDiv.innerHTML = `
-                <div class="text-center py-3">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-2">Analyzing your portfolio...</p>
-                </div>
-            `;
-            
-            // Simulate analysis (would connect to backend in real app)
-            setTimeout(() => {
-                analyzePortfolio(analysisDiv);
-            }, 1000);
-            
-            // Update button text
-            this.innerHTML = '<i class="fas fa-times me-1"></i> Close Analysis';
-        } else {
-            // Hide analysis
-            analysisDiv.classList.add('d-none');
-            
-            // Update button text
-            this.innerHTML = '<i class="fas fa-chart-pie me-1"></i> Analyze Portfolio';
         }
-    });
-}
-
-/**
- * Analyze portfolio and provide recommendations
- * @param {HTMLElement} container - Container to display results
- */
-function analyzePortfolio(container) {
-    // Get portfolio data from the page
-    const portfolioData = getPortfolioDataFromPage();
-    
-    // Calculate diversification score
-    const diversificationScore = calculateDiversificationScore(portfolioData);
-    
-    // Calculate risk score
-    const riskScore = calculateRiskScore(portfolioData);
-    
-    // Generate recommendations
-    const recommendations = generateRecommendations(portfolioData, diversificationScore, riskScore);
-    
-    // Display analysis results
-    container.innerHTML = `
-        <div class="card border-primary">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Portfolio Analysis Results</h5>
-            </div>
-            <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-body text-center">
-                                <h6 class="card-title">Diversification Score</h6>
-                                <div class="display-4 ${getScoreColorClass(diversificationScore)}">${diversificationScore}/10</div>
-                                <p class="text-muted">${getDiversificationMessage(diversificationScore)}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-body text-center">
-                                <h6 class="card-title">Risk Assessment</h6>
-                                <div class="display-4 ${getRiskColorClass(riskScore)}">${getRiskLabel(riskScore)}</div>
-                                <p class="text-muted">${getRiskMessage(riskScore)}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <h6 class="mb-3">Recommendations</h6>
-                <ul class="list-group mb-3">
-                    ${recommendations.map(rec => `
-                        <li class="list-group-item">
-                            <i class="fas fa-lightbulb text-warning me-2"></i>
-                            ${rec}
-                        </li>
-                    `).join('')}
-                </ul>
-                
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <small>This analysis is based on current portfolio data and general investment principles. 
-                    For personalized financial advice, consult with a qualified financial advisor.</small>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-/**
- * Extract portfolio data from the page
- * @returns {Object} Portfolio data object
- */
-function getPortfolioDataFromPage() {
-    const data = {
-        totalInvested: 0,
-        totalValue: 0,
-        byType: {},
-        byRisk: {},
-        investments: []
+        
+        if (invested > 0) {
+            calculator.classList.remove('d-none');
+        } else {
+            calculator.classList.add('d-none');
+        }
     };
     
-    // Extract from summary section
-    const totalInvestedEl = document.querySelector('.row.mb-4 .text-primary');
-    const totalValueEl = document.querySelector('.row.mb-4 .text-info');
+    purchasePrice.addEventListener('input', updateCalculator);
+    quantity.addEventListener('input', updateCalculator);
+    currentPrice.addEventListener('input', updateCalculator);
     
-    if (totalInvestedEl) {
-        data.totalInvested = parseFloat(totalInvestedEl.textContent.replace('$', '').replace(/,/g, '')) || 0;
+    // Initial calculation
+    updateCalculator();
+}
+
+/**
+ * Initialize DataTables for investment tables
+ */
+function initializeDataTables() {
+    // Check if jQuery is defined and DataTable exists
+    if (typeof $ !== 'undefined' && typeof $.fn !== 'undefined' && typeof $.fn.DataTable === 'function') {
+        try {
+            const table = $('#investmentTable');
+            if (table.length > 0) {
+                table.DataTable({
+                    responsive: true,
+                    searching: true,
+                    paging: true,
+                    pageLength: 10,
+                    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                    language: {
+                        search: "_INPUT_",
+                        searchPlaceholder: "Search investments...",
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ investments",
+                        infoEmpty: "Showing 0 to 0 of 0 investments",
+                        infoFiltered: "(filtered from _MAX_ total investments)",
+                        zeroRecords: "No matching investments found",
+                        paginate: {
+                            first: '<i class="fas fa-angle-double-left"></i>',
+                            previous: '<i class="fas fa-angle-left"></i>',
+                            next: '<i class="fas fa-angle-right"></i>',
+                            last: '<i class="fas fa-angle-double-right"></i>'
+                        }
+                    },
+                    dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                    order: [[7, 'desc']] // Order by gain/loss column
+                });
+            }
+        } catch (error) {
+            console.error('Error initializing DataTable:', error);
+        }
+    }
+}
+
+/**
+ * Initialize search filter for investment table
+ */
+function initializeSearchFilter() {
+    const searchInput = document.getElementById('investmentSearch');
+    if (!searchInput) return;
+    
+    // Check if DataTables is active on the table
+    let usingDataTables = false;
+    
+    if (typeof $ !== 'undefined' && typeof $.fn !== 'undefined' && typeof $.fn.DataTable === 'function') {
+        try {
+            const dtInstance = $('#investmentTable').DataTable();
+            if (dtInstance) {
+                usingDataTables = true;
+            }
+        } catch (e) {
+            // DataTables not initialized on this table
+            usingDataTables = false;
+        }
     }
     
-    if (totalValueEl) {
-        data.totalValue = parseFloat(totalValueEl.textContent.replace('$', '').replace(/,/g, '')) || 0;
-    }
-    
-    // Extract from investment table
-    const table = document.getElementById('investmentTable');
-    if (table) {
-        const rows = table.querySelectorAll('tbody tr');
-        
-        rows.forEach(row => {
-            const name = row.querySelector('td:nth-child(1)').textContent.trim();
-            const typeCell = row.querySelector('td:nth-child(2)');
-            const type = typeCell.textContent.split('(')[0].trim();
-            const riskBadge = typeCell.querySelector('.badge');
-            const risk = riskBadge ? riskBadge.textContent.trim().toLowerCase() : 'unknown';
-            const currentValue = parseFloat(row.querySelector('td:nth-child(7)').textContent.replace('$', '').replace(/,/g, '')) || 0;
+    // If we're not using DataTables, implement manual search
+    if (!usingDataTables) {
+        searchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase();
+            const tableRows = document.querySelectorAll('#investmentTable tbody tr');
             
-            // Add to investments array
-            data.investments.push({
-                name,
-                type,
-                risk,
-                value: currentValue
+            tableRows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
             });
-            
-            // Aggregate by type
-            if (!data.byType[type]) {
-                data.byType[type] = 0;
-            }
-            data.byType[type] += currentValue;
-            
-            // Aggregate by risk
-            if (!data.byRisk[risk]) {
-                data.byRisk[risk] = 0;
-            }
-            data.byRisk[risk] += currentValue;
         });
     }
-    
-    return data;
 }
 
 /**
- * Calculate diversification score based on portfolio data
- * @param {Object} portfolioData - Portfolio data
- * @returns {number} Diversification score (0-10)
+ * Initialize investment action buttons
  */
-function calculateDiversificationScore(portfolioData) {
-    let score = 0;
+function initializeInvestmentActions() {
+    // Edit investment button
+    document.querySelectorAll('.edit-investment').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const investmentId = this.getAttribute('data-investment-id');
+            if (!investmentId) return;
+            
+            const editForm = document.getElementById('editInvestmentForm');
+            const editFooter = document.getElementById('editInvestmentFooter');
+            const editIdInput = document.getElementById('edit_investment_id');
+            
+            if (!editForm || !editFooter || !editIdInput) {
+                showNotification('Error: Form elements not found!', 'danger');
+                return;
+            }
+            
+            // Show modal with loading state
+            const modal = new bootstrap.Modal(document.getElementById('editInvestmentModal'));
+            modal.show();
+            
+            // Hide form elements while loading
+            editForm.classList.add('d-none');
+            editFooter.classList.add('d-none');
+            
+            // Fetch investment data with proper base path
+            const basePath = getBasePath();
+            fetch(basePath + '/investments?action=get_investment&investment_id=' + investmentId)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Populate form fields if they exist
+                        if (document.getElementById('edit_investment_id')) 
+                            document.getElementById('edit_investment_id').value = data.investment.investment_id;
+                        if (document.getElementById('edit_type_id')) 
+                            document.getElementById('edit_type_id').value = data.investment.type_id;
+                        if (document.getElementById('edit_name')) 
+                            document.getElementById('edit_name').value = data.investment.name;
+                        if (document.getElementById('edit_ticker_symbol')) 
+                            document.getElementById('edit_ticker_symbol').value = data.investment.ticker_symbol || '';
+                        if (document.getElementById('edit_purchase_date')) 
+                            document.getElementById('edit_purchase_date').value = data.investment.purchase_date;
+                        if (document.getElementById('edit_purchase_price')) 
+                            document.getElementById('edit_purchase_price').value = data.investment.purchase_price;
+                        if (document.getElementById('edit_quantity')) 
+                            document.getElementById('edit_quantity').value = data.investment.quantity;
+                        if (document.getElementById('edit_current_price')) 
+                            document.getElementById('edit_current_price').value = data.investment.current_price;
+                        if (document.getElementById('edit_notes')) 
+                            document.getElementById('edit_notes').value = data.investment.notes || '';
+                        
+                        // Show form elements
+                        if (editForm) editForm.classList.remove('d-none');
+                        if (editFooter) editFooter.classList.remove('d-none');
+                        
+                        // Initialize calculator
+                        initInvestmentCalculator('edit_purchase_price', 'edit_quantity', 'edit_current_price', 'edit-investment-calculator');
+                    } else {
+                        // Show error notification
+                        showNotification('Failed to load investment data: ' + (data.message || 'Unknown error'), 'danger');
+                        modal.hide();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching investment data:', error);
+                    showNotification('An error occurred while loading investment data: ' + error.message, 'danger');
+                    modal.hide();
+                });
+        });
+    });
     
-    // Check number of investment types
-    const typeCount = Object.keys(portfolioData.byType).length;
-    if (typeCount >= 5) {
-        score += 3;
-    } else if (typeCount >= 3) {
-        score += 2;
-    } else if (typeCount >= 2) {
-        score += 1;
-    }
+    // Delete investment button
+    document.querySelectorAll('.delete-investment').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const investmentId = this.getAttribute('data-investment-id');
+            if (!investmentId) return;
+            
+            const deleteIdInput = document.getElementById('delete_investment_id');
+            if (deleteIdInput) {
+                deleteIdInput.value = investmentId;
+                
+                // Show modal
+                const deleteModal = document.getElementById('deleteInvestmentModal');
+                if (deleteModal) {
+                    try {
+                        const modal = new bootstrap.Modal(deleteModal);
+                        modal.show();
+                    } catch (error) {
+                        console.error('Error showing delete modal:', error);
+                        showNotification('Error showing delete modal', 'danger');
+                    }
+                } else {
+                    console.error('Delete modal element not found');
+                    showNotification('Delete modal not found', 'danger');
+                }
+            } else {
+                console.error('Delete investment ID input not found');
+                showNotification('Delete form elements not found', 'danger');
+            }
+        });
+    });
     
-    // Check distribution across types
-    const typeValues = Object.values(portfolioData.byType);
-    if (typeValues.length > 0) {
-        const totalValue = typeValues.reduce((sum, val) => sum + val, 0);
-        
-        // Check if any one type is too dominant
-        const maxPercentage = Math.max(...typeValues.map(val => (val / totalValue) * 100));
-        
-        if (maxPercentage < 50) {
-            score += 4;
-        } else if (maxPercentage < 70) {
-            score += 2;
-        } else {
-            score += 1;
+    // Update price button
+    document.querySelectorAll('.update-price').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent row click event
+            e.preventDefault(); // Prevent default button behavior
+            
+            const investmentId = this.getAttribute('data-investment-id');
+            const currentPrice = this.getAttribute('data-current-price');
+            
+            if (!investmentId || !currentPrice) return;
+            
+            const updateIdInput = document.getElementById('update_investment_id');
+            const updatePriceInput = document.getElementById('update_current_price');
+            
+            if (updateIdInput && updatePriceInput) {
+                updateIdInput.value = investmentId;
+                updatePriceInput.value = currentPrice;
+                
+                // Show modal
+                const priceModal = document.getElementById('updatePriceModal');
+                if (priceModal) {
+                    try {
+                        const modal = new bootstrap.Modal(priceModal);
+                        modal.show();
+                    } catch (error) {
+                        console.error('Error showing update price modal:', error);
+                        showNotification('Error showing update price modal', 'danger');
+                    }
+                } else {
+                    console.error('Update price modal not found');
+                    showNotification('Update price modal not found', 'danger');
+                }
+            } else {
+                console.error('Update price form elements not found');
+                showNotification('Update price form elements not found', 'danger');
+            }
+        });
+    });
+}
+
+/**
+ * Initialize tooltips for interactive elements
+ */
+function initializeTooltips() {
+    // Check if Bootstrap is available
+    if (typeof bootstrap !== 'undefined' && typeof bootstrap.Tooltip === 'function') {
+        try {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl, {
+                    boundary: document.body
+                });
+            });
+        } catch (error) {
+            console.error('Error initializing tooltips:', error);
         }
-    }
-    
-    // Check risk diversity
-    const riskCount = Object.keys(portfolioData.byRisk).length;
-    if (riskCount >= 3) {
-        score += 3;
-    } else if (riskCount >= 2) {
-        score += 2;
     } else {
-        score += 1;
+        // Add title attribute to buttons that should have tooltips
+        document.querySelectorAll('.btn-icon').forEach(btn => {
+            if (!btn.getAttribute('title')) {
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    if (icon.classList.contains('fa-edit')) {
+                        btn.setAttribute('title', 'Edit Investment');
+                    } else if (icon.classList.contains('fa-trash')) {
+                        btn.setAttribute('title', 'Delete Investment');
+                    } else if (icon.classList.contains('fa-sync-alt')) {
+                        btn.setAttribute('title', 'Update Price');
+                    }
+                }
+            }
+        });
     }
-    
-    return score;
 }
 
 /**
- * Calculate risk score based on portfolio data
- * @param {Object} portfolioData - Portfolio data
- * @returns {number} Risk score (0-100)
+ * Animate elements for better user experience
  */
-function calculateRiskScore(portfolioData) {
-    // Risk weights
-    const riskWeights = {
-        'very low': 10,
-        'low': 30,
-        'moderate': 50,
-        'high': 70,
-        'very high': 90,
-        'unknown': 50
-    };
+function animateElements() {
+    // Add animation to cards
+    const cards = document.querySelectorAll('.card');
     
-    // Calculate weighted average risk
-    let totalValue = 0;
-    let weightedRiskSum = 0;
+    cards.forEach((card, index) => {
+        card.style.setProperty('--index', index);
+        setTimeout(() => {
+            card.classList.add('fade-in');
+        }, 100);
+    });
     
-    for (const [risk, value] of Object.entries(portfolioData.byRisk)) {
-        const weight = riskWeights[risk] || 50;
-        weightedRiskSum += weight * value;
-        totalValue += value;
-    }
-    
-    return totalValue > 0 ? Math.round(weightedRiskSum / totalValue) : 50;
+    // Add hover effect to table rows
+    const tableRows = document.querySelectorAll('.investments-table tbody tr');
+    tableRows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = 'var(--primary-lighter, #f8f9fa)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+    });
 }
 
 /**
- * Generate portfolio recommendations
- * @param {Object} portfolioData - Portfolio data
- * @param {number} diversificationScore - Diversification score
- * @param {number} riskScore - Risk score
- * @returns {Array} Array of recommendation strings
+ * Show notification
+ * @param {string} message - Notification message
+ * @param {string} type - Notification type (success, info, warning, danger)
+ * @param {number} duration - Duration in milliseconds
  */
-function generateRecommendations(portfolioData, diversificationScore, riskScore) {
-    const recommendations = [];
+function showNotification(message, type = 'info', duration = 5000) {
+    // Check if notification container exists, if not create it
+    let container = document.querySelector('.notification-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'notification-container';
+        container.style.position = 'fixed';
+        container.style.top = '20px';
+        container.style.right = '20px';
+        container.style.zIndex = '9999';
+        document.body.appendChild(container);
+    }
     
-    // Diversification recommendations
-    if (diversificationScore < 5) {
-        recommendations.push('Consider diversifying your portfolio across more investment types to reduce risk.');
-        
-        // Check specific types that are missing
-        const commonTypes = ['Stocks', 'Bonds', 'ETFs', 'Mutual Funds', 'Real Estate'];
-        const missingTypes = commonTypes.filter(type => !Object.keys(portfolioData.byType).some(t => t.includes(type)));
-        
-        if (missingTypes.length > 0) {
-            recommendations.push(`Consider adding these investment types to your portfolio: ${missingTypes.join(', ')}.`);
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.style.backgroundColor = getColorForType(type);
+    notification.style.color = '#fff';
+    notification.style.padding = '12px 20px';
+    notification.style.borderRadius = '8px';
+    notification.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+    notification.style.marginBottom = '10px';
+    notification.style.display = 'flex';
+    notification.style.alignItems = 'center';
+    notification.style.opacity = '0';
+    notification.style.transform = 'translateX(50px)';
+    notification.style.transition = 'all 0.3s ease';
+    notification.style.maxWidth = '350px';
+    notification.style.wordBreak = 'break-word';
+    
+    // Add icon
+    let iconClass = 'info-circle';
+    if (type === 'success') iconClass = 'check-circle';
+    if (type === 'warning') iconClass = 'exclamation-triangle';
+    if (type === 'danger') iconClass = 'exclamation-circle';
+    
+    notification.innerHTML = `
+        <i class="fas fa-${iconClass}" style="margin-right: 10px;"></i>
+        <div style="flex: 1;">${message}</div>
+        <button type="button" style="background: transparent; border: none; color: white; cursor: pointer; margin-left: 10px;">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    // Add to container
+    container.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(0)';
+    }, 10);
+    
+    // Close button
+    const closeBtn = notification.querySelector('button');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => removeNotification(notification));
+    }
+    
+    // Auto remove after duration
+    setTimeout(() => removeNotification(notification), duration);
+    
+    function removeNotification(el) {
+        if (!el) return;
+        el.style.opacity = '0';
+        el.style.transform = 'translateX(50px)';
+        setTimeout(() => {
+            if (el.parentNode) {
+                el.parentNode.removeChild(el);
+            }
+        }, 300);
+    }
+    
+    function getColorForType(type) {
+        switch(type) {
+            case 'success': return 'rgba(46, 204, 113, 0.9)';
+            case 'warning': return 'rgba(243, 156, 18, 0.9)';
+            case 'danger': return 'rgba(231, 76, 60, 0.9)';
+            default: return 'rgba(52, 152, 219, 0.9)'; // info
         }
     }
-    
-    // Risk recommendations
-    if (riskScore > 70) {
-        recommendations.push('Your portfolio has a high risk level. Consider adding more conservative investments to balance risk.');
-    } else if (riskScore < 30) {
-        recommendations.push('Your portfolio is very conservative. Consider adding some growth investments for potentially higher returns.');
-    }
-    
-    // Check for concentration
-    const typeValues = Object.entries(portfolioData.byType).map(([type, value]) => ({
-        type,
-        value,
-        percentage: (value / portfolioData.totalValue) * 100
-    }));
-    
-    // Sort by percentage descending
-    typeValues.sort((a, b) => b.percentage - a.percentage);
-    
-    // Check if top investment type is too concentrated
-    if (typeValues.length > 0 && typeValues[0].percentage > 70) {
-        recommendations.push(`Your portfolio is heavily concentrated in ${typeValues[0].type} (${typeValues[0].percentage.toFixed(1)}%). Consider reducing this concentration.`);
-    }
-    
-    // Add general recommendation if others are few
-    if (recommendations.length < 2) {
-        recommendations.push('Regularly review your investments and rebalance your portfolio periodically to maintain your desired asset allocation.');
-    }
-    
-    return recommendations;
-}
-
-/**
- * Get color class based on diversification score
- * @param {number} score - Diversification score
- * @returns {string} Color class
- */
-function getScoreColorClass(score) {
-    if (score >= 8) return 'text-success';
-    if (score >= 5) return 'text-primary';
-    if (score >= 3) return 'text-warning';
-    return 'text-danger';
-}
-
-/**
- * Get diversification message based on score
- * @param {number} score - Diversification score
- * @returns {string} Descriptive message
- */
-function getDiversificationMessage(score) {
-    if (score >= 8) return 'Well diversified';
-    if (score >= 5) return 'Moderately diversified';
-    if (score >= 3) return 'Somewhat diversified';
-    return 'Poorly diversified';
-}
-
-/**
- * Get color class based on risk score
- * @param {number} score - Risk score
- * @returns {string} Color class
- */
-function getRiskColorClass(score) {
-    if (score >= 70) return 'text-danger';
-    if (score >= 50) return 'text-warning';
-    if (score >= 30) return 'text-info';
-    return 'text-success';
-}
-
-/**
- * Get risk label based on risk score
- * @param {number} score - Risk score
- * @returns {string} Risk label
- */
-function getRiskLabel(score) {
-    if (score >= 70) return 'High';
-    if (score >= 50) return 'Moderate';
-    if (score >= 30) return 'Low';
-    return 'Very Low';
-}
-
-/**
- * Get risk message based on risk score
- * @param {number} score - Risk score
- * @returns {string} Descriptive message
- */
-function getRiskMessage(score) {
-    if (score >= 70) return 'Higher potential returns but with increased volatility';
-    if (score >= 50) return 'Balanced approach with moderate risk and returns';
-    if (score >= 30) return 'Conservative with lower risk and moderate returns';
-    return 'Very conservative with lower returns but high stability';
-}
-
-/**
- * Format number with commas
- * @param {number} num - Number to format
- * @returns {string} Formatted number
- */
-function formatNumber(num) {
-    return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }

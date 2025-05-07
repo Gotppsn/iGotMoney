@@ -7,7 +7,7 @@
 
 // Check if user is logged in
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header('Location: /login');
+    header('Location: ' . BASE_PATH . '/login');
     exit();
 }
 
@@ -95,27 +95,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (isset($_GET['action']) && $_GET['action'] === 'get_investment') {
     header('Content-Type: application/json');
     
-    $investment_id = $_GET['investment_id'] ?? 0;
+    $investment_id = isset($_GET['investment_id']) ? (int)$_GET['investment_id'] : 0;
     
-    if ($investment->getById($investment_id, $user_id)) {
-        echo json_encode([
-            'success' => true,
-            'investment' => [
-                'investment_id' => $investment->investment_id,
-                'type_id' => $investment->type_id,
-                'name' => $investment->name,
-                'ticker_symbol' => $investment->ticker_symbol,
-                'purchase_date' => $investment->purchase_date,
-                'purchase_price' => $investment->purchase_price,
-                'quantity' => $investment->quantity,
-                'current_price' => $investment->current_price,
-                'notes' => $investment->notes
-            ]
-        ]);
-    } else {
+    try {
+        if ($investment_id > 0 && $investment->getById($investment_id, $user_id)) {
+            echo json_encode([
+                'success' => true,
+                'investment' => [
+                    'investment_id' => $investment->investment_id,
+                    'type_id' => $investment->type_id,
+                    'name' => $investment->name,
+                    'ticker_symbol' => $investment->ticker_symbol,
+                    'purchase_date' => $investment->purchase_date,
+                    'purchase_price' => $investment->purchase_price,
+                    'quantity' => $investment->quantity,
+                    'current_price' => $investment->current_price,
+                    'notes' => $investment->notes
+                ]
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Investment not found or invalid ID.'
+            ]);
+        }
+    } catch (Exception $e) {
+        error_log("Error in fetching investment: " . $e->getMessage());
         echo json_encode([
             'success' => false,
-            'message' => 'Investment not found.'
+            'message' => 'Error retrieving investment data: ' . $e->getMessage()
         ]);
     }
     
@@ -124,12 +132,41 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_investment') {
 
 // Get all investment types
 $investment_types = $investment->getAllTypes();
+if (!$investment_types) {
+    $error = 'Failed to load investment types.';
+    $investment_types = [];
+}
 
 // Get all investments
-$investments = $investment->getAll($user_id);
+try {
+    $investments = $investment->getAll($user_id);
+    
+    if (!$investments && $investment->getLastError()) {
+        $error = 'Failed to load investments: ' . $investment->getLastError();
+    }
+} catch (Exception $e) {
+    error_log("Error loading investments: " . $e->getMessage());
+    $error = 'An error occurred while loading investments.';
+    $investments = false;
+}
 
 // Get investment summary
-$investment_summary = $investment->getSummary($user_id);
+try {
+    $investment_summary = $investment->getSummary($user_id);
+} catch (Exception $e) {
+    error_log("Error getting investment summary: " . $e->getMessage());
+    $error = 'An error occurred while calculating investment summary.';
+    $investment_summary = [
+        'total_invested' => 0,
+        'current_value' => 0,
+        'total_gain_loss' => 0,
+        'percent_gain_loss' => 0,
+        'by_type' => [],
+        'by_risk' => [],
+        'top_performers' => [],
+        'worst_performers' => []
+    ];
+}
 
 // Include view
 require_once 'views/investments.php';
