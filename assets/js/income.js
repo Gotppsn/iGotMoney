@@ -1,352 +1,248 @@
 /**
- * iGotMoney - Income JavaScript
- * Handles functionality for the income management page
+ * iGotMoney - Income Management JavaScript
+ * Handles all income page functionality
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize frequency based calculation
-    initializeFrequencyCalculation();
-    
-    // Initialize date validation
-    initializeDateValidation();
-    
     // Initialize form validation
     initializeFormValidation();
     
-    // Initialize income summary calculation
-    initializeIncomeSummary();
+    // Initialize event handlers
+    initializeEventHandlers();
+    
+    // Add animation to cards
+    animateElements();
 });
 
 /**
- * Initialize frequency based calculation
- * Updates amount label based on frequency selection
- */
-function initializeFrequencyCalculation() {
-    const frequencySelects = document.querySelectorAll('#frequency, #edit_frequency');
-    
-    frequencySelects.forEach(select => {
-        select.addEventListener('change', function() {
-            updateAmountLabel(this);
-            updateIncomePreview(this.closest('form'));
-        });
-        
-        // Initialize with current value
-        updateAmountLabel(select);
-    });
-    
-    // Add event listeners to amount inputs
-    const amountInputs = document.querySelectorAll('#amount, #edit_amount');
-    amountInputs.forEach(input => {
-        input.addEventListener('input', function() {
-            updateIncomePreview(this.closest('form'));
-        });
-    });
-}
-
-/**
- * Update amount label based on frequency
- * @param {Element} frequencySelect - The frequency select element
- */
-function updateAmountLabel(frequencySelect) {
-    const frequency = frequencySelect.value;
-    const isAddForm = frequencySelect.id === 'frequency';
-    const amountLabel = document.querySelector(`label[for="${isAddForm ? 'amount' : 'edit_amount'}"]`);
-    
-    if (!amountLabel) return;
-    
-    let labelText = 'Amount';
-    
-    switch (frequency) {
-        case 'daily':
-            labelText = 'Daily Amount';
-            break;
-        case 'weekly':
-            labelText = 'Weekly Amount';
-            break;
-        case 'bi-weekly':
-            labelText = 'Bi-Weekly Amount';
-            break;
-        case 'monthly':
-            labelText = 'Monthly Amount';
-            break;
-        case 'quarterly':
-            labelText = 'Quarterly Amount';
-            break;
-        case 'annually':
-            labelText = 'Annual Amount';
-            break;
-        case 'one-time':
-            labelText = 'One-Time Amount';
-            break;
-    }
-    
-    amountLabel.textContent = labelText;
-}
-
-/**
- * Update income preview when amount or frequency changes
- * @param {Element} form - The form element
- */
-function updateIncomePreview(form) {
-    if (!form) return;
-    
-    const amount = parseFloat(form.querySelector('input[name="amount"]').value) || 0;
-    const frequency = form.querySelector('select[name="frequency"]').value;
-    
-    // Calculate monthly and annual equivalents
-    const monthlyEquivalent = calculateMonthlyEquivalent(amount, frequency);
-    const annualEquivalent = calculateAnnualEquivalent(amount, frequency);
-    
-    // Create or update preview element
-    let previewElement = form.querySelector('.income-preview');
-    if (!previewElement) {
-        previewElement = document.createElement('div');
-        previewElement.className = 'income-preview mt-3 alert alert-info';
-        const amountInput = form.querySelector('input[name="amount"]');
-        amountInput.parentNode.parentNode.insertAdjacentElement('afterend', previewElement);
-    }
-    
-    if (amount > 0) {
-        previewElement.innerHTML = `
-            <div class="d-flex justify-content-between">
-                <span>Monthly equivalent:</span>
-                <strong>$${monthlyEquivalent.toFixed(2)}</strong>
-            </div>
-            <div class="d-flex justify-content-between">
-                <span>Annual equivalent:</span>
-                <strong>$${annualEquivalent.toFixed(2)}</strong>
-            </div>
-        `;
-        previewElement.style.display = 'block';
-    } else {
-        previewElement.style.display = 'none';
-    }
-}
-
-/**
- * Initialize date validation
- * Ensures end date is after start date
- */
-function initializeDateValidation() {
-    const startDateInputs = document.querySelectorAll('#start_date, #edit_start_date');
-    const endDateInputs = document.querySelectorAll('#end_date, #edit_end_date');
-    
-    startDateInputs.forEach((input, index) => {
-        input.addEventListener('change', function() {
-            validateDates(this, endDateInputs[index]);
-        });
-    });
-    
-    endDateInputs.forEach((input, index) => {
-        input.addEventListener('change', function() {
-            validateDates(startDateInputs[index], this);
-        });
-    });
-}
-
-/**
- * Validate start and end dates
- * @param {Element} startDateInput - The start date input element
- * @param {Element} endDateInput - The end date input element
- */
-function validateDates(startDateInput, endDateInput) {
-    if (!startDateInput || !endDateInput || !endDateInput.value) return;
-    
-    const startDate = new Date(startDateInput.value);
-    const endDate = new Date(endDateInput.value);
-    
-    if (endDate < startDate) {
-        alert('End date must be after start date.');
-        endDateInput.value = '';
-    }
-}
-
-/**
  * Initialize form validation
- * Validates form inputs before submission
  */
 function initializeFormValidation() {
-    const addForm = document.querySelector('#addIncomeModal form');
-    const editForm = document.querySelector('#editIncomeModal form');
+    // Fetch all forms that need validation
+    const forms = document.querySelectorAll('.needs-validation');
     
-    if (addForm) {
-        addForm.addEventListener('submit', function(e) {
-            if (!validateIncomeForm(this)) {
-                e.preventDefault();
-            }
-        });
-    }
-    
-    if (editForm) {
-        editForm.addEventListener('submit', function(e) {
-            if (!validateIncomeForm(this)) {
-                e.preventDefault();
-            }
-        });
-    }
-}
-
-/**
- * Validate income form
- * @param {Element} form - The form to validate
- * @returns {boolean} - True if valid, false otherwise
- */
-function validateIncomeForm(form) {
-    const nameInput = form.querySelector('input[name="name"]');
-    const amountInput = form.querySelector('input[name="amount"]');
-    const startDateInput = form.querySelector('input[name="start_date"]');
-    
-    let isValid = true;
-    let errorMessage = '';
-    
-    // Reset previous error messages
-    form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-    
-    // Validate name
-    if (!nameInput.value.trim()) {
-        nameInput.classList.add('is-invalid');
-        errorMessage = 'Income name is required.';
-        isValid = false;
-    }
-    
-    // Validate amount
-    if (!amountInput.value || parseFloat(amountInput.value) <= 0) {
-        amountInput.classList.add('is-invalid');
-        errorMessage = errorMessage || 'Please enter a valid amount greater than zero.';
-        isValid = false;
-    }
-    
-    // Validate start date
-    if (!startDateInput.value) {
-        startDateInput.classList.add('is-invalid');
-        errorMessage = errorMessage || 'Start date is required.';
-        isValid = false;
-    }
-    
-    if (!isValid && errorMessage) {
-        // Show error message
-        alert(errorMessage);
-    }
-    
-    return isValid;
-}
-
-/**
- * Initialize income summary visualization
- * Adds visual elements to highlight income statistics
- */
-function initializeIncomeSummary() {
-    const summaryCards = document.querySelectorAll('.dashboard-card.income');
-    
-    summaryCards.forEach(card => {
-        // Get the income value
-        const incomeText = card.querySelector('.h5').textContent;
-        const incomeValue = parseFloat(incomeText.replace('$', '').replace(/,/g, ''));
-        
-        // Add a trend indicator if not already present
-        if (!card.querySelector('.trend-indicator') && !isNaN(incomeValue)) {
-            const trendIndicator = document.createElement('div');
-            trendIndicator.className = 'trend-indicator small mt-2';
-            
-            if (incomeValue > 0) {
-                trendIndicator.innerHTML = `
-                    <span class="text-success">
-                        <i class="fas fa-arrow-up me-1"></i>Active Income
-                    </span>
-                `;
-            } else {
-                trendIndicator.innerHTML = `
-                    <span class="text-muted">
-                        <i class="fas fa-minus me-1"></i>No Income
-                    </span>
-                `;
+    // Loop through forms and prevent submission if invalid
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
             }
             
-            card.querySelector('.row').appendChild(trendIndicator);
-        }
+            form.classList.add('was-validated');
+        }, false);
     });
 }
 
 /**
- * Calculate monthly equivalent based on frequency
- * @param {number} amount - The amount
- * @param {string} frequency - The frequency
- * @returns {number} - Monthly equivalent amount
+ * Initialize event handlers
  */
-function calculateMonthlyEquivalent(amount, frequency) {
-    switch (frequency) {
-        case 'daily':
-            return amount * 30; // Approximate days in a month
-        case 'weekly':
-            return amount * 4.33; // Approximate weeks in a month
-        case 'bi-weekly':
-            return amount * 2.17; // Approximate bi-weeks in a month
-        case 'monthly':
-            return amount;
-        case 'quarterly':
-            return amount / 3;
-        case 'annually':
-            return amount / 12;
-        case 'one-time':
-            return amount; // One-time income is counted in full for the month it occurs
-        default:
-            return amount;
+function initializeEventHandlers() {
+    // Search functionality
+    const searchInput = document.getElementById('incomeSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', handleSearch);
     }
-}
-
-/**
- * Calculate annual equivalent based on frequency
- * @param {number} amount - The amount
- * @param {string} frequency - The frequency
- * @returns {number} - Annual equivalent amount
- */
-function calculateAnnualEquivalent(amount, frequency) {
-    switch (frequency) {
-        case 'daily':
-            return amount * 365;
-        case 'weekly':
-            return amount * 52;
-        case 'bi-weekly':
-            return amount * 26;
-        case 'monthly':
-            return amount * 12;
-        case 'quarterly':
-            return amount * 4;
-        case 'annually':
-            return amount;
-        case 'one-time':
-            return amount; // One-time income is counted in full for the year it occurs
-        default:
-            return amount;
-    }
-}
-
-/**
- * Helper function to show a notification
- * @param {string} message - The message to display
- * @param {string} type - The notification type (success, info, warning, danger)
- * @param {number} duration - The duration in milliseconds
- */
-function showNotification(message, type = 'info', duration = 3000) {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    notification.style.top = '20px';
-    notification.style.right = '20px';
-    notification.style.zIndex = '9999';
-    notification.style.maxWidth = '300px';
     
-    notification.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    // Edit income buttons - Direct inline handlers for compatibility
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-income')) {
+            const button = e.target.closest('.edit-income');
+            const incomeId = button.getAttribute('data-income-id');
+            handleEditIncome(incomeId);
+        }
+        
+        if (e.target.closest('.delete-income')) {
+            const button = e.target.closest('.delete-income');
+            const incomeId = button.getAttribute('data-income-id');
+            handleDeleteIncome(incomeId);
+        }
+    });
+    
+    // Modal focus handling
+    const addIncomeModal = document.getElementById('addIncomeModal');
+    if (addIncomeModal) {
+        addIncomeModal.addEventListener('shown.bs.modal', function() {
+            document.getElementById('name').focus();
+        });
+    }
+}
+
+/**
+ * Handle search functionality
+ */
+function handleSearch() {
+    const searchTerm = this.value.toLowerCase();
+    const tableId = this.getAttribute('data-table-search');
+    const table = document.getElementById(tableId);
+    
+    if (!table) return;
+    
+    const rows = table.querySelectorAll('tbody tr');
+    let hasVisibleRows = false;
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const shouldShow = text.includes(searchTerm);
+        
+        if (shouldShow) {
+            row.style.display = '';
+            hasVisibleRows = true;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Show or hide empty state message
+    const cardBody = table.closest('.card-body');
+    let emptyStateMsg = cardBody.querySelector('.empty-search-message');
+    
+    if (!hasVisibleRows && searchTerm !== '') {
+        if (!emptyStateMsg) {
+            emptyStateMsg = document.createElement('div');
+            emptyStateMsg.className = 'text-center py-4 empty-search-message';
+            emptyStateMsg.innerHTML = `
+                <div class="text-muted">
+                    <i class="fas fa-search fa-2x mb-3"></i>
+                    <p>No results found for "${searchTerm}"</p>
+                </div>
+            `;
+            cardBody.appendChild(emptyStateMsg);
+        } else {
+            emptyStateMsg.style.display = '';
+            emptyStateMsg.querySelector('p').innerText = `No results found for "${searchTerm}"`;
+        }
+    } else if (emptyStateMsg) {
+        emptyStateMsg.style.display = 'none';
+    }
+}
+
+/**
+ * Handle edit income button click
+ * @param {string} incomeId - The ID of the income to edit
+ */
+function handleEditIncome(incomeId) {
+    // Set income ID in edit form
+    document.getElementById('edit_income_id').value = incomeId;
+    
+    // Get base path for API calls
+    const basePath = document.querySelector('meta[name="base-path"]')?.getAttribute('content') || '';
+    
+    // Show loading spinner in modal body
+    const editModal = document.getElementById('editIncomeModal');
+    const modalBody = editModal.querySelector('.modal-body');
+    const originalContent = modalBody.innerHTML;
+    
+    modalBody.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading income data...</p>
+        </div>
     `;
     
-    // Add to document
-    document.body.appendChild(notification);
+    // Show modal
+    const bsModal = new bootstrap.Modal(editModal);
+    bsModal.show();
     
-    // Remove after duration
-    setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300); // Wait for fade out
-    }, duration);
+    // Fetch income data
+    fetch(`${basePath}/income?action=get_income&income_id=${incomeId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Restore original content
+                modalBody.innerHTML = originalContent;
+                
+                // Populate form fields
+                document.getElementById('edit_income_id').value = data.income.income_id;
+                document.getElementById('edit_name').value = data.income.name;
+                document.getElementById('edit_amount').value = data.income.amount;
+                document.getElementById('edit_frequency').value = data.income.frequency;
+                document.getElementById('edit_start_date').value = data.income.start_date;
+                document.getElementById('edit_end_date').value = data.income.end_date || '';
+                document.getElementById('edit_is_active').checked = data.income.is_active == 1;
+            } else {
+                // Show error message in modal
+                modalBody.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Failed to load income data: ${data.message}
+                    </div>
+                    <div class="text-center mt-3">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                            Close
+                        </button>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching income data:', error);
+            
+            // Show error message in modal
+            modalBody.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    An error occurred while loading income data. Please try again.
+                </div>
+                <div class="text-center mt-3">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                        Close
+                    </button>
+                </div>
+            `;
+        });
+}
+
+/**
+ * Handle delete income button click
+ * @param {string} incomeId - The ID of the income to delete
+ */
+function handleDeleteIncome(incomeId) {
+    // Set income ID in delete form
+    document.getElementById('delete_income_id').value = incomeId;
+    
+    // Show modal
+    const deleteModal = document.getElementById('deleteIncomeModal');
+    const bsModal = new bootstrap.Modal(deleteModal);
+    bsModal.show();
+}
+
+/**
+ * Animate elements on page load
+ */
+function animateElements() {
+    // Add staggered animation to table rows
+    const tableRows = document.querySelectorAll('.income-table tbody tr');
+    tableRows.forEach((row, index) => {
+        row.style.opacity = '0';
+        row.style.transform = 'translateY(10px)';
+        row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        row.style.transitionDelay = `${index * 0.05}s`;
+        
+        setTimeout(() => {
+            row.style.opacity = '1';
+            row.style.transform = 'translateY(0)';
+        }, 100);
+    });
+    
+    // Add animation to summary cards
+    const cards = document.querySelectorAll('.income-summary-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(10px)';
+        card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        card.style.transitionDelay = `${index * 0.1}s`;
+        
+        setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, 100);
+    });
 }
