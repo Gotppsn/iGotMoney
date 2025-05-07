@@ -22,6 +22,19 @@ $user_id = $_SESSION['user_id'];
 $goal = new FinancialGoal();
 $income = new Income();
 
+// Function to respond with JSON for AJAX requests
+function respondWithJson($data) {
+    header('Content-Type: application/json');
+    echo json_encode($data);
+    exit();
+}
+
+// Check if it's an AJAX request
+function isAjaxRequest() {
+    return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+           strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+}
+
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = isset($_POST['action']) ? $_POST['action'] : '';
@@ -44,8 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Set goal properties
             $goal->user_id = $user_id;
             $goal->name = $_POST['name'] ?? '';
-            $goal->target_amount = $_POST['target_amount'] ?? 0;
-            $goal->current_amount = $_POST['current_amount'] ?? 0;
+            $goal->target_amount = floatval($_POST['target_amount'] ?? 0);
+            $goal->current_amount = floatval($_POST['current_amount'] ?? 0);
             $goal->start_date = $_POST['start_date'] ?? date('Y-m-d');
             $goal->target_date = $_POST['target_date'] ?? date('Y-m-d', strtotime('+1 year'));
             $goal->description = $_POST['description'] ?? '';
@@ -57,14 +70,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $success = 'Financial goal added successfully!';
                 
                 // Check if this is an AJAX request
-                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    header('Content-Type: application/json');
-                    echo json_encode([
+                if (isAjaxRequest()) {
+                    respondWithJson([
                         'success' => true,
                         'message' => $success,
                         'goal_id' => $goal->goal_id
                     ]);
-                    exit();
                 } else {
                     // If not AJAX, redirect with proper BASE_PATH
                     header("Location: " . BASE_PATH . "/goals");
@@ -74,19 +85,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Failed to add financial goal.';
                 
                 // Check if this is an AJAX request
-                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    header('Content-Type: application/json');
-                    echo json_encode([
+                if (isAjaxRequest()) {
+                    respondWithJson([
                         'success' => false,
                         'message' => $error
                     ]);
-                    exit();
                 }
             }
         }
     } elseif ($action === 'edit') {
         // Get goal ID
-        $goal_id = $_POST['goal_id'] ?? 0;
+        $goal_id = isset($_POST['goal_id']) ? intval($_POST['goal_id']) : 0;
         
         // Validate inputs
         if (empty($_POST['name'])) {
@@ -106,8 +115,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($goal->getById($goal_id, $user_id)) {
                 // Update goal properties
                 $goal->name = $_POST['name'] ?? $goal->name;
-                $goal->target_amount = $_POST['target_amount'] ?? $goal->target_amount;
-                $goal->current_amount = $_POST['current_amount'] ?? $goal->current_amount;
+                $goal->target_amount = floatval($_POST['target_amount'] ?? $goal->target_amount);
+                $goal->current_amount = floatval($_POST['current_amount'] ?? $goal->current_amount);
                 $goal->start_date = $_POST['start_date'] ?? $goal->start_date;
                 $goal->target_date = $_POST['target_date'] ?? $goal->target_date;
                 $goal->description = $_POST['description'] ?? $goal->description;
@@ -119,13 +128,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $success = 'Financial goal updated successfully!';
                     
                     // Check if this is an AJAX request
-                    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                        header('Content-Type: application/json');
-                        echo json_encode([
+                    if (isAjaxRequest()) {
+                        respondWithJson([
                             'success' => true,
                             'message' => $success
                         ]);
-                        exit();
                     } else {
                         // If not AJAX, redirect with proper BASE_PATH
                         header("Location: " . BASE_PATH . "/goals");
@@ -135,45 +142,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = 'Failed to update financial goal.';
                     
                     // Check if this is an AJAX request
-                    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                        header('Content-Type: application/json');
-                        echo json_encode([
+                    if (isAjaxRequest()) {
+                        respondWithJson([
                             'success' => false,
                             'message' => $error
                         ]);
-                        exit();
                     }
                 }
             } else {
                 $error = 'Financial goal not found.';
                 
                 // Check if this is an AJAX request
-                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    header('Content-Type: application/json');
-                    echo json_encode([
+                if (isAjaxRequest()) {
+                    respondWithJson([
                         'success' => false,
                         'message' => $error
                     ]);
-                    exit();
                 }
             }
         }
     } elseif ($action === 'delete') {
         // Get goal ID
-        $goal_id = $_POST['goal_id'] ?? 0;
+        $goal_id = isset($_POST['goal_id']) ? intval($_POST['goal_id']) : 0;
         
         // Delete goal
         if ($goal->delete($goal_id, $user_id)) {
             $success = 'Financial goal deleted successfully!';
             
             // Check if this is an AJAX request
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                header('Content-Type: application/json');
-                echo json_encode([
+            if (isAjaxRequest()) {
+                respondWithJson([
                     'success' => true,
                     'message' => $success
                 ]);
-                exit();
             } else {
                 // If not AJAX, redirect with proper BASE_PATH
                 header("Location: " . BASE_PATH . "/goals");
@@ -183,35 +184,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Failed to delete financial goal.';
             
             // Check if this is an AJAX request
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                header('Content-Type: application/json');
-                echo json_encode([
+            if (isAjaxRequest()) {
+                respondWithJson([
                     'success' => false,
                     'message' => $error
                 ]);
-                exit();
             }
         }
     } elseif ($action === 'update_progress') {
         // Get goal ID and amount
-        $goal_id = $_POST['goal_id'] ?? 0;
-        $amount = $_POST['amount'] ?? 0;
+        $goal_id = isset($_POST['goal_id']) ? intval($_POST['goal_id']) : 0;
+        $amount = isset($_POST['amount']) ? $_POST['amount'] : 0;
         
         // Validate amount
         if (!is_numeric($amount) || floatval($amount) <= 0) {
             $error = 'Please enter a valid positive amount.';
             
             // Check if this is an AJAX request
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                header('Content-Type: application/json');
-                echo json_encode([
+            if (isAjaxRequest()) {
+                respondWithJson([
                     'success' => false,
                     'message' => $error
                 ]);
-                exit();
             }
         } else {
             // Update progress
+            $amount = floatval($amount);
             if ($goal->updateProgress($goal_id, $user_id, $amount)) {
                 $success = 'Goal progress updated successfully!';
                 
@@ -223,9 +221,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 // Check if this is an AJAX request
-                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    header('Content-Type: application/json');
-                    echo json_encode([
+                if (isAjaxRequest()) {
+                    respondWithJson([
                         'success' => true,
                         'message' => $success,
                         'goal' => [
@@ -234,7 +231,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'progress_percentage' => $goal->calculateProgressPercentage()
                         ]
                     ]);
-                    exit();
                 } else {
                     // If not AJAX, redirect with proper BASE_PATH
                     header("Location: " . BASE_PATH . "/goals");
@@ -244,13 +240,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Failed to update goal progress.';
                 
                 // Check if this is an AJAX request
-                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    header('Content-Type: application/json');
-                    echo json_encode([
+                if (isAjaxRequest()) {
+                    respondWithJson([
                         'success' => false,
                         'message' => $error
                     ]);
-                    exit();
                 }
             }
         }
@@ -266,37 +260,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $show_recommendations = true;
             
             // Check if this is an AJAX request
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                header('Content-Type: application/json');
-                echo json_encode([
+            if (isAjaxRequest()) {
+                respondWithJson([
                     'success' => true,
                     'recommended_goals' => $recommended_goals
                 ]);
-                exit();
             }
         } else {
             $error = 'Failed to generate goal recommendations.';
             
             // Check if this is an AJAX request
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                header('Content-Type: application/json');
-                echo json_encode([
+            if (isAjaxRequest()) {
+                respondWithJson([
                     'success' => false,
                     'message' => $error
                 ]);
-                exit();
             }
         }
     }
     
     // Handle AJAX form validation errors
-    if (isset($error) && isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-        header('Content-Type: application/json');
-        echo json_encode([
+    if (isset($error) && isAjaxRequest()) {
+        respondWithJson([
             'success' => false,
             'message' => $error
         ]);
-        exit();
     }
 }
 
@@ -304,7 +292,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (isset($_GET['action']) && $_GET['action'] === 'get_goal') {
     header('Content-Type: application/json');
     
-    $goal_id = $_GET['goal_id'] ?? 0;
+    $goal_id = isset($_GET['goal_id']) ? intval($_GET['goal_id']) : 0;
     
     if ($goal->getById($goal_id, $user_id)) {
         $progress_percentage = $goal->calculateProgressPercentage();
@@ -352,6 +340,9 @@ if (!isset($recommended_goals) && $goal_count < 1) {
     $recommended_goals = $goal->recommendGoals($user_id, $monthly_income);
     $show_recommendations = true;
 }
+
+// Add form-submission.js to handle AJAX form submissions
+$additional_js[] = '/assets/js/form-submission.js';
 
 // Include view
 require_once 'views/goals.php';

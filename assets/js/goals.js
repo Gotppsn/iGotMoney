@@ -19,7 +19,198 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize form validation
     initializeFormValidation();
+
+    // Initialize goal calculator for add form
+    initializeGoalCalculators();
+
+    // Initialize filter buttons
+    initializeFilterButtons();
 });
+
+/**
+ * Initialize the filter buttons for goal view
+ */
+function initializeFilterButtons() {
+    document.getElementById('viewAll')?.addEventListener('click', function() {
+        toggleGoalVisibility('all');
+        setActiveButton(this);
+    });
+
+    document.getElementById('viewInProgress')?.addEventListener('click', function() {
+        toggleGoalVisibility('in-progress');
+        setActiveButton(this);
+    });
+
+    document.getElementById('viewCompleted')?.addEventListener('click', function() {
+        toggleGoalVisibility('completed');
+        setActiveButton(this);
+    });
+}
+
+/**
+ * Toggle goal visibility based on status
+ * @param {string} status - Status to filter by
+ */
+function toggleGoalVisibility(status) {
+    const allGoals = document.querySelectorAll('.goal-item');
+    
+    allGoals.forEach(goal => {
+        if (status === 'all') {
+            goal.style.display = '';
+        } else if (status === 'in-progress' && !goal.classList.contains('completed-goal')) {
+            goal.style.display = '';
+        } else if (status === 'completed' && goal.classList.contains('completed-goal')) {
+            goal.style.display = '';
+        } else {
+            goal.style.display = 'none';
+        }
+    });
+}
+
+/**
+ * Set active button
+ * @param {HTMLElement} button - Button to set as active
+ */
+function setActiveButton(button) {
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    button.classList.add('active');
+}
+
+/**
+ * Initialize goal calculators for both add and edit forms
+ */
+function initializeGoalCalculators() {
+    // Add form calculator
+    const targetAmountInput = document.getElementById('target_amount');
+    const currentAmountInput = document.getElementById('current_amount');
+    const startDateInput = document.getElementById('start_date');
+    const targetDateInput = document.getElementById('target_date');
+    const calculator = document.getElementById('goalCalculator');
+    const monthlyContribution = document.getElementById('monthlyContribution');
+    const timeToGoal = document.getElementById('timeToGoal');
+    
+    if (targetAmountInput && currentAmountInput && startDateInput && targetDateInput && calculator && monthlyContribution && timeToGoal) {
+        const updateCalculator = function() {
+            const targetAmount = parseFloat(targetAmountInput.value) || 0;
+            const currentAmount = parseFloat(currentAmountInput.value) || 0;
+            const startDate = new Date(startDateInput.value);
+            const targetDate = new Date(targetDateInput.value);
+            
+            // Check if we have valid values
+            if (targetAmount <= 0 || isNaN(startDate.getTime()) || isNaN(targetDate.getTime()) || startDate >= targetDate) {
+                calculator.classList.add('d-none');
+                return;
+            }
+            
+            // Show calculator
+            calculator.classList.remove('d-none');
+            
+            // Calculate months between dates
+            const monthsDiff = (targetDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                             (targetDate.getMonth() - startDate.getMonth());
+            
+            // Calculate monthly contribution
+            const remainingAmount = targetAmount - currentAmount;
+            const monthly = monthsDiff > 0 ? remainingAmount / monthsDiff : remainingAmount;
+            
+            // Update calculator display
+            monthlyContribution.textContent = '$' + formatNumber(monthly);
+            timeToGoal.textContent = monthsDiff + ' months';
+        };
+        
+        targetAmountInput.addEventListener('input', updateCalculator);
+        currentAmountInput.addEventListener('input', updateCalculator);
+        startDateInput.addEventListener('change', updateCalculator);
+        targetDateInput.addEventListener('change', updateCalculator);
+    }
+    
+    // Edit form calculator
+    const editTargetAmountInput = document.getElementById('edit_target_amount');
+    const editCurrentAmountInput = document.getElementById('edit_current_amount');
+    const editStartDateInput = document.getElementById('edit_start_date');
+    const editTargetDateInput = document.getElementById('edit_target_date');
+    const editCalculator = document.getElementById('editGoalCalculator');
+    const editMonthlyContribution = document.getElementById('editMonthlyContribution');
+    const editTimeToGoal = document.getElementById('editTimeToGoal');
+    
+    if (editTargetAmountInput && editCurrentAmountInput && editStartDateInput && editTargetDateInput && editCalculator && editMonthlyContribution && editTimeToGoal) {
+        window.updateEditGoalCalculator = function() {
+            const targetAmount = parseFloat(editTargetAmountInput.value) || 0;
+            const currentAmount = parseFloat(editCurrentAmountInput.value) || 0;
+            const startDate = new Date(editStartDateInput.value);
+            const targetDate = new Date(editTargetDateInput.value);
+            
+            // Check if we have valid values
+            if (targetAmount <= 0 || isNaN(startDate.getTime()) || isNaN(targetDate.getTime()) || startDate >= targetDate) {
+                editCalculator.classList.add('d-none');
+                return;
+            }
+            
+            // Show calculator
+            editCalculator.classList.remove('d-none');
+            
+            // Calculate months between dates
+            const monthsDiff = (targetDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                              (targetDate.getMonth() - startDate.getMonth());
+            
+            // Calculate monthly contribution
+            const remainingAmount = targetAmount - currentAmount;
+            const monthly = monthsDiff > 0 ? remainingAmount / monthsDiff : remainingAmount;
+            
+            // Update calculator display
+            editMonthlyContribution.textContent = '$' + formatNumber(monthly);
+            editTimeToGoal.textContent = monthsDiff + ' months';
+        };
+        
+        editTargetAmountInput.addEventListener('input', window.updateEditGoalCalculator);
+        editCurrentAmountInput.addEventListener('input', window.updateEditGoalCalculator);
+        editStartDateInput.addEventListener('change', window.updateEditGoalCalculator);
+        editTargetDateInput.addEventListener('change', window.updateEditGoalCalculator);
+    }
+
+    // Add goal recommendation handler
+    document.querySelectorAll('.adopt-goal').forEach(button => {
+        button.addEventListener('click', function() {
+            const name = this.getAttribute('data-name');
+            const description = this.getAttribute('data-description');
+            const targetAmount = this.getAttribute('data-target');
+            const priority = this.getAttribute('data-priority');
+            const timeline = this.getAttribute('data-timeline');
+            
+            // Calculate target date based on timeline
+            const targetDate = new Date();
+            if (timeline.includes('month')) {
+                const months = parseInt(timeline);
+                targetDate.setMonth(targetDate.getMonth() + months);
+            } else if (timeline.includes('year')) {
+                const years = parseInt(timeline);
+                targetDate.setFullYear(targetDate.getFullYear() + years);
+            } else {
+                targetDate.setFullYear(targetDate.getFullYear() + 1); // Default to 1 year
+            }
+            
+            // Populate add goal form
+            document.getElementById('name').value = name;
+            document.getElementById('description').value = description;
+            document.getElementById('target_amount').value = targetAmount;
+            document.getElementById('current_amount').value = 0;
+            document.getElementById('start_date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('target_date').value = targetDate.toISOString().split('T')[0];
+            document.getElementById('priority').value = priority;
+            
+            // Close recommend modal and open add goal modal
+            const recommendModal = bootstrap.Modal.getInstance(document.getElementById('recommendGoalsModal'));
+            if (recommendModal) recommendModal.hide();
+            const addModal = new bootstrap.Modal(document.getElementById('addGoalModal'));
+            addModal.show();
+            
+            // Update calculator
+            updateCalculator();
+        });
+    });
+}
 
 /**
  * Show spinner on an element
@@ -137,15 +328,19 @@ function initializeDateValidation() {
     const targetDateInputs = document.querySelectorAll('#target_date, #edit_target_date');
     
     startDateInputs.forEach((input, index) => {
-        input.addEventListener('change', function() {
-            validateDates(this, targetDateInputs[index]);
-        });
+        if (input && targetDateInputs[index]) {
+            input.addEventListener('change', function() {
+                validateDates(this, targetDateInputs[index]);
+            });
+        }
     });
     
     targetDateInputs.forEach((input, index) => {
-        input.addEventListener('change', function() {
-            validateDates(startDateInputs[index], this);
-        });
+        if (input && startDateInputs[index]) {
+            input.addEventListener('change', function() {
+                validateDates(startDateInputs[index], this);
+            });
+        }
     });
 }
 
@@ -155,7 +350,7 @@ function initializeDateValidation() {
  * @param {HTMLElement} targetDateInput - The target date input element
  */
 function validateDates(startDateInput, targetDateInput) {
-    if (!startDateInput || !targetDateInput || !targetDateInput.value) return;
+    if (!startDateInput || !targetDateInput || !targetDateInput.value || !startDateInput.value) return;
     
     const startDate = new Date(startDateInput.value);
     const targetDate = new Date(targetDateInput.value);
@@ -191,6 +386,8 @@ function initializeProgressTracking(basePath) {
     document.querySelectorAll('.update-progress').forEach(button => {
         button.addEventListener('click', function() {
             const goalId = this.getAttribute('data-goal-id');
+            if (!goalId) return;
+            
             document.getElementById('progress_goal_id').value = goalId;
             
             // Show spinner on the button
@@ -231,20 +428,22 @@ function initializeProgressTracking(basePath) {
                         
                         // Add event listener to amount input
                         const amountInput = document.getElementById('progress_amount');
-                        amountInput.addEventListener('input', function() {
-                            const amount = parseFloat(this.value) || 0;
-                            const currentAmount = parseFloat(data.goal.current_amount);
-                            const targetAmount = parseFloat(data.goal.target_amount);
-                            
-                            // Check if this contribution would complete the goal
-                            if (completionAlert) {
-                                if (currentAmount + amount >= targetAmount) {
-                                    completionAlert.classList.remove('d-none');
-                                } else {
-                                    completionAlert.classList.add('d-none');
+                        if (amountInput) {
+                            amountInput.addEventListener('input', function() {
+                                const amount = parseFloat(this.value) || 0;
+                                const currentAmount = parseFloat(data.goal.current_amount);
+                                const targetAmount = parseFloat(data.goal.target_amount);
+                                
+                                // Check if this contribution would complete the goal
+                                if (completionAlert) {
+                                    if (currentAmount + amount >= targetAmount) {
+                                        completionAlert.classList.remove('d-none');
+                                    } else {
+                                        completionAlert.classList.add('d-none');
+                                    }
                                 }
-                            }
-                        });
+                            });
+                        }
                         
                         // Show the modal
                         const modal = new bootstrap.Modal(document.getElementById('updateProgressModal'));
@@ -267,6 +466,7 @@ function initializeProgressTracking(basePath) {
     document.querySelectorAll('.edit-goal').forEach(button => {
         button.addEventListener('click', function() {
             const goalId = this.getAttribute('data-goal-id');
+            if (!goalId) return;
             
             // Show spinner on the button
             showSpinner(this);
@@ -296,8 +496,8 @@ function initializeProgressTracking(basePath) {
                         document.getElementById('edit_status').value = data.goal.status;
                         
                         // Update calculator
-                        if (typeof updateEditGoalCalculator === 'function') {
-                            updateEditGoalCalculator();
+                        if (typeof window.updateEditGoalCalculator === 'function') {
+                            window.updateEditGoalCalculator();
                         }
                         
                         // Show the modal
@@ -316,12 +516,40 @@ function initializeProgressTracking(basePath) {
                 });
         });
     });
+
+    // Handle delete goal button clicks
+    document.querySelectorAll('.delete-goal').forEach(button => {
+        button.addEventListener('click', function() {
+            const goalId = this.getAttribute('data-goal-id');
+            if (!goalId) return;
+            
+            // Find the goal name
+            const goalCard = this.closest('.goal-item');
+            let goalName = "this goal";
+            if (goalCard) {
+                const titleElement = goalCard.querySelector('.font-weight-bold');
+                if (titleElement) {
+                    goalName = titleElement.textContent.trim();
+                }
+            }
+            
+            // Set the goal ID and name in the delete modal
+            document.getElementById('delete_goal_id').value = goalId;
+            document.getElementById('delete_goal_name').textContent = goalName;
+            
+            // Show the delete modal
+            const modal = new bootstrap.Modal(document.getElementById('deleteGoalModal'));
+            modal.show();
+        });
+    });
     
     // Handle progress form submission
     const progressForm = document.querySelector('#updateProgressModal form');
     if (progressForm) {
         progressForm.addEventListener('submit', function(e) {
             const amountInput = document.getElementById('progress_amount');
+            if (!amountInput) return;
+            
             const amount = parseFloat(amountInput.value);
             
             if (isNaN(amount) || amount <= 0) {
@@ -575,7 +803,7 @@ function addProgressProjection() {
  */
 function initializeFormValidation() {
     // Add form validation
-    const addForm = document.getElementById('addBudgetForm');
+    const addForm = document.querySelector('#addGoalModal form');
     if (addForm) {
         addForm.addEventListener('submit', function(event) {
             if (!this.checkValidity()) {
@@ -587,135 +815,18 @@ function initializeFormValidation() {
         });
     }
     
-    // Initialize goal calculator for add form
-    const targetAmountInput = document.getElementById('target_amount');
-    const currentAmountInput = document.getElementById('current_amount');
-    const startDateInput = document.getElementById('start_date');
-    const targetDateInput = document.getElementById('target_date');
-    const calculator = document.getElementById('goalCalculator');
-    const monthlyContribution = document.getElementById('monthlyContribution');
-    const timeToGoal = document.getElementById('timeToGoal');
-    
-    if (targetAmountInput && currentAmountInput && startDateInput && targetDateInput && calculator && monthlyContribution && timeToGoal) {
-        const updateCalculator = function() {
-            const targetAmount = parseFloat(targetAmountInput.value) || 0;
-            const currentAmount = parseFloat(currentAmountInput.value) || 0;
-            const startDate = new Date(startDateInput.value);
-            const targetDate = new Date(targetDateInput.value);
-            
-            // Check if we have valid values
-            if (targetAmount <= 0 || isNaN(startDate.getTime()) || isNaN(targetDate.getTime()) || startDate >= targetDate) {
-                calculator.classList.add('d-none');
-                return;
+    // Edit form validation
+    const editForm = document.querySelector('#editGoalModal form');
+    if (editForm) {
+        editForm.addEventListener('submit', function(event) {
+            if (!this.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
             }
             
-            // Show calculator
-            calculator.classList.remove('d-none');
-            
-            // Calculate months between dates
-            const monthsDiff = (targetDate.getFullYear() - startDate.getFullYear()) * 12 + 
-                             (targetDate.getMonth() - startDate.getMonth());
-            
-            // Calculate monthly contribution
-            const remainingAmount = targetAmount - currentAmount;
-            const monthly = monthsDiff > 0 ? remainingAmount / monthsDiff : remainingAmount;
-            
-            // Update calculator display
-            monthlyContribution.textContent = '$' + formatNumber(monthly);
-            timeToGoal.textContent = monthsDiff + ' months';
-        };
-        
-        targetAmountInput.addEventListener('input', updateCalculator);
-        currentAmountInput.addEventListener('input', updateCalculator);
-        startDateInput.addEventListener('change', updateCalculator);
-        targetDateInput.addEventListener('change', updateCalculator);
-    }
-    
-    // Initialize goal calculator for edit form
-    const editTargetAmountInput = document.getElementById('edit_target_amount');
-    const editCurrentAmountInput = document.getElementById('edit_current_amount');
-    const editStartDateInput = document.getElementById('edit_start_date');
-    const editTargetDateInput = document.getElementById('edit_target_date');
-    const editCalculator = document.getElementById('editGoalCalculator');
-    const editMonthlyContribution = document.getElementById('editMonthlyContribution');
-    const editTimeToGoal = document.getElementById('editTimeToGoal');
-    
-    if (editTargetAmountInput && editCurrentAmountInput && editStartDateInput && editTargetDateInput && editCalculator && editMonthlyContribution && editTimeToGoal) {
-        const updateEditCalculator = function() {
-            const targetAmount = parseFloat(editTargetAmountInput.value) || 0;
-            const currentAmount = parseFloat(editCurrentAmountInput.value) || 0;
-            const startDate = new Date(editStartDateInput.value);
-            const targetDate = new Date(editTargetDateInput.value);
-            
-            // Check if we have valid values
-            if (targetAmount <= 0 || isNaN(startDate.getTime()) || isNaN(targetDate.getTime()) || startDate >= targetDate) {
-                editCalculator.classList.add('d-none');
-                return;
-            }
-            
-            // Show calculator
-            editCalculator.classList.remove('d-none');
-            
-            // Calculate months between dates
-            const monthsDiff = (targetDate.getFullYear() - startDate.getFullYear()) * 12 + 
-                              (targetDate.getMonth() - startDate.getMonth());
-            
-            // Calculate monthly contribution
-            const remainingAmount = targetAmount - currentAmount;
-            const monthly = monthsDiff > 0 ? remainingAmount / monthsDiff : remainingAmount;
-            
-            // Update calculator display
-            editMonthlyContribution.textContent = '$' + formatNumber(monthly);
-            editTimeToGoal.textContent = monthsDiff + ' months';
-        };
-        
-        editTargetAmountInput.addEventListener('input', updateEditCalculator);
-        editCurrentAmountInput.addEventListener('input', updateEditCalculator);
-        editStartDateInput.addEventListener('change', updateEditCalculator);
-        editTargetDateInput.addEventListener('change', updateEditCalculator);
-    }
-    
-    // Handle adopt recommended goal
-    document.querySelectorAll('.adopt-goal').forEach(button => {
-        button.addEventListener('click', function() {
-            const name = this.getAttribute('data-name');
-            const description = this.getAttribute('data-description');
-            const targetAmount = this.getAttribute('data-target');
-            const priority = this.getAttribute('data-priority');
-            const timeline = this.getAttribute('data-timeline');
-            
-            // Calculate target date based on timeline
-            const targetDate = new Date();
-            if (timeline.includes('month')) {
-                const months = parseInt(timeline);
-                targetDate.setMonth(targetDate.getMonth() + months);
-            } else if (timeline.includes('year')) {
-                const years = parseInt(timeline);
-                targetDate.setFullYear(targetDate.getFullYear() + years);
-            } else {
-                targetDate.setFullYear(targetDate.getFullYear() + 1); // Default to 1 year
-            }
-            
-            // Populate add goal form
-            document.getElementById('name').value = name;
-            document.getElementById('description').value = description;
-            document.getElementById('target_amount').value = targetAmount;
-            document.getElementById('current_amount').value = 0;
-            document.getElementById('start_date').value = new Date().toISOString().split('T')[0];
-            document.getElementById('target_date').value = targetDate.toISOString().split('T')[0];
-            document.getElementById('priority').value = priority;
-            
-            // Close recommend modal and open add goal modal
-            bootstrap.Modal.getInstance(document.getElementById('recommendGoalsModal')).hide();
-            const addModal = new bootstrap.Modal(document.getElementById('addGoalModal'));
-            addModal.show();
-            
-            // Update calculator
-            if (typeof updateCalculator === 'function') {
-                updateCalculator();
-            }
+            this.classList.add('was-validated');
         });
-    });
+    }
 }
 
 /**
@@ -744,30 +855,70 @@ function formatDate(date) {
  * @param {number} duration - Duration in milliseconds
  */
 function showNotification(message, type = 'info', duration = 3000) {
-    // Create notification element
+    // Check if notification container exists
+    let container = document.getElementById('notification-container');
+    
+    if (!container) {
+        // Create container
+        container = document.createElement('div');
+        container.id = 'notification-container';
+        container.style.position = 'fixed';
+        container.style.top = '20px';
+        container.style.right = '20px';
+        container.style.zIndex = '9999';
+        container.style.width = '300px';
+        document.body.appendChild(container);
+    }
+    
+    // Create notification
     const notification = document.createElement('div');
-    notification.className = `alert alert-${type} alert-dismissible fade show notification-toast`;
+    notification.className = `alert alert-${type} alert-dismissible fade show`;
+    notification.style.marginBottom = '10px';
+    notification.style.boxShadow = '0 0.25rem 0.75rem rgba(0, 0, 0, 0.1)';
+    
+    // Add content
     notification.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
     
-    // Style the notification
-    notification.style.position = 'fixed';
-    notification.style.top = '1rem';
-    notification.style.right = '1rem';
-    notification.style.zIndex = '1050';
-    notification.style.minWidth = '250px';
-    notification.style.boxShadow = '0 0.5rem 1rem rgba(0, 0, 0, 0.15)';
+    // Add to container
+    container.appendChild(notification);
     
-    // Add to document
-    document.body.appendChild(notification);
-    
-    // Auto-dismiss after duration
-    setTimeout(function() {
-        notification.classList.remove('show');
-        setTimeout(function() {
+    try {
+        // Initialize Bootstrap alert
+        const bsAlert = new bootstrap.Alert(notification);
+        
+        // Auto close after duration
+        setTimeout(() => {
+            try {
+                bsAlert.close();
+            } catch (e) {
+                // Fallback if bootstrap alert fails
+                notification.remove();
+            }
+        }, duration);
+        
+        // Remove from DOM after closing animation
+        notification.addEventListener('closed.bs.alert', () => {
             notification.remove();
-        }, 150);
-    }, duration);
+            
+            // Remove container if empty
+            if (container.children.length === 0) {
+                container.remove();
+            }
+        });
+    } catch (e) {
+        console.error('Error initializing Bootstrap alert:', e);
+        
+        // Fallback if bootstrap alert fails
+        setTimeout(() => {
+            notification.remove();
+            
+            // Remove container if empty
+            if (container.children.length === 0) {
+                container.remove();
+            }
+        }, duration);
+    }
 }

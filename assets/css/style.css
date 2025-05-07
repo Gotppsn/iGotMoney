@@ -200,3 +200,18 @@ main {
       margin-bottom: 0.15rem;
   }
 }
+
+.progress {
+  position: relative;
+}
+.milestone-marker {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+.milestone-marker.milestone-reached {
+  background-color: rgba(255, 255, 255, 0.7);
+}

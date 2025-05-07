@@ -57,6 +57,11 @@ class FinancialGoal {
         $this->priority = htmlspecialchars(strip_tags($this->priority));
         $this->status = htmlspecialchars(strip_tags($this->status));
         
+        // Check if goal is completed
+        if ($this->current_amount >= $this->target_amount) {
+            $this->status = 'completed';
+        }
+        
         // Bind parameters - Fixed parameter types string to match number of parameters
         $stmt->bind_param("isddsssss", 
                           $this->user_id, 
@@ -222,6 +227,9 @@ class FinancialGoal {
             return false;
         }
         
+        // Convert amount to float to ensure proper arithmetic
+        $amount = floatval($amount);
+        
         // Update current amount
         $this->current_amount += $amount;
         
@@ -287,17 +295,27 @@ class FinancialGoal {
         // Calculate months between start and target dates
         $start = new DateTime($this->start_date);
         $target = new DateTime($this->target_date);
+        
+        // Check if target date is in the past
+        $now = new DateTime();
+        if ($target < $now) {
+            // If target date is in the past, calculate from now to 1 year ahead
+            $start = $now;
+            $target = clone $now;
+            $target->modify('+1 year');
+        }
+        
         $interval = $start->diff($target);
         $months = ($interval->y * 12) + $interval->m;
         
-        // If past date or less than one month, return total amount needed
-        if ($months <= 0) {
-            return $this->target_amount - $this->current_amount;
+        // If less than one month, add the days as a fraction of a month
+        if ($months === 0) {
+            $months = max(0.1, $interval->d / 30);
         }
         
         // Calculate monthly contribution needed
-        $remaining = $this->target_amount - $this->current_amount;
-        $monthly = $remaining / $months;
+        $remaining = max(0, $this->target_amount - $this->current_amount);
+        $monthly = $months > 0 ? $remaining / $months : $remaining;
         
         return $monthly;
     }
@@ -308,7 +326,8 @@ class FinancialGoal {
             return 0;
         }
         
-        return ($this->current_amount / $this->target_amount) * 100;
+        $percentage = ($this->current_amount / $this->target_amount) * 100;
+        return min(100, $percentage); // Cap at 100%
     }
     
     // Calculate time progress percentage
@@ -321,17 +340,24 @@ class FinancialGoal {
         $target = new DateTime($this->target_date);
         $now = new DateTime();
         
-        $total_interval = $start->diff($target);
-        $elapsed_interval = $start->diff($now);
-        
-        $total_days = $total_interval->days;
-        $elapsed_days = $elapsed_interval->days;
-        
-        if ($total_days <= 0) {
+        // If target date is in the past, return 100%
+        if ($target < $now) {
             return 100;
         }
         
-        return min(100, ($elapsed_days / $total_days) * 100);
+        // If start date is in the future, return 0%
+        if ($start > $now) {
+            return 0;
+        }
+        
+        $total_interval = $start->diff($target);
+        $elapsed_interval = $start->diff($now);
+        
+        $total_days = max(1, $total_interval->days); // Avoid division by zero
+        $elapsed_days = $elapsed_interval->days;
+        
+        $percentage = ($elapsed_days / $total_days) * 100;
+        return min(100, $percentage); // Cap at 100%
     }
     
     // Check if goal is on track
@@ -346,6 +372,9 @@ class FinancialGoal {
     // Generate recommended goals based on income and existing goals
     public function recommendGoals($user_id, $monthly_income) {
         $recommended_goals = array();
+        
+        // Ensure monthly income is valid
+        $monthly_income = max(1, floatval($monthly_income));
         
         // Get existing goals
         $existing_goals = $this->getActiveGoals($user_id);

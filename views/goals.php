@@ -52,7 +52,7 @@ require_once 'includes/header.php';
                 $total_interval = $start_date->diff($target_date);
                 $elapsed_interval = $start_date->diff($now);
                 
-                $total_days = $total_interval->days;
+                $total_days = max(1, $total_interval->days);
                 $elapsed_days = $elapsed_interval->days;
                 
                 $time_progress = $total_days > 0 ? ($elapsed_days / $total_days) * 100 : 100;
@@ -164,7 +164,7 @@ require_once 'includes/header.php';
                         $now = new DateTime();
                         
                         $days_remaining = $now->diff($target_date)->format("%r%a");
-                        $total_days = $start_date->diff($target_date)->days;
+                        $total_days = max(1, $start_date->diff($target_date)->days);
                         $elapsed_days = $start_date->diff($now)->days;
                         
                         $time_progress = $total_days > 0 ? min(100, ($elapsed_days / $total_days) * 100) : 100;
@@ -200,7 +200,7 @@ require_once 'includes/header.php';
                         // Calculate monthly contribution needed
                         $monthly_contribution = 0;
                         if ($days_remaining > 0 && $goal['status'] !== 'completed') {
-                            $remaining_amount = $goal['target_amount'] - $goal['current_amount'];
+                            $remaining_amount = max(0, $goal['target_amount'] - $goal['current_amount']);
                             $months_remaining = $days_remaining / 30.44; // Average days per month
                             $monthly_contribution = $months_remaining > 0 ? $remaining_amount / $months_remaining : $remaining_amount;
                         }
@@ -359,13 +359,14 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="addGoalModalLabel">Add Financial Goal</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/goals" method="post">
+            <form action="<?php echo BASE_PATH; ?>/goals" method="post" class="needs-validation" novalidate>
                 <input type="hidden" name="action" value="add">
                 
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="name" class="form-label">Goal Name</label>
                         <input type="text" class="form-control" id="name" name="name" required>
+                        <div class="invalid-feedback">Please provide a goal name.</div>
                     </div>
                     
                     <div class="mb-3">
@@ -378,7 +379,8 @@ require_once 'includes/header.php';
                             <label for="target_amount" class="form-label">Target Amount</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="target_amount" name="target_amount" step="0.01" min="0" required>
+                                <input type="number" class="form-control" id="target_amount" name="target_amount" step="0.01" min="0.01" required>
+                                <div class="invalid-feedback">Please provide a valid target amount.</div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -386,6 +388,7 @@ require_once 'includes/header.php';
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
                                 <input type="number" class="form-control" id="current_amount" name="current_amount" step="0.01" min="0" value="0">
+                                <div class="invalid-feedback">Current amount must be a non-negative number.</div>
                             </div>
                         </div>
                     </div>
@@ -394,10 +397,12 @@ require_once 'includes/header.php';
                         <div class="col-md-6">
                             <label for="start_date" class="form-label">Start Date</label>
                             <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
+                            <div class="invalid-feedback">Please provide a start date.</div>
                         </div>
                         <div class="col-md-6">
                             <label for="target_date" class="form-label">Target Date</label>
                             <input type="date" class="form-control" id="target_date" name="target_date" value="<?php echo date('Y-m-d', strtotime('+1 year')); ?>" required>
+                            <div class="invalid-feedback">Please provide a target date after the start date.</div>
                         </div>
                     </div>
                     
@@ -440,7 +445,7 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="editGoalModalLabel">Edit Financial Goal</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/goals" method="post">
+            <form action="<?php echo BASE_PATH; ?>/goals" method="post" class="needs-validation" novalidate>
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="goal_id" id="edit_goal_id">
                 
@@ -448,6 +453,7 @@ require_once 'includes/header.php';
                     <div class="mb-3">
                         <label for="edit_name" class="form-label">Goal Name</label>
                         <input type="text" class="form-control" id="edit_name" name="name" required>
+                        <div class="invalid-feedback">Please provide a goal name.</div>
                     </div>
                     
                     <div class="mb-3">
@@ -460,7 +466,8 @@ require_once 'includes/header.php';
                             <label for="edit_target_amount" class="form-label">Target Amount</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="edit_target_amount" name="target_amount" step="0.01" min="0" required>
+                                <input type="number" class="form-control" id="edit_target_amount" name="target_amount" step="0.01" min="0.01" required>
+                                <div class="invalid-feedback">Please provide a valid target amount.</div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -468,6 +475,7 @@ require_once 'includes/header.php';
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
                                 <input type="number" class="form-control" id="edit_current_amount" name="current_amount" step="0.01" min="0">
+                                <div class="invalid-feedback">Current amount must be a non-negative number.</div>
                             </div>
                         </div>
                     </div>
@@ -476,10 +484,12 @@ require_once 'includes/header.php';
                         <div class="col-md-6">
                             <label for="edit_start_date" class="form-label">Start Date</label>
                             <input type="date" class="form-control" id="edit_start_date" name="start_date" required>
+                            <div class="invalid-feedback">Please provide a start date.</div>
                         </div>
                         <div class="col-md-6">
                             <label for="edit_target_date" class="form-label">Target Date</label>
                             <input type="date" class="form-control" id="edit_target_date" name="target_date" required>
+                            <div class="invalid-feedback">Please provide a target date after the start date.</div>
                         </div>
                     </div>
                     
@@ -532,7 +542,7 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="updateProgressModalLabel">Update Goal Progress</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/goals" method="post">
+            <form action="<?php echo BASE_PATH; ?>/goals" method="post" class="needs-validation" novalidate>
                 <input type="hidden" name="action" value="update_progress">
                 <input type="hidden" name="goal_id" id="progress_goal_id">
                 
@@ -556,7 +566,8 @@ require_once 'includes/header.php';
                         <label for="progress_amount" class="form-label">Add to Current Amount</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" id="progress_amount" name="amount" step="0.01" min="0" required>
+                            <input type="number" class="form-control" id="progress_amount" name="amount" step="0.01" min="0.01" required>
+                            <div class="invalid-feedback">Please enter a valid positive amount.</div>
                         </div>
                         <div class="form-text">Enter the amount you want to add to your current progress.</div>
                     </div>
@@ -689,80 +700,7 @@ require_once 'includes/header.php';
     </div>
 </div>
 
-<!-- Add the global spinner functions that will fix the issues -->
-<script>
-// Define showSpinner globally so it works with any script calling it
-function showSpinner(element) {
-    // Check if spinner already exists
-    if (element.querySelector('.spinner-border')) return;
-    
-    // Save original content
-    const originalContent = element.innerHTML;
-    element.setAttribute('data-original-content', originalContent);
-    
-    // Add spinner
-    element.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3">Loading data...</p></div>';
-}
-
-// Define hideSpinner globally
-function hideSpinner(element) {
-    // Get original content
-    const originalContent = element.getAttribute('data-original-content');
-    if (originalContent) {
-        element.innerHTML = originalContent;
-        element.removeAttribute('data-original-content');
-    }
-}
-
-// Helper function for formatting numbers
-function formatNumber(num) {
-    return parseFloat(num).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-</script>
-
 <?php
-// JavaScript for goals page
-$page_scripts = "
-// Handle filter buttons
-document.getElementById('viewAll').addEventListener('click', function() {
-    toggleGoalVisibility('all');
-    setActiveButton(this);
-});
-
-document.getElementById('viewInProgress').addEventListener('click', function() {
-    toggleGoalVisibility('in-progress');
-    setActiveButton(this);
-});
-
-document.getElementById('viewCompleted').addEventListener('click', function() {
-    toggleGoalVisibility('completed');
-    setActiveButton(this);
-});
-
-function toggleGoalVisibility(status) {
-    const allGoals = document.querySelectorAll('.goal-item');
-    
-    allGoals.forEach(goal => {
-        if (status === 'all') {
-            goal.style.display = '';
-        } else if (status === 'in-progress' && !goal.classList.contains('completed-goal')) {
-            goal.style.display = '';
-        } else if (status === 'completed' && goal.classList.contains('completed-goal')) {
-            goal.style.display = '';
-        } else {
-            goal.style.display = 'none';
-        }
-    });
-}
-
-function setActiveButton(button) {
-    document.querySelectorAll('.btn-group .btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    button.classList.add('active');
-}
-";
-
 // Include footer
 require_once 'includes/footer.php';
 ?>
