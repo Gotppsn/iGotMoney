@@ -7,7 +7,7 @@
 
 // Check if user is logged in
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header('Location: /login');
+    header('Location: ' . BASE_PATH . '/login');
     exit();
 }
 
@@ -84,8 +84,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Update selected year to the one just updated
             $selected_year = $tax_year;
         } else {
-            $error = 'Failed to auto-fill tax information.';
+            $error = 'Failed to auto-fill tax information. Please make sure you have income sources defined.';
         }
+        
+        // Redirect to avoid form resubmission
+        header('Location: ' . BASE_PATH . '/taxes?year=' . $selected_year . '&success=' . urlencode($success ?? '') . '&error=' . urlencode($error ?? ''));
+        exit();
     }
 }
 
@@ -124,6 +128,15 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_tax_info') {
     }
     
     exit();
+}
+
+// Check for success/error messages from redirects
+if (isset($_GET['success']) && !empty($_GET['success'])) {
+    $success = urldecode($_GET['success']);
+}
+
+if (isset($_GET['error']) && !empty($_GET['error'])) {
+    $error = urldecode($_GET['error']);
 }
 
 // Get all tax information for the user

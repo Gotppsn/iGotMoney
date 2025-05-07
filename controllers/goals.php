@@ -1,6 +1,6 @@
 <?php
 /**
- * Goals Controller - Fixed to include BASE_PATH in redirects
+ * Goals Controller
  * 
  * Handles financial goals functionality
  */
@@ -341,8 +341,8 @@ if (!isset($recommended_goals) && $goal_count < 1) {
     $show_recommendations = true;
 }
 
-// Add form-submission.js to handle AJAX form submissions
-$additional_js[] = '/assets/js/form-submission.js';
+// Add additional JavaScript for modernized UI
+$additional_js[] = '/assets/js/goals-modern.js';
 
 // Include view
 require_once 'views/goals.php';

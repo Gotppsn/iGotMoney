@@ -1,0 +1,641 @@
+/* iGotMoney - Modern Tax Planning Page Styles */
+
+:root {
+    --primary-rgb: 67, 97, 238;
+    --primary-color: rgb(var(--primary-rgb));
+    --primary-light: rgba(var(--primary-rgb), 0.1);
+    --primary-lighter: rgba(var(--primary-rgb), 0.05);
+    
+    --success-rgb: 46, 204, 113;
+    --success-color: rgb(var(--success-rgb));
+    --success-light: rgba(var(--success-rgb), 0.1);
+    
+    --danger-rgb: 231, 76, 60;
+    --danger-color: rgb(var(--danger-rgb));
+    --danger-light: rgba(var(--danger-rgb), 0.1);
+    
+    --warning-rgb: 243, 156, 18;
+    --warning-color: rgb(var(--warning-rgb));
+    --warning-light: rgba(var(--warning-rgb), 0.1);
+    
+    --info-rgb: 52, 152, 219;
+    --info-color: rgb(var(--info-rgb));
+    --info-light: rgba(var(--info-rgb), 0.1);
+    
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-600: #6c757d;
+    --gray-700: #495057;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+}
+
+/* Page Header */
+.tax-page-header {
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.tax-page-title {
+    font-weight: 700;
+    font-size: 1.75rem;
+    color: var(--gray-800);
+    margin-bottom: 0.25rem;
+}
+
+.tax-page-subtitle {
+    color: var(--gray-600);
+    font-size: 0.95rem;
+    margin-bottom: 0;
+}
+
+.tax-year-dropdown .btn {
+    font-weight: 500;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: white;
+    border: 1px solid var(--gray-300);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.tax-year-dropdown .btn:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.tax-auto-fill-btn,
+.auto-fill-submit-btn {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 5px rgba(var(--primary-rgb), 0.2);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.tax-auto-fill-btn:hover,
+.auto-fill-submit-btn:hover {
+    background-color: rgb(60, 90, 230);
+    border-color: rgb(60, 90, 230);
+    box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.3);
+    transform: translateY(-2px);
+}
+
+.tax-auto-fill-btn i,
+.auto-fill-submit-btn i {
+    margin-right: 0.5rem;
+}
+
+.auto-fill-submit-btn:disabled {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    opacity: 0.7;
+}
+
+.auto-fill-submit-btn .spinner-border {
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.5rem;
+}
+
+/* Tax Summary Cards */
+.tax-summary-card {
+    border-radius: 1rem;
+    border: none;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    height: 100%;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease, box-shadow 0.3s ease;
+}
+
+.tax-summary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.tax-summary-card .card-body {
+    padding: 1.5rem;
+}
+
+.summary-card-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    margin-right: 1rem;
+    font-size: 1.5rem;
+}
+
+.summary-card-income {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.summary-card-liability {
+    background-color: var(--danger-light);
+    color: var(--danger-color);
+}
+
+.summary-card-remaining {
+    background-color: var(--warning-light);
+    color: var(--warning-color);
+}
+
+.summary-card-rate {
+    background-color: var(--info-light);
+    color: var(--info-color);
+}
+
+.summary-card-title {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    color: var(--gray-600);
+    margin-bottom: 0.5rem;
+}
+
+.summary-card-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 0;
+    transition: color 0.3s ease;
+}
+
+/* Animation for value updates */
+.summary-card-value.updating {
+    color: var(--primary-color);
+    animation: pulse 0.5s ease;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Tax Information Form Card */
+.tax-form-card {
+    border-radius: 1rem;
+    border: none;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+}
+
+.tax-form-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+.tax-form-card .card-header {
+    background-color: white;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 1.25rem 1.5rem;
+}
+
+.tax-form-card .card-header h6 {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--gray-800);
+    margin-bottom: 0;
+}
+
+.tax-form-card .card-body {
+    padding: 1.5rem;
+}
+
+.tax-form-card .form-label {
+    font-weight: 500;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+}
+
+.tax-form-card .form-control,
+.tax-form-card .form-select {
+    border-radius: 0.5rem;
+    padding: 0.65rem 1rem;
+    border-color: var(--gray-300);
+    transition: all 0.3s ease;
+}
+
+.tax-form-card .form-control:focus,
+.tax-form-card .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(var(--primary-rgb), 0.15);
+}
+
+.tax-form-card .input-group {
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.tax-form-card .input-group-text {
+    background-color: var(--gray-100);
+    border-color: var(--gray-300);
+    font-weight: 500;
+    color: var(--gray-600);
+}
+
+.tax-form-card .form-text {
+    color: var(--gray-600);
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+.tax-form-card .btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    border-radius: 0.5rem;
+    padding: 0.65rem 1.25rem;
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(var(--primary-rgb), 0.2);
+    transition: all 0.3s ease;
+}
+
+.tax-form-card .btn-primary:hover {
+    background-color: rgb(60, 90, 230);
+    border-color: rgb(60, 90, 230);
+    box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.3);
+    transform: translateY(-2px);
+}
+
+/* Tax Saving Tips Card */
+.tax-tips-card {
+    border-radius: 1rem;
+    border: none;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+    height: 100%;
+}
+
+.tax-tips-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+.tax-tips-card .card-header {
+    background-color: white;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 1.25rem 1.5rem;
+}
+
+.tax-tips-card .card-header h6 {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--gray-800);
+    margin-bottom: 0;
+}
+
+.tax-tips-card .card-body {
+    padding: 1.5rem;
+}
+
+.tax-tips-accordion .accordion-item {
+    border: none;
+    background-color: transparent;
+    margin-bottom: 0.75rem;
+}
+
+.tax-tips-accordion .accordion-header {
+    margin-bottom: 0;
+}
+
+.tax-tips-accordion .accordion-button {
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    background-color: var(--gray-100);
+    color: var(--gray-800);
+    font-weight: 500;
+    box-shadow: none;
+    transition: all 0.3s ease;
+}
+
+.tax-tips-accordion .accordion-button:not(.collapsed) {
+    background-color: var(--primary-lighter);
+    color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.1);
+}
+
+.tax-tips-accordion .accordion-button::after {
+    background-size: 1rem;
+}
+
+.tax-tips-accordion .accordion-button:hover {
+    background-color: var(--primary-lighter);
+}
+
+.tax-tips-accordion .accordion-body {
+    padding: 1.25rem;
+    border-radius: 0 0 0.75rem 0.75rem;
+    background-color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-top: -0.25rem;
+    z-index: 1;
+    position: relative;
+}
+
+.tax-tips-accordion .accordion-collapse {
+    border-radius: 0 0 0.75rem 0.75rem;
+}
+
+.tax-tips-empty {
+    background-color: var(--gray-100);
+    border-radius: 0.75rem;
+    padding: 3rem 1.5rem;
+    text-align: center;
+}
+
+.tax-tips-empty-icon {
+    font-size: 2.5rem;
+    color: var(--warning-color);
+    margin-bottom: 1.5rem;
+}
+
+/* Tax Chart and Breakdown */
+.tax-chart-card {
+    border-radius: 1rem;
+    border: none;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+}
+
+.tax-chart-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+.tax-chart-card .card-header {
+    background-color: white;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 1.25rem 1.5rem;
+}
+
+.tax-chart-card .card-header h6 {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--gray-800);
+    margin-bottom: 0;
+}
+
+.tax-chart-card .card-body {
+    padding: 1.5rem;
+}
+
+.chart-container {
+    height: 300px;
+    position: relative;
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.8s ease-out 0.3s both;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Table Styling */
+.tax-breakdown-table {
+    margin-bottom: 0;
+}
+
+.tax-breakdown-table th {
+    background-color: var(--gray-100);
+    font-weight: 600;
+    color: var(--gray-700);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    padding: 0.75rem 1rem;
+    border-top: none;
+}
+
+.tax-breakdown-table td {
+    vertical-align: middle;
+    padding: 1rem;
+    color: var(--gray-700);
+    border-color: var(--gray-200);
+}
+
+.tax-breakdown-table tr.table-primary {
+    background-color: var(--primary-lighter);
+    color: var(--primary-color);
+}
+
+.tax-breakdown-table tr.table-primary td {
+    font-weight: 600;
+}
+
+.tax-breakdown-table tr.table-danger {
+    background-color: var(--danger-light);
+    color: var(--danger-color);
+}
+
+.tax-breakdown-table tr.table-success {
+    background-color: var(--success-light);
+    color: var(--success-color);
+}
+
+/* Empty States */
+.tax-empty-state {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    background-color: var(--gray-100);
+    border-radius: 0.75rem;
+}
+
+.tax-empty-state p {
+    color: var(--gray-600);
+    margin-bottom: 1.5rem;
+}
+
+/* Modals */
+.tax-modal .modal-content {
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.tax-modal .modal-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.tax-modal .modal-header h5 {
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: var(--gray-800);
+}
+
+.tax-modal .modal-body {
+    padding: 1.5rem;
+}
+
+.tax-modal .modal-footer {
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.tax-modal .btn-secondary {
+    font-weight: 500;
+    border-radius: 0.5rem;
+}
+
+.tax-modal .btn-danger,
+.tax-modal .btn-primary {
+    font-weight: 500;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.tax-modal .btn-danger:hover,
+.tax-modal .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.pulse-animation {
+    animation: pulse 1.5s ease;
+}
+
+/* Auto-fill button pulse animation */
+@keyframes autofill-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(var(--primary-rgb), 0); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0); }
+}
+
+.tax-auto-fill-btn {
+    position: relative;
+}
+
+.tax-auto-fill-btn.pulse-animation {
+    animation: autofill-pulse 1.5s infinite;
+}
+
+/* Form field focus effect */
+.tax-form-card .mb-3.focused {
+    transition: all 0.3s ease;
+}
+
+.tax-form-card .mb-3.focused .form-label {
+    color: var(--primary-color);
+}
+
+/* Form Submission States */
+.btn .spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.5rem;
+}
+
+.tax-form-card .btn[disabled],
+.tax-modal .btn[disabled] {
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+/* Success Alert Styling */
+.alert-success {
+    background-color: var(--success-light);
+    color: var(--success-color);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.5s ease;
+}
+
+.alert-danger {
+    background-color: var(--danger-light);
+    color: var(--danger-color);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.5s ease;
+}
+
+@media (max-width: 767.98px) {
+    .tax-page-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    
+    .tax-header-actions {
+        margin-top: 1rem;
+        width: 100%;
+        display: flex;
+    }
+    
+    .tax-year-dropdown {
+        margin-right: 0.5rem;
+    }
+    
+    .tax-auto-fill-btn {
+        flex-grow: 1;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+    
+    .tax-breakdown-table th,
+    .tax-breakdown-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .summary-card-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .summary-card-value {
+        font-size: 1.25rem;
+    }
+    
+    .tax-tips-accordion .accordion-button {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .tax-tips-accordion .accordion-body {
+        padding: 1rem;
+    }
+    
+    .chart-container {
+        height: 200px;
+    }
+}

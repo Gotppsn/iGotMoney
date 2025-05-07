@@ -9,6 +9,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize year selection
     initializeYearSelection();
+    
+    // Initialize animations
+    initializeAnimations();
+    
+    // Check for auto-filled success message
+    checkAutoFillSuccess();
+    
+    // Add event listeners for form submission
+    setupFormSubmission();
 });
 
 /**
@@ -135,7 +144,7 @@ function calculateTaxEstimates() {
     // Calculate effective tax rate
     const effectiveTaxRate = estimatedIncome > 0 ? (tax / estimatedIncome) * 100 : 0;
     
-    // Update tax summary cards (would normally be done with AJAX)
+    // Update tax summary cards
     updateTaxSummaryCards(estimatedIncome, tax, remainingTax, effectiveTaxRate);
 }
 
@@ -147,18 +156,19 @@ function calculateTaxEstimates() {
  * @param {number} effectiveTaxRate - Effective tax rate percentage
  */
 function updateTaxSummaryCards(estimatedIncome, taxLiability, remainingTax, effectiveTaxRate) {
-    // This function would update the UI with the calculated tax values
-    // For demonstration purposes, we're just logging the values
-    console.log({
-        estimatedIncome: formatCurrency(estimatedIncome),
-        taxLiability: formatCurrency(taxLiability),
-        remainingTax: formatCurrency(remainingTax),
-        effectiveTaxRate: effectiveTaxRate.toFixed(2) + '%'
-    });
+    // Get the card value elements
+    const cards = document.querySelectorAll('.summary-card-value');
     
-    // In a real implementation, we would update the DOM elements
-    const cards = document.querySelectorAll('.dashboard-card .h5');
     if (cards.length >= 4) {
+        // Apply a subtle animation to highlight the changes
+        cards.forEach(card => {
+            card.classList.add('updating');
+            setTimeout(() => {
+                card.classList.remove('updating');
+            }, 500);
+        });
+        
+        // Update the values with formatted currency
         cards[0].textContent = formatCurrency(estimatedIncome);
         cards[1].textContent = formatCurrency(taxLiability);
         cards[2].textContent = formatCurrency(remainingTax);
@@ -183,6 +193,12 @@ function updateTaxChart(estimatedIncome, taxLiability) {
         // Update chart data
         taxBreakdownChart.data.datasets[0].data = [netIncome, taxLiability];
         
+        // Apply a smooth animation to the chart update
+        taxBreakdownChart.options.animation = {
+            duration: 800,
+            easing: 'easeOutQuart'
+        };
+        
         // Update chart
         taxBreakdownChart.update();
     }
@@ -193,9 +209,6 @@ function updateTaxChart(estimatedIncome, taxLiability) {
  * Handles year dropdown selection
  */
 function initializeYearSelection() {
-    const yearDropdown = document.getElementById('yearDropdown');
-    if (!yearDropdown) return;
-    
     const yearItems = document.querySelectorAll('.dropdown-item');
     yearItems.forEach(item => {
         item.addEventListener('click', function(e) {
@@ -203,6 +216,189 @@ function initializeYearSelection() {
             window.location.href = this.getAttribute('href');
         });
     });
+}
+
+/**
+ * Initialize animations
+ * Adds subtle animations to the UI elements
+ */
+function initializeAnimations() {
+    // Add staggered fade-in effect to summary cards
+    const summaryCards = document.querySelectorAll('.tax-summary-card');
+    summaryCards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+    
+    // Add pulse animation to the Auto-Fill button
+    const autoFillBtn = document.getElementById('autoFillTaxInfo');
+    if (autoFillBtn) {
+        setTimeout(() => {
+            autoFillBtn.classList.add('pulse-animation');
+            setTimeout(() => {
+                autoFillBtn.classList.remove('pulse-animation');
+            }, 1500);
+        }, 1000);
+    }
+    
+    // Add smooth transition to form inputs
+    const formInputs = document.querySelectorAll('.form-control, .form-select');
+    formInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.closest('.mb-3').classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            this.closest('.mb-3').classList.remove('focused');
+        });
+    });
+}
+
+/**
+ * Setup form submission for loading states
+ */
+function setupFormSubmission() {
+    // Main tax info form submission
+    const taxInfoForm = document.getElementById('taxInfoForm');
+    if (taxInfoForm) {
+        taxInfoForm.addEventListener('submit', function() {
+            const submitButton = this.querySelector('button[type="submit"]');
+            if (submitButton) {
+                const originalText = submitButton.innerHTML;
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+                
+                // Reset button state after 30 seconds (failsafe)
+                setTimeout(() => {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalText;
+                }, 30000);
+            }
+        });
+    }
+    
+    // Delete form submission
+    const deleteForm = document.getElementById('deleteTaxInfoForm');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function() {
+            const submitButton = document.querySelector('button[form="deleteTaxInfoForm"]');
+            if (submitButton) {
+                const originalText = submitButton.innerHTML;
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+                
+                // Reset button state after 30 seconds (failsafe)
+                setTimeout(() => {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalText;
+                }, 30000);
+            }
+        });
+    }
+    
+    // Delete tax info button
+    const deleteButton = document.getElementById('deleteTaxInfo');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('deleteTaxId').value = this.getAttribute('data-tax-id');
+            var modal = new bootstrap.Modal(document.getElementById('deleteTaxInfoModal'));
+            modal.show();
+        });
+    }
+    
+    // Scroll to form button
+    const scrollToFormBtn = document.getElementById('scrollToForm');
+    if (scrollToFormBtn) {
+        scrollToFormBtn.addEventListener('click', function() {
+            document.querySelector('.tax-form-card').scrollIntoView({ behavior: 'smooth' });
+        });
+    }
+}
+
+/**
+ * Handle auto-fill buttons
+ */
+function setupAutoFillButtons() {
+    // Main auto-fill button
+    const autoFillBtn = document.getElementById('autoFillTaxInfo');
+    if (autoFillBtn) {
+        autoFillBtn.addEventListener('click', function() {
+            var modal = new bootstrap.Modal(document.getElementById('autoFillModal'));
+            modal.show();
+        });
+    }
+    
+    // Empty state auto-fill button
+    const emptyAutoFillBtn = document.getElementById('autoFillTaxInfoEmpty');
+    if (emptyAutoFillBtn) {
+        emptyAutoFillBtn.addEventListener('click', function() {
+            var modal = new bootstrap.Modal(document.getElementById('autoFillModal'));
+            modal.show();
+        });
+    }
+    
+    // Auto-fill form submission
+    const autoFillForm = document.getElementById('autoFillForm');
+    if (autoFillForm) {
+        autoFillForm.addEventListener('submit', function() {
+            // Show loading state
+            const submitButton = document.querySelector('button[form="autoFillForm"]');
+            if (submitButton) {
+                const originalText = submitButton.innerHTML;
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Auto-Filling...';
+                
+                // Reset button state after 30 seconds (failsafe)
+                setTimeout(() => {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalText;
+                }, 30000);
+            }
+        });
+    }
+}
+
+// Initialize auto-fill functionality
+setupAutoFillButtons();
+
+/**
+ * Check for auto-fill success message in URL parameters
+ * Shows toast notification if auto-fill was successful
+ */
+function checkAutoFillSuccess() {
+    // Parse URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const successParam = urlParams.get('success');
+    const errorParam = urlParams.get('error');
+    
+    // If we have a success message from auto-fill, highlight the form
+    if (successParam && successParam.includes('auto-filled')) {
+        // Highlight summary cards with success animation
+        document.querySelectorAll('.summary-card-value').forEach(card => {
+            card.classList.add('updating');
+            setTimeout(() => {
+                card.classList.remove('updating');
+            }, 1500);
+        });
+        
+        // If chart exists, add highlight animation
+        if (typeof taxBreakdownChart !== 'undefined') {
+            taxBreakdownChart.options.animation = {
+                duration: 1200,
+                easing: 'easeOutBounce'
+            };
+            taxBreakdownChart.update();
+        }
+        
+        // Clean URL by removing success/error parameters
+        const url = new URL(window.location.href);
+        url.searchParams.delete('success');
+        url.searchParams.delete('error');
+        window.history.replaceState({}, document.title, url.toString());
+    }
 }
 
 /**
