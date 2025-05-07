@@ -3,132 +3,124 @@
 $page_title = 'Budget Management - iGotMoney';
 $current_page = 'budget';
 
-// Additional JS
-$additional_js = ['/assets/js/budget.js'];
+// Additional CSS for modern design
+$additional_css = ['/assets/css/budget-modern.css'];
 
 // Include header
 require_once 'includes/header.php';
 ?>
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Budget Management</h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <div class="btn-group me-2">
-            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#generateBudgetModal">
-                <i class="fas fa-magic"></i> Auto-Generate Budget
-            </button>
-        </div>
-        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
-            <i class="fas fa-plus"></i> Add Budget
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap">
+    <div>
+        <h1 class="h2 fw-bold">Budget Management</h1>
+        <p class="text-muted mb-0">Track, allocate, and optimize your monthly budget</p>
+    </div>
+    <div class="page-actions">
+        <button type="button" class="btn btn-outline-primary me-2" id="generateBudgetBtn" data-bs-toggle="modal" data-bs-target="#generateBudgetModal">
+            <i class="fas fa-magic me-2"></i> Auto-Generate
+        </button>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
+            <i class="fas fa-plus me-2"></i> Add Budget
         </button>
     </div>
 </div>
 
-<!-- Budget Overview -->
-<div class="row mb-4">
+<!-- Budget Overview Cards -->
+<div class="row mb-4 g-3">
+    <!-- Budget Health Card -->
     <div class="col-lg-4">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Budget Summary</h6>
-            </div>
+        <?php
+        $total_budget = 0;
+        $total_spent = 0;
+        $total_remaining = 0;
+        
+        if (!empty($budget_status)) {
+            foreach ($budget_status as $budget) {
+                $total_budget += $budget['budget_amount'];
+                $total_spent += $budget['spent'];
+            }
+            $total_remaining = $total_budget - $total_spent;
+        }
+        
+        // Calculate budget health as percentage
+        $budget_health = $total_budget > 0 ? (($total_budget - $total_spent) / $total_budget) * 100 : 0;
+        $health_class = 'success';
+        $health_icon = 'check-circle';
+        $health_status = 'good';
+        $health_message = 'Your budget is doing great!';
+        
+        if ($budget_health < 30) {
+            $health_class = 'danger';
+            $health_icon = 'exclamation-circle';
+            $health_status = 'danger';
+            $health_message = 'Warning: Your budget is nearly depleted!';
+        } elseif ($budget_health < 50) {
+            $health_class = 'warning';
+            $health_icon = 'exclamation-triangle';
+            $health_status = 'warning';
+            $health_message = 'Your budget needs attention.';
+        }
+        ?>
+        <div class="card shadow-sm border-0 h-100 health-card" data-health="<?php echo $health_status; ?>">
             <div class="card-body">
-                <?php
-                $total_budget = 0;
-                $total_spent = 0;
-                $total_remaining = 0;
-                
-                if (!empty($budget_status)) {
-                    foreach ($budget_status as $budget) {
-                        $total_budget += $budget['budget_amount'];
-                        $total_spent += $budget['spent'];
-                    }
-                    $total_remaining = $total_budget - $total_spent;
-                }
-                
-                // Calculate budget health as percentage
-                $budget_health = $total_budget > 0 ? (($total_budget - $total_spent) / $total_budget) * 100 : 0;
-                $health_class = 'text-success';
-                $health_icon = 'check-circle';
-                
-                if ($budget_health < 30) {
-                    $health_class = 'text-danger';
-                    $health_icon = 'exclamation-circle';
-                } elseif ($budget_health < 50) {
-                    $health_class = 'text-warning';
-                    $health_icon = 'exclamation-triangle';
-                }
-                ?>
-                
-                <div class="text-center mb-4">
-                    <h4 class="<?php echo $health_class; ?>">
-                        <i class="fas fa-<?php echo $health_icon; ?> me-2"></i>
-                        <?php echo number_format($budget_health, 0); ?>% Budget Health
-                    </h4>
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon-wrapper bg-soft-<?php echo $health_class; ?> me-3">
+                        <i class="fas fa-<?php echo $health_icon; ?> text-<?php echo $health_class; ?>"></i>
+                    </div>
+                    <h5 class="card-title mb-0">Budget Health</h5>
                 </div>
                 
-                <div class="row mb-3">
-                    <div class="col-md-4 text-center">
-                        <h5>Total Budget</h5>
-                        <h3 class="text-primary">$<?php echo number_format($total_budget, 2); ?></h3>
-                    </div>
-                    <div class="col-md-4 text-center">
-                        <h5>Spent</h5>
-                        <h3 class="text-danger">$<?php echo number_format($total_spent, 2); ?></h3>
-                    </div>
-                    <div class="col-md-4 text-center">
-                        <h5>Remaining</h5>
-                        <h3 class="text-success">$<?php echo number_format($total_remaining, 2); ?></h3>
+                <div class="gauge-wrapper position-relative mb-4">
+                    <div class="gauge"></div>
+                    <div class="gauge-value">
+                        <h2 class="fw-bold text-<?php echo $health_class; ?>"><?php echo number_format($budget_health, 0); ?>%</h2>
+                        <p class="text-muted">remaining budget</p>
                     </div>
                 </div>
                 
-                <div class="progress mb-2">
-                    <?php
-                    $spent_percentage = $total_budget > 0 ? min(100, ($total_spent / $total_budget) * 100) : 0;
-                    $progress_class = 'bg-success';
-                    
-                    if ($spent_percentage >= 90) {
-                        $progress_class = 'bg-danger';
-                    } elseif ($spent_percentage >= 70) {
-                        $progress_class = 'bg-warning';
-                    }
-                    ?>
-                    <div class="progress-bar <?php echo $progress_class; ?>" role="progressbar" 
-                        style="width: <?php echo $spent_percentage; ?>%" 
-                        aria-valuenow="<?php echo $spent_percentage; ?>" 
-                        aria-valuemin="0" aria-valuemax="100">
-                        <?php echo number_format($spent_percentage, 0); ?>%
+                <div class="row budget-stats text-center g-0">
+                    <div class="col-4 budget-stat">
+                        <p class="small text-muted mb-1">Total Budget</p>
+                        <h5 class="text-primary mb-0">$<?php echo number_format($total_budget, 0); ?></h5>
+                    </div>
+                    <div class="col-4 budget-stat">
+                        <p class="small text-muted mb-1">Spent</p>
+                        <h5 class="text-danger mb-0">$<?php echo number_format($total_spent, 0); ?></h5>
+                    </div>
+                    <div class="col-4 budget-stat">
+                        <p class="small text-muted mb-1">Remaining</p>
+                        <h5 class="text-success mb-0">$<?php echo number_format($total_remaining, 0); ?></h5>
                     </div>
                 </div>
                 
-                <div class="text-center mt-4">
-                    <p class="mb-0">
-                        <?php if ($total_budget === 0): ?>
-                            <span class="text-muted">No budgets defined yet.</span>
-                        <?php else: ?>
-                            <span class="<?php echo $health_class; ?>">
-                                <?php
-                                if ($budget_health >= 70) {
-                                    echo 'Your budget is doing great!';
-                                } elseif ($budget_health >= 50) {
-                                    echo 'Your budget is on track.';
-                                } elseif ($budget_health >= 30) {
-                                    echo 'Your budget needs attention.';
-                                } else {
-                                    echo 'Warning: Your budget is nearly depleted!';
-                                }
-                                ?>
-                            </span>
-                        <?php endif; ?>
+                <div class="mt-3 text-center">
+                    <p class="text-<?php echo $health_class; ?> fw-medium mb-0">
+                        <?php echo $health_message; ?>
                     </p>
                 </div>
             </div>
         </div>
     </div>
     
+    <!-- Budget vs. Actual Chart Card -->
     <div class="col-lg-8">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Budget vs. Actual</h6>
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar text-primary me-2"></i>
+                    Budget vs. Actual
+                </h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="chartPeriodDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-calendar-alt me-1"></i> This Month
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chartPeriodDropdown">
+                        <li><a class="dropdown-item active" href="#">This Month</a></li>
+                        <li><a class="dropdown-item" href="#">Last Month</a></li>
+                        <li><a class="dropdown-item" href="#">Last 3 Months</a></li>
+                        <li><a class="dropdown-item" href="#">This Year</a></li>
+                    </ul>
+                </div>
             </div>
             <div class="card-body">
                 <div class="chart-container" style="position: relative; height: 300px;">
@@ -140,54 +132,82 @@ require_once 'includes/header.php';
 </div>
 
 <!-- Budget Categories Status -->
-<div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Budget Categories Status</h6>
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0">
+            <i class="fas fa-tasks text-primary me-2"></i>
+            Budget Categories Status
+        </h5>
+        <div class="search-container">
+            <span class="input-group-text">
+                <i class="fa fa-search"></i>
+            </span>
+            <input type="text" class="form-control" 
+                   placeholder="Search categories..." 
+                   id="categorySearch">
+        </div>
     </div>
-    <div class="card-body">
+    <div class="card-body p-0">
         <?php if (empty($budget_status)): ?>
-            <div class="text-center py-4">
-                <p>No budgets defined yet. Start by creating a budget for each expense category.</p>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
-                    <i class="fas fa-plus"></i> Add Your First Budget
-                </button>
-                <span class="mx-2">or</span>
-                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#generateBudgetModal">
-                    <i class="fas fa-magic"></i> Auto-Generate Budget
-                </button>
+            <div class="text-center py-5 empty-state">
+                <div class="empty-state-icon mb-3">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <h4 class="mb-2">No budgets defined yet</h4>
+                <p class="text-muted mb-4">Start by creating a budget for each expense category.</p>
+                <div class="d-flex justify-content-center">
+                    <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
+                        <i class="fas fa-plus me-2"></i> Add Your First Budget
+                    </button>
+                    <span class="mx-1">or</span>
+                    <button type="button" class="btn btn-success ms-2" data-bs-toggle="modal" data-bs-target="#generateBudgetModal">
+                        <i class="fas fa-magic me-2"></i> Auto-Generate Budget
+                    </button>
+                </div>
             </div>
         <?php else: ?>
             <div class="table-responsive">
-                <table class="table table-bordered" width="100%" cellspacing="0">
-                    <thead>
+                <table class="table table-hover align-middle budget-table mb-0" id="budgetCategoriesTable">
+                    <thead class="table-light">
                         <tr>
-                            <th>Category</th>
+                            <th class="ps-4">Category</th>
                             <th>Budget</th>
                             <th>Spent</th>
                             <th>Remaining</th>
                             <th>Progress</th>
                             <th>Status</th>
-                            <th>Actions</th>
+                            <th class="text-end pe-4">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($budget_status as $budget): ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($budget['category_name']); ?></td>
-                                <td>$<?php echo number_format($budget['budget_amount'], 2); ?></td>
-                                <td>$<?php echo number_format($budget['spent'], 2); ?></td>
-                                <td>$<?php echo number_format($budget['available'], 2); ?></td>
-                                <td>
-                                    <div class="progress">
-                                        <?php
-                                        $progress_class = 'bg-success';
-                                        if ($budget['percentage'] >= 90) {
-                                            $progress_class = 'bg-danger';
-                                        } elseif ($budget['percentage'] >= 70) {
-                                            $progress_class = 'bg-warning';
-                                        }
-                                        ?>
-                                        <div class="progress-bar <?php echo $progress_class; ?>" role="progressbar" 
+                                <td class="ps-4 fw-medium">
+                                    <?php echo htmlspecialchars($budget['category_name']); ?>
+                                </td>
+                                <td class="budget-amount">
+                                    $<?php echo number_format($budget['budget_amount'], 2); ?>
+                                </td>
+                                <td class="spent-amount">
+                                    $<?php echo number_format($budget['spent'], 2); ?>
+                                </td>
+                                <td class="remaining-amount">
+                                    <span class="<?php echo $budget['available'] < 0 ? 'text-danger' : 'text-success'; ?>">
+                                        $<?php echo number_format($budget['available'], 2); ?>
+                                    </span>
+                                </td>
+                                <td style="width: 20%;">
+                                    <?php
+                                    $progress_class = 'bg-success';
+                                    if ($budget['percentage'] >= 90) {
+                                        $progress_class = 'bg-danger';
+                                    } elseif ($budget['percentage'] >= 70) {
+                                        $progress_class = 'bg-warning';
+                                    }
+                                    ?>
+                                    <div class="progress budget-progress">
+                                        <div class="progress-bar <?php echo $progress_class; ?>" 
+                                            role="progressbar" 
                                             style="width: <?php echo min(100, $budget['percentage']); ?>%" 
                                             aria-valuenow="<?php echo $budget['percentage']; ?>" 
                                             aria-valuemin="0" aria-valuemax="100">
@@ -195,24 +215,30 @@ require_once 'includes/header.php';
                                         </div>
                                     </div>
                                 </td>
-                                <td class="text-center">
+                                <td>
                                     <?php
                                     if ($budget['percentage'] >= 90) {
-                                        echo '<span class="badge bg-danger">Critical</span>';
+                                        echo '<span class="badge bg-soft-danger text-danger">Critical</span>';
                                     } elseif ($budget['percentage'] >= 70) {
-                                        echo '<span class="badge bg-warning">Warning</span>';
+                                        echo '<span class="badge bg-soft-warning text-warning">Warning</span>';
                                     } else {
-                                        echo '<span class="badge bg-success">Good</span>';
+                                        echo '<span class="badge bg-soft-success text-success">Good</span>';
                                     }
                                     ?>
                                 </td>
-                                <td class="text-center">
-                                    <button type="button" class="btn btn-sm btn-info edit-budget" data-budget-id="<?php echo $budget['budget_id']; ?>">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-danger delete-budget" data-budget-id="<?php echo $budget['budget_id']; ?>">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                <td class="text-end pe-4">
+                                    <div class="budget-actions">
+                                        <button type="button" class="btn btn-sm btn-icon btn-outline-primary edit-budget" 
+                                                data-budget-id="<?php echo $budget['budget_id']; ?>" 
+                                                title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-icon btn-outline-danger delete-budget" 
+                                                data-budget-id="<?php echo $budget['budget_id']; ?>" 
+                                                title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -225,40 +251,60 @@ require_once 'includes/header.php';
 
 <!-- Budget Recommendations -->
 <?php if (isset($monthly_income) && $monthly_income > 0 && isset($budget_plan) && !empty($budget_plan)): ?>
-<div class="card shadow mb-4">
-    <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h6 class="m-0 font-weight-bold text-primary">Budget Recommendations</h6>
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0">
+            <i class="fas fa-lightbulb text-primary me-2"></i>
+            Budget Recommendations
+        </h5>
         <button class="btn btn-sm btn-success" id="adoptAllRecommendations">
-            <i class="fas fa-check"></i> Adopt All Recommendations
+            <i class="fas fa-check me-1"></i> Adopt All Recommendations
         </button>
     </div>
     <div class="card-body">
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i>
-            Based on your income of $<?php echo number_format($monthly_income, 2); ?> per month, here are some recommended budget allocations.
+        <div class="alert alert-info d-flex align-items-center" role="alert">
+            <i class="fas fa-info-circle me-3 fs-4"></i>
+            <div>
+                Based on your income of <strong>$<?php echo number_format($monthly_income, 2); ?></strong> per month, here are some recommended budget allocations.
+            </div>
         </div>
         
         <div class="table-responsive">
-            <table class="table table-bordered" width="100%" cellspacing="0">
-                <thead>
+            <table class="table table-hover align-middle recommendations-table">
+                <thead class="table-light">
                     <tr>
                         <th>Category</th>
                         <th>Recommended Budget</th>
                         <th>Percentage of Income</th>
-                        <th>Action</th>
+                        <th class="text-end">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($budget_plan as $recommendation): ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($recommendation['category_name']); ?></td>
-                            <td>$<?php echo number_format($recommendation['allocated_amount'], 2); ?></td>
-                            <td><?php echo number_format($recommendation['percentage'], 1); ?>%</td>
+                            <td class="fw-medium">
+                                <?php echo htmlspecialchars($recommendation['category_name']); ?>
+                            </td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-success adopt-recommendation" 
+                                $<?php echo number_format($recommendation['allocated_amount'], 2); ?>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                        <div class="progress-bar bg-info" 
+                                            role="progressbar" 
+                                            style="width: <?php echo $recommendation['percentage']; ?>%" 
+                                            aria-valuenow="<?php echo $recommendation['percentage']; ?>" 
+                                            aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <span class="text-muted small"><?php echo number_format($recommendation['percentage'], 1); ?>%</span>
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-success adopt-recommendation" 
                                         data-category-id="<?php echo $recommendation['category_id']; ?>"
                                         data-amount="<?php echo $recommendation['allocated_amount']; ?>">
-                                    <i class="fas fa-check"></i> Adopt
+                                    <i class="fas fa-check me-1"></i> Adopt
                                 </button>
                             </td>
                         </tr>
@@ -269,15 +315,20 @@ require_once 'includes/header.php';
     </div>
 </div>
 <?php elseif (isset($monthly_income) && $monthly_income <= 0): ?>
-<div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Budget Recommendations</h6>
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-transparent border-0 py-3">
+        <h5 class="mb-0">
+            <i class="fas fa-lightbulb text-primary me-2"></i>
+            Budget Recommendations
+        </h5>
     </div>
     <div class="card-body">
-        <div class="alert alert-warning">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            You need to add income sources before we can generate budget recommendations.
-            <a href="<?php echo BASE_PATH; ?>/income" class="alert-link">Go to Income Management</a> to add your income sources.
+        <div class="alert alert-warning d-flex align-items-center" role="alert">
+            <i class="fas fa-exclamation-triangle me-3 fs-4"></i>
+            <div>
+                You need to add income sources before we can generate budget recommendations.
+                <a href="<?php echo BASE_PATH; ?>/income" class="alert-link">Go to Income Management</a> to add your income sources.
+            </div>
         </div>
     </div>
 </div>
@@ -285,18 +336,20 @@ require_once 'includes/header.php';
 
 <!-- Add Budget Modal -->
 <div class="modal fade" id="addBudgetModal" tabindex="-1" aria-labelledby="addBudgetModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
             <div class="modal-header">
-                <h5 class="modal-title" id="addBudgetModalLabel">Add Budget</h5>
+                <h5 class="modal-title" id="addBudgetModalLabel">
+                    <i class="fas fa-plus-circle me-2"></i>Add Budget
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/budget" method="post" id="addBudgetForm">
+            <form action="<?php echo BASE_PATH; ?>/budget" method="post" id="addBudgetForm" class="needs-validation" novalidate>
                 <input type="hidden" name="action" value="add">
                 
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="category_id" class="form-label">Category</label>
+                        <label for="category_id" class="form-label">Category <span class="text-danger">*</span></label>
                         <select class="form-select" id="category_id" name="category_id" required>
                             <option value="">Select a category</option>
                             <?php 
@@ -318,7 +371,7 @@ require_once 'includes/header.php';
                     </div>
                     
                     <div class="mb-3">
-                        <label for="amount" class="form-label">Budget Amount</label>
+                        <label for="amount" class="form-label">Budget Amount <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
                             <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" required>
@@ -326,22 +379,26 @@ require_once 'includes/header.php';
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="start_date" class="form-label">Start Date</label>
-                        <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
-                        <div class="invalid-feedback">Please select a start date.</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="end_date" class="form-label">End Date</label>
-                        <input type="date" class="form-control" id="end_date" name="end_date" value="<?php echo date('Y-m-d', strtotime('+1 month')); ?>" required>
-                        <div class="invalid-feedback">Please select an end date.</div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
+                            <div class="invalid-feedback">Please select a start date.</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="end_date" class="form-label">End Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" value="<?php echo date('Y-m-d', strtotime('+1 month')); ?>" required>
+                            <div class="invalid-feedback">Please select an end date.</div>
+                        </div>
                     </div>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Budget</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-1"></i> Add Budget
+                    </button>
                 </div>
             </form>
         </div>
@@ -350,19 +407,21 @@ require_once 'includes/header.php';
 
 <!-- Edit Budget Modal -->
 <div class="modal fade" id="editBudgetModal" tabindex="-1" aria-labelledby="editBudgetModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
             <div class="modal-header">
-                <h5 class="modal-title" id="editBudgetModalLabel">Edit Budget</h5>
+                <h5 class="modal-title" id="editBudgetModalLabel">
+                    <i class="fas fa-edit me-2"></i>Edit Budget
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/budget" method="post" id="editBudgetForm">
+            <form action="<?php echo BASE_PATH; ?>/budget" method="post" id="editBudgetForm" class="needs-validation" novalidate>
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="budget_id" id="edit_budget_id">
                 
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="edit_category_id" class="form-label">Category</label>
+                        <label for="edit_category_id" class="form-label">Category <span class="text-danger">*</span></label>
                         <select class="form-select" id="edit_category_id" name="category_id" required>
                             <option value="">Select a category</option>
                             <?php 
@@ -384,7 +443,7 @@ require_once 'includes/header.php';
                     </div>
                     
                     <div class="mb-3">
-                        <label for="edit_amount" class="form-label">Budget Amount</label>
+                        <label for="edit_amount" class="form-label">Budget Amount <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
                             <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0.01" required>
@@ -392,22 +451,26 @@ require_once 'includes/header.php';
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="edit_start_date" class="form-label">Start Date</label>
-                        <input type="date" class="form-control" id="edit_start_date" name="start_date" required>
-                        <div class="invalid-feedback">Please select a start date.</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="edit_end_date" class="form-label">End Date</label>
-                        <input type="date" class="form-control" id="edit_end_date" name="end_date" required>
-                        <div class="invalid-feedback">Please select an end date.</div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="edit_start_date" name="start_date" required>
+                            <div class="invalid-feedback">Please select a start date.</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_end_date" class="form-label">End Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="edit_end_date" name="end_date" required>
+                            <div class="invalid-feedback">Please select an end date.</div>
+                        </div>
                     </div>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Save Changes
+                    </button>
                 </div>
             </form>
         </div>
@@ -416,35 +479,43 @@ require_once 'includes/header.php';
 
 <!-- Delete Budget Modal -->
 <div class="modal fade" id="deleteBudgetModal" tabindex="-1" aria-labelledby="deleteBudgetModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteBudgetModalLabel">Delete Budget</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteBudgetModalLabel">
+                    <i class="fas fa-trash-alt me-2"></i>Delete Budget
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/budget" method="post" id="deleteBudgetForm">
-                <input type="hidden" name="action" value="delete">
-                <input type="hidden" name="budget_id" id="delete_budget_id">
-                
-                <div class="modal-body">
-                    <p>Are you sure you want to delete this budget? This action cannot be undone.</p>
+            <div class="modal-body text-center">
+                <div class="delete-icon mb-4">
+                    <i class="fas fa-exclamation-triangle"></i>
                 </div>
-                
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </div>
-            </form>
+                <h5 class="mb-2">Are you sure?</h5>
+                <p class="text-muted mb-0">This action cannot be undone. This will permanently delete the budget.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="<?php echo BASE_PATH; ?>/budget" method="post" id="deleteBudgetForm">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="budget_id" id="delete_budget_id">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-1"></i> Delete
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Generate Budget Modal -->
 <div class="modal fade" id="generateBudgetModal" tabindex="-1" aria-labelledby="generateBudgetModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
             <div class="modal-header">
-                <h5 class="modal-title" id="generateBudgetModalLabel">Auto-Generate Budget</h5>
+                <h5 class="modal-title" id="generateBudgetModalLabel">
+                    <i class="fas fa-magic me-2"></i>Auto-Generate Budget
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="<?php echo BASE_PATH; ?>/budget" method="post" id="generateBudgetForm">
@@ -453,36 +524,53 @@ require_once 'includes/header.php';
                 
                 <div class="modal-body">
                     <?php if (isset($monthly_income) && $monthly_income > 0): ?>
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            The system will generate a recommended budget based on your income and spending patterns.
+                        <div class="alert alert-info d-flex">
+                            <i class="fas fa-info-circle me-3 fs-4"></i>
+                            <div>
+                                The system will generate a recommended budget based on your income and spending patterns.
+                            </div>
                         </div>
                         
-                        <p>Your current monthly income: <strong>$<?php echo number_format($monthly_income, 2); ?></strong></p>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-medium">Your current monthly income:</span>
+                                <span class="badge bg-primary p-2 fs-6">$<?php echo number_format($monthly_income, 2); ?></span>
+                            </div>
+                            
+                            <div class="card bg-light border-0">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Budget will be created based on:</h6>
+                                    <ul class="mb-0">
+                                        <li>Your income level</li>
+                                        <li>Your previous spending patterns</li>
+                                        <li>Recommended financial ratios</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                         
-                        <p>This will create budget allocations for all expense categories using:</p>
-                        <ul>
-                            <li>Your income level</li>
-                            <li>Your previous spending patterns</li>
-                            <li>Recommended financial ratios</li>
-                        </ul>
-                        
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            This will replace any existing budgets for the current month.
+                        <div class="alert alert-warning d-flex">
+                            <i class="fas fa-exclamation-triangle me-3 fs-4"></i>
+                            <div>
+                                This will replace any existing budgets for the current month.
+                            </div>
                         </div>
                     <?php else: ?>
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            You need to add income sources before generating a budget plan.
-                            <a href="<?php echo BASE_PATH; ?>/income" class="alert-link">Go to Income Management</a> to add your income sources.
+                        <div class="alert alert-danger d-flex">
+                            <i class="fas fa-exclamation-triangle me-3 fs-4"></i>
+                            <div>
+                                You need to add income sources before generating a budget plan.
+                                <a href="<?php echo BASE_PATH; ?>/income" class="alert-link">Go to Income Management</a> to add your income sources.
+                            </div>
                         </div>
                     <?php endif; ?>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success" <?php echo (isset($monthly_income) && $monthly_income > 0) ? '' : 'disabled'; ?>>Generate Budget</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" <?php echo (isset($monthly_income) && $monthly_income > 0) ? '' : 'disabled'; ?>>
+                        <i class="fas fa-magic me-1"></i> Generate Budget
+                    </button>
                 </div>
             </form>
         </div>
@@ -503,93 +591,23 @@ if (!empty($budget_status)) {
     }
 }
 
-// Include Chart.js library directly
-echo '<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>';
-
 // Add BASE_PATH as a global JavaScript variable to use in AJAX requests
 echo '<script>const BASE_PATH = "' . BASE_PATH . '";</script>';
 
-// JavaScript for budget page
-$page_scripts = "
-// Initialize the chart for budget vs actual when document is ready and Chart.js is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Make sure Chart.js is loaded
-    if (typeof Chart === 'undefined') {
-        console.error('Chart.js is not loaded. Please include it in your page.');
-        // Add fallback message in chart container
-        var chartContainer = document.querySelector('.chart-container');
-        if (chartContainer) {
-            chartContainer.innerHTML = '<div class=\"alert alert-warning\">Chart cannot be displayed: Chart.js library not available</div>';
-        }
-        return;
+// Pass chart data to JS as HTML data attributes
+echo '<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const chartCanvas = document.getElementById("budgetVsActualChart");
+    if (chartCanvas) {
+        chartCanvas.setAttribute("data-labels", \'' . json_encode($categories) . '\');
+        chartCanvas.setAttribute("data-budget", \'' . json_encode($budget_amounts) . '\');
+        chartCanvas.setAttribute("data-spent", \'' . json_encode($spent_amounts) . '\');
     }
-    
-    var ctx = document.getElementById('budgetVsActualChart');
-    if (!ctx) {
-        console.error('Canvas element not found');
-        return;
-    }
-    
-    try {
-        var budgetVsActualChart = new Chart(ctx.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: " . json_encode($categories) . ",
-                datasets: [
-                    {
-                        label: 'Budget',
-                        data: " . json_encode($budget_amounts) . ",
-                        backgroundColor: 'rgba(78, 115, 223, 0.8)',
-                        borderColor: 'rgba(78, 115, 223, 1)',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Spent',
-                        data: " . json_encode($spent_amounts) . ",
-                        backgroundColor: 'rgba(231, 74, 59, 0.8)',
-                        borderColor: 'rgba(231, 74, 59, 1)',
-                        borderWidth: 1
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '$' + value.toLocaleString();
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                var label = context.dataset.label || '';
-                                var value = context.raw || 0;
-                                return label + ': $' + value.toLocaleString();
-                            }
-                        }
-                    }
-                },
-                barPercentage: 0.6,
-                categoryPercentage: 0.8
-            }
-        });
-        console.log('Chart initialized successfully');
-    } catch (e) {
-        console.error('Error initializing chart:', e);
-        // Display error in chart container
-        var chartContainer = document.querySelector('.chart-container');
-        if (chartContainer) {
-            chartContainer.innerHTML = '<div class=\"alert alert-danger\">Error initializing chart: ' + e.message + '</div>';
-        }
-    }
-});";
+});
+</script>';
+
+// Additional JS
+$additional_js = ['/assets/js/budget.js'];
 
 // Include footer
 require_once 'includes/footer.php';
