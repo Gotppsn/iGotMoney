@@ -3,184 +3,212 @@
 $page_title = 'Stock Analysis - iGotMoney';
 $current_page = 'stocks';
 
-// Additional JS
-$additional_js = ['/assets/js/stocks.js'];
-
-// Additional CSS
-$additional_css = [];
-
-// Add custom CSS for stock page
-$custom_css = "
-<style>
-  .price-updated {
-    animation: price-flash 2s;
-  }
-  @keyframes price-flash {
-    0% { background-color: rgba(0,0,0,0); }
-    20% { background-color: rgba(255,255,0,0.3); }
-    100% { background-color: rgba(0,0,0,0); }
-  }
-  
-  .stock-chart-container {
-    height: 300px;
-    width: 100%;
-    margin-top: 1.5rem;
-  }
-  
-  .price-change {
-    font-size: 0.8rem;
-    animation: fade-in 0.5s;
-  }
-  
-  @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-</style>
-";
-
 // Include header
 require_once 'includes/header.php';
-
-// Output custom CSS
-echo $custom_css;
 ?>
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Stock Analysis</h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addToWatchlistModal">
-            <i class="fas fa-plus"></i> Add to Watchlist
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="page-title">Stock Analysis</h1>
+        <p class="page-subtitle">Track, analyze, and discover investment opportunities</p>
+    </div>
+    <div class="page-actions">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addToWatchlistModal">
+            <i class="fas fa-plus me-1"></i> Add to Watchlist
         </button>
     </div>
 </div>
 
-<!-- Stock Analysis and Watchlist -->
-<div class="row mb-4">
-    <div class="col-lg-6">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Analyze Stock</h6>
+<!-- Stock Analysis Section -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="stock-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>Stock Analysis</h5>
             </div>
             <div class="card-body">
-                <form action="<?php echo BASE_PATH; ?>/stocks" method="post" id="analyzeStockForm">
+                <!-- Analysis Form -->
+                <form action="<?php echo BASE_PATH; ?>/stocks" method="post" id="analyzeStockForm" class="analysis-form">
                     <input type="hidden" name="action" value="analyze_stock">
                     
-                    <div class="mb-3">
-                        <label for="ticker_symbol" class="form-label">Stock Ticker Symbol</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="ticker_symbol" name="ticker_symbol" placeholder="e.g., AAPL, MSFT" required>
-                            <button class="btn btn-primary" type="submit">Analyze</button>
-                        </div>
-                        <div class="form-text">Enter the ticker symbol of the stock you want to analyze.</div>
+                    <div class="position-relative">
+                        <i class="fas fa-search form-icon"></i>
+                        <input type="text" class="form-control" id="ticker_symbol" name="ticker_symbol" placeholder="Enter stock ticker (e.g., AAPL, MSFT, GOOG)" required>
+                        <button class="btn btn-primary search-btn" type="submit">Analyze</button>
                     </div>
+                    <div class="form-text text-center mt-2">Enter the ticker symbol of the stock you want to analyze.</div>
                 </form>
                 
-                <?php if (isset($stock_analysis) && $stock_analysis['status'] === 'success'): ?>
-                    <div class="alert alert-success">
-                        <h5>Analysis Results for <?php echo htmlspecialchars($stock_analysis['ticker']); ?></h5>
-                        <p><strong>Current Price:</strong> $<?php echo number_format($stock_analysis['current_price'], 2); ?></p>
-                        
-                        <div class="row mt-3">
-                            <div class="col-md-6">
-                                <h6>Technical Indicators</h6>
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                        Short MA (20-day)
-                                        <span>$<?php echo number_format($stock_analysis['short_ma'], 2); ?></span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                        Long MA (50-day)
-                                        <span>$<?php echo number_format($stock_analysis['long_ma'], 2); ?></span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                        RSI (14-day)
-                                        <span><?php echo number_format($stock_analysis['rsi'], 2); ?></span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                        Support Level
-                                        <span>$<?php echo number_format($stock_analysis['support'], 2); ?></span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                        Resistance Level
-                                        <span>$<?php echo number_format($stock_analysis['resistance'], 2); ?></span>
-                                    </li>
-                                </ul>
+                <!-- Analysis Results -->
+                <div id="analysisResult">
+                    <?php if (isset($stock_analysis) && $stock_analysis['status'] === 'success'): ?>
+                        <div class="analysis-result mt-4">
+                            <input type="hidden" id="currentTickerSymbol" value="<?php echo htmlspecialchars($stock_analysis['ticker']); ?>">
+                            
+                            <!-- Stock Header -->
+                            <div class="stock-header">
+                                <div class="stock-logo">
+                                    <?php echo substr(htmlspecialchars($stock_analysis['ticker']), 0, 1); ?>
+                                </div>
+                                <div class="stock-info">
+                                    <h3><?php echo htmlspecialchars($stock_analysis['ticker']); ?></h3>
+                                    <p><?php echo htmlspecialchars($stock_analysis['company_name']); ?></p>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <h6>Recommendation</h6>
-                                <?php
-                                $recommendation_class = '';
-                                $recommendation_icon = '';
-                                
-                                switch ($stock_analysis['recommendation']) {
-                                    case 'buy':
-                                        $recommendation_class = 'success';
-                                        $recommendation_icon = 'arrow-up';
-                                        break;
-                                    case 'sell':
-                                        $recommendation_class = 'danger';
-                                        $recommendation_icon = 'arrow-down';
-                                        break;
-                                    default:
-                                        $recommendation_class = 'info';
-                                        $recommendation_icon = 'minus';
-                                }
-                                ?>
-                                <div class="alert alert-<?php echo $recommendation_class; ?>">
-                                    <h4 class="alert-heading">
-                                        <i class="fas fa-<?php echo $recommendation_icon; ?> me-2"></i>
-                                        <?php echo ucfirst($stock_analysis['recommendation']); ?>
-                                    </h4>
-                                    <hr>
-                                    <?php if (!empty($stock_analysis['buy_points'])): ?>
-                                        <p><strong>Potential Buy Points:</strong></p>
-                                        <ul>
-                                            <?php foreach ($stock_analysis['buy_points'] as $point): ?>
-                                                <li>$<?php echo number_format($point['price'], 2); ?> - <?php echo $point['reason']; ?></li>
-                                            <?php endforeach; ?>
-                                        </ul>
-                                    <?php endif; ?>
+                            
+                            <!-- Price and Chart Row -->
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <!-- Current Price -->
+                                    <div class="mb-4">
+                                        <h6 class="text-muted mb-2">Current Price</h6>
+                                        <div class="stock-price" id="currentStockPrice" data-price="<?php echo $stock_analysis['current_price']; ?>">
+                                            $<?php echo number_format($stock_analysis['current_price'], 2); ?>
+                                        </div>
+                                        
+                                        <?php
+                                        $change_class = $stock_analysis['price_change'] >= 0 ? 'positive' : 'negative';
+                                        $change_icon = $stock_analysis['price_change'] >= 0 ? 'caret-up' : 'caret-down';
+                                        ?>
+                                        
+                                        <div class="price-change <?php echo $change_class; ?>">
+                                            <i class="fas fa-<?php echo $change_icon; ?>"></i>
+                                            $<span id="priceChange"><?php echo number_format($stock_analysis['price_change'], 2); ?></span>
+                                            (<span id="priceChangePercent"><?php echo number_format($stock_analysis['price_change_percent'], 2); ?>%</span>)
+                                        </div>
+                                    </div>
                                     
-                                    <?php if (!empty($stock_analysis['sell_points'])): ?>
-                                        <p><strong>Potential Sell Points:</strong></p>
-                                        <ul>
-                                            <?php foreach ($stock_analysis['sell_points'] as $point): ?>
-                                                <li>$<?php echo number_format($point['price'], 2); ?> - <?php echo $point['reason']; ?></li>
-                                            <?php endforeach; ?>
+                                    <!-- Technical Indicators -->
+                                    <div class="mb-4">
+                                        <h6 class="text-muted mb-3">Technical Indicators</h6>
+                                        <ul class="indicator-list">
+                                            <li class="indicator-item">
+                                                <span class="indicator-label">Short MA (20-day)</span>
+                                                <span class="indicator-value">$<?php echo number_format($stock_analysis['short_ma'], 2); ?></span>
+                                            </li>
+                                            <li class="indicator-item">
+                                                <span class="indicator-label">Long MA (50-day)</span>
+                                                <span class="indicator-value">$<?php echo number_format($stock_analysis['long_ma'], 2); ?></span>
+                                            </li>
+                                            <li class="indicator-item">
+                                                <span class="indicator-label">RSI (14-day)</span>
+                                                <span class="indicator-value"><?php echo number_format($stock_analysis['rsi'], 2); ?></span>
+                                            </li>
+                                            <li class="indicator-item">
+                                                <span class="indicator-label">Support Level</span>
+                                                <span class="indicator-value">$<?php echo number_format($stock_analysis['support'], 2); ?></span>
+                                            </li>
+                                            <li class="indicator-item">
+                                                <span class="indicator-label">Resistance Level</span>
+                                                <span class="indicator-value">$<?php echo number_format($stock_analysis['resistance'], 2); ?></span>
+                                            </li>
                                         </ul>
+                                    </div>
+                                    
+                                    <!-- Recommendation -->
+                                    <?php
+                                    $rec_class = '';
+                                    $rec_icon = '';
+                                    
+                                    switch ($stock_analysis['recommendation']) {
+                                        case 'buy':
+                                            $rec_class = 'buy-card';
+                                            $rec_icon = 'arrow-up';
+                                            break;
+                                        case 'sell':
+                                            $rec_class = 'sell-card';
+                                            $rec_icon = 'arrow-down';
+                                            break;
+                                        default:
+                                            $rec_class = 'hold-card';
+                                            $rec_icon = 'minus';
+                                    }
+                                    ?>
+                                    
+                                    <div class="recommendation-card <?php echo $rec_class; ?>">
+                                        <h4>
+                                            <i class="fas fa-<?php echo $rec_icon; ?>"></i>
+                                            <?php echo ucfirst($stock_analysis['recommendation']); ?> Recommendation
+                                        </h4>
+                                        <hr>
+                                        
+                                        <?php if (!empty($stock_analysis['buy_points'])): ?>
+                                            <p><strong>Potential Buy Points:</strong></p>
+                                            <ul class="price-points">
+                                                <?php foreach ($stock_analysis['buy_points'] as $point): ?>
+                                                    <li><span class="price-point-value">$<?php echo number_format($point['price'], 2); ?></span> - <?php echo $point['reason']; ?></li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        <?php endif; ?>
+                                        
+                                        <?php if (!empty($stock_analysis['sell_points'])): ?>
+                                            <p><strong>Potential Sell Points:</strong></p>
+                                            <ul class="price-points">
+                                                <?php foreach ($stock_analysis['sell_points'] as $point): ?>
+                                                    <li><span class="price-point-value">$<?php echo number_format($point['price'], 2); ?></span> - <?php echo $point['reason']; ?></li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        <?php endif; ?>
+                                        
+                                        <div class="text-center mt-3">
+                                            <button type="button" class="btn btn-sm btn-light add-to-watchlist-from-analysis" 
+                                                    data-ticker="<?php echo htmlspecialchars($stock_analysis['ticker']); ?>" 
+                                                    data-price="<?php echo $stock_analysis['current_price']; ?>"
+                                                    data-company="<?php echo htmlspecialchars($stock_analysis['company_name']); ?>">
+                                                <i class="fas fa-plus"></i> Add to Watchlist
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-8">
+                                    <!-- Stock Price Chart -->
+                                    <div class="stock-chart-container">
+                                        <div class="chart-header">
+                                            <h6 class="chart-title">Price History</h6>
+                                            <div class="chart-period">
+                                                <button type="button" class="chart-period-btn active" data-period="1m">1M</button>
+                                                <button type="button" class="chart-period-btn" data-period="3m">3M</button>
+                                                <button type="button" class="chart-period-btn" data-period="1y">1Y</button>
+                                            </div>
+                                        </div>
+                                        <canvas id="stockPriceChart" class="stock-chart"></canvas>
+                                    </div>
+                                    
+                                    <!-- Volume Chart (optional) -->
+                                    <?php if (isset($stockPriceData['volumes']) && !empty($stockPriceData['volumes'])): ?>
+                                    <div class="stock-chart-container mt-3" style="height: 200px;">
+                                        <div class="chart-header">
+                                            <h6 class="chart-title">Trading Volume</h6>
+                                        </div>
+                                        <canvas id="stockVolumeChart" class="stock-chart"></canvas>
+                                    </div>
                                     <?php endif; ?>
                                 </div>
-                                <button type="button" class="btn btn-primary btn-sm add-to-watchlist-from-analysis" 
-                                        data-ticker="<?php echo htmlspecialchars($stock_analysis['ticker']); ?>" 
-                                        data-price="<?php echo $stock_analysis['current_price']; ?>">
-                                    <i class="fas fa-plus"></i> Add to Watchlist
-                                </button>
                             </div>
                         </div>
-                        
-                        <div class="stock-chart-container mt-4">
-                            <canvas id="stockPriceChart" class="stock-chart" style="height: 300px;"></canvas>
-                        </div>
-                    </div>
-                <?php endif; ?>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-lg-6">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">Stock Watchlist</h6>
-                <div class="input-group input-group-sm" style="width: 200px;">
-                    <input type="text" class="form-control" placeholder="Search watchlist..." id="watchlistSearch" data-table-search="watchlistTable">
-                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+</div>
+
+<!-- Watchlist Section -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="stock-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title"><i class="fas fa-star me-2"></i>Stock Watchlist</h5>
+                <div class="watchlist-search">
+                    <span class="search-icon"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control search-input" placeholder="Search watchlist..." id="watchlistSearch" data-target="watchlistTable">
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body watchlist-container">
                 <?php if (isset($watchlist) && $watchlist && $watchlist->num_rows > 0): ?>
                     <div class="table-responsive">
-                        <table class="table table-bordered data-table" id="watchlistTable" width="100%" cellspacing="0">
+                        <table class="table watchlist-table" id="watchlistTable" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
                                     <th>Symbol</th>
@@ -194,33 +222,41 @@ echo $custom_css;
                             <tbody>
                                 <?php while ($stock = $watchlist->fetch_assoc()): ?>
                                     <tr data-notes="<?php echo htmlspecialchars($stock['notes'] ?? ''); ?>">
-                                        <td><?php echo htmlspecialchars($stock['ticker_symbol']); ?></td>
-                                        <td><?php echo htmlspecialchars($stock['company_name']); ?></td>
-                                        <td>$<?php echo number_format($stock['current_price'], 2); ?></td>
+                                        <td data-symbol="<?php echo htmlspecialchars($stock['ticker_symbol']); ?>">
+                                            <span class="stock-symbol"><?php echo htmlspecialchars($stock['ticker_symbol']); ?></span>
+                                        </td>
+                                        <td>
+                                            <span class="stock-company"><?php echo htmlspecialchars($stock['company_name']); ?></span>
+                                        </td>
+                                        <td data-price="<?php echo $stock['current_price']; ?>">
+                                            $<?php echo number_format($stock['current_price'], 2); ?>
+                                        </td>
                                         <td>
                                             <?php if (!empty($stock['target_buy_price'])): ?>
-                                                $<?php echo number_format($stock['target_buy_price'], 2); ?>
+                                                <span class="target-price">$<?php echo number_format($stock['target_buy_price'], 2); ?></span>
                                             <?php else: ?>
-                                                <span class="text-muted">N/A</span>
+                                                <span class="text-muted">--</span>
                                             <?php endif; ?>
                                         </td>
                                         <td>
                                             <?php if (!empty($stock['target_sell_price'])): ?>
-                                                $<?php echo number_format($stock['target_sell_price'], 2); ?>
+                                                <span class="target-price">$<?php echo number_format($stock['target_sell_price'], 2); ?></span>
                                             <?php else: ?>
-                                                <span class="text-muted">N/A</span>
+                                                <span class="text-muted">--</span>
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <button type="button" class="btn btn-sm btn-info analyze-from-watchlist" data-ticker="<?php echo htmlspecialchars($stock['ticker_symbol']); ?>">
-                                                <i class="fas fa-chart-line"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-warning edit-watchlist" data-watchlist-id="<?php echo $stock['watchlist_id']; ?>">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-danger remove-from-watchlist" data-watchlist-id="<?php echo $stock['watchlist_id']; ?>">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
+                                            <div class="action-buttons">
+                                                <button type="button" class="btn btn-sm btn-info analyze-from-watchlist" data-ticker="<?php echo htmlspecialchars($stock['ticker_symbol']); ?>" data-bs-toggle="tooltip" title="Analyze Stock">
+                                                    <i class="fas fa-chart-line"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-warning edit-watchlist" data-watchlist-id="<?php echo $stock['watchlist_id']; ?>" data-bs-toggle="tooltip" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-danger remove-from-watchlist" data-watchlist-id="<?php echo $stock['watchlist_id']; ?>" data-bs-toggle="tooltip" title="Remove">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endwhile; ?>
@@ -228,10 +264,14 @@ echo $custom_css;
                         </table>
                     </div>
                 <?php else: ?>
-                    <div class="text-center py-4">
-                        <p>No stocks in your watchlist yet.</p>
+                    <div class="empty-watchlist">
+                        <div class="empty-watchlist-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <h4>Your watchlist is empty</h4>
+                        <p class="text-muted">Track stocks you're interested in by adding them to your watchlist.</p>
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addToWatchlistModal">
-                            <i class="fas fa-plus"></i> Add Your First Stock
+                            <i class="fas fa-plus me-1"></i> Add Your First Stock
                         </button>
                     </div>
                 <?php endif; ?>
@@ -240,56 +280,56 @@ echo $custom_css;
     </div>
 </div>
 
-<!-- Stock Market Insights -->
-<div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Stock Market Insights</h6>
+<!-- Market Insights Section -->
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card insights-card technical">
+            <div class="insights-header">
+                <h5><i class="fas fa-chart-line me-2"></i>Technical Analysis</h5>
+            </div>
+            <div class="insights-body">
+                <p>Technical analysis uses charts and historical data patterns to forecast future stock price movements.</p>
+                <p><strong>Key Indicators:</strong></p>
+                <ul class="insights-list">
+                    <li>Moving Averages (MA) - Short vs Long term trends</li>
+                    <li>Relative Strength Index (RSI) - Overbought/Oversold conditions</li>
+                    <li>Support & Resistance - Price level boundaries</li>
+                    <li>MACD - Momentum and trend direction</li>
+                </ul>
+            </div>
+        </div>
     </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-4">
-                <div class="card border-left-info h-100 py-2">
-                    <div class="card-body">
-                        <h5 class="card-title">Technical Analysis</h5>
-                        <p class="card-text">Technical analysis uses charts and indicators to predict future stock price movements based on historical data patterns.</p>
-                        <p><strong>Key Indicators:</strong></p>
-                        <ul>
-                            <li>Moving Averages (MA) - Short vs Long term trends</li>
-                            <li>Relative Strength Index (RSI) - Overbought/Oversold conditions</li>
-                            <li>Support & Resistance - Price level boundaries</li>
-                        </ul>
-                    </div>
-                </div>
+    <div class="col-lg-4 mb-4">
+        <div class="card insights-card fundamental">
+            <div class="insights-header">
+                <h5><i class="fas fa-balance-scale me-2"></i>Fundamental Analysis</h5>
             </div>
-            <div class="col-md-4">
-                <div class="card border-left-warning h-100 py-2">
-                    <div class="card-body">
-                        <h5 class="card-title">Fundamental Analysis</h5>
-                        <p class="card-text">Fundamental analysis evaluates a company's intrinsic value by examining financial statements, industry position, and economic factors.</p>
-                        <p><strong>Key Metrics:</strong></p>
-                        <ul>
-                            <li>P/E Ratio - Price relative to earnings</li>
-                            <li>Debt-to-Equity Ratio - Financial leverage</li>
-                            <li>Revenue Growth - Sales trend over time</li>
-                            <li>Profit Margins - Efficiency of operations</li>
-                        </ul>
-                    </div>
-                </div>
+            <div class="insights-body">
+                <p>Fundamental analysis evaluates a company's intrinsic value through financial statements and economic factors.</p>
+                <p><strong>Key Metrics:</strong></p>
+                <ul class="insights-list">
+                    <li>P/E Ratio - Price relative to earnings</li>
+                    <li>Debt-to-Equity Ratio - Financial leverage</li>
+                    <li>Revenue Growth - Sales trend over time</li>
+                    <li>Profit Margins - Efficiency of operations</li>
+                </ul>
             </div>
-            <div class="col-md-4">
-                <div class="card border-left-success h-100 py-2">
-                    <div class="card-body">
-                        <h5 class="card-title">Investment Strategies</h5>
-                        <p class="card-text">Different approaches to stock investing based on your goals and risk tolerance.</p>
-                        <p><strong>Common Strategies:</strong></p>
-                        <ul>
-                            <li>Value Investing - Finding undervalued stocks</li>
-                            <li>Growth Investing - Focus on expansion potential</li>
-                            <li>Dividend Investing - Income generation</li>
-                            <li>Dollar-Cost Averaging - Regular investments over time</li>
-                        </ul>
-                    </div>
-                </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-4">
+        <div class="card insights-card strategy">
+            <div class="insights-header">
+                <h5><i class="fas fa-chess me-2"></i>Investment Strategies</h5>
+            </div>
+            <div class="insights-body">
+                <p>Different approaches to stock investing based on your goals and risk tolerance.</p>
+                <p><strong>Common Strategies:</strong></p>
+                <ul class="insights-list">
+                    <li>Value Investing - Finding undervalued stocks</li>
+                    <li>Growth Investing - Focus on expansion potential</li>
+                    <li>Dividend Investing - Income generation</li>
+                    <li>Dollar-Cost Averaging - Regular investments</li>
+                </ul>
             </div>
         </div>
     </div>
@@ -300,10 +340,10 @@ echo $custom_css;
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addToWatchlistModalLabel">Add Stock to Watchlist</h5>
+                <h5 class="modal-title" id="addToWatchlistModalLabel"><i class="fas fa-plus-circle me-2"></i>Add Stock to Watchlist</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/stocks" method="post">
+            <form action="<?php echo BASE_PATH; ?>/stocks" method="post" class="modal-form">
                 <input type="hidden" name="action" value="add_to_watchlist">
                 
                 <div class="modal-body">
@@ -353,7 +393,7 @@ echo $custom_css;
                 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add to Watchlist</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-1"></i> Add to Watchlist</button>
                 </div>
             </form>
         </div>
@@ -362,23 +402,89 @@ echo $custom_css;
 
 <!-- Remove from Watchlist Modal -->
 <div class="modal fade" id="removeFromWatchlistModal" tabindex="-1" aria-labelledby="removeFromWatchlistModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-sm">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="removeFromWatchlistModalLabel">Remove from Watchlist</h5>
+                <h5 class="modal-title" id="removeFromWatchlistModalLabel"><i class="fas fa-trash me-2"></i>Remove from Watchlist</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <p>Are you sure you want to remove this stock from your watchlist?</p>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                    <p>Are you sure you want to remove this stock from your watchlist?</p>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form action="<?php echo BASE_PATH; ?>/stocks" method="post">
                     <input type="hidden" name="action" value="remove_from_watchlist">
                     <input type="hidden" name="watchlist_id" id="remove_watchlist_id">
-                    <button type="submit" class="btn btn-danger">Remove</button>
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-trash me-1"></i> Remove</button>
                 </form>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Watchlist Item Modal -->
+<div class="modal fade" id="editWatchlistModal" tabindex="-1" aria-labelledby="editWatchlistModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editWatchlistModalLabel"><i class="fas fa-edit me-2"></i>Edit Watchlist Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="<?php echo BASE_PATH; ?>/stocks" method="post" class="modal-form">
+                <input type="hidden" name="action" value="update_watchlist_item">
+                <input type="hidden" name="watchlist_id" id="edit_watchlist_id">
+                
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_ticker_symbol" class="form-label">Ticker Symbol</label>
+                        <input type="text" class="form-control" id="edit_ticker_symbol" name="ticker_symbol" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_company_name" class="form-label">Company Name</label>
+                        <input type="text" class="form-control" id="edit_company_name" name="company_name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_current_price" class="form-label">Current Price</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="edit_current_price" name="current_price" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit_target_buy_price" class="form-label">Target Buy Price</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="edit_target_buy_price" name="target_buy_price" step="0.01" min="0">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_target_sell_price" class="form-label">Target Sell Price</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="edit_target_sell_price" name="target_sell_price" step="0.01" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="edit_notes" name="notes" rows="3"></textarea>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> Save Changes</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -387,104 +493,39 @@ echo $custom_css;
 // Add JavaScript variables for the chart
 if (isset($stock_analysis) && $stock_analysis['status'] === 'success') {
     $page_scripts = "
-    // Pass analysis values to the chart
-    const shortMaValue = " . $stock_analysis['short_ma'] . ";
-    const longMaValue = " . $stock_analysis['long_ma'] . ";
-    const supportValue = " . $stock_analysis['support'] . ";
-    const resistanceValue = " . $stock_analysis['resistance'] . ";
-    
     // Stock price data for chart
-    const stockPriceData = " . json_encode($stockPriceData ?? null) . ";
+    const stockPriceData = " . json_encode($stockPriceData) . ";
     
-    // Handle add to watchlist from analysis button
-    document.querySelectorAll('.add-to-watchlist-from-analysis').forEach(button => {
-        button.addEventListener('click', function() {
-            const ticker = this.getAttribute('data-ticker');
-            const price = this.getAttribute('data-price');
-            
-            // Populate the add to watchlist form
-            document.getElementById('ticker_symbol_watchlist').value = ticker;
-            document.getElementById('current_price_watchlist').value = price;
-            
-            // Fetch company name
-            fetchStockInfo(ticker, document.getElementById('company_name'), document.getElementById('current_price_watchlist'));
-            
-            // Show the modal
-            const modal = new bootstrap.Modal(document.getElementById('addToWatchlistModal'));
-            modal.show();
-        });
+    // Base path for API calls
+    const BASE_PATH = '" . BASE_PATH . "';
+    
+    // Show success notification
+    document.addEventListener('DOMContentLoaded', function() {
+        showNotification('Stock analysis completed successfully', 'success');
+    });
+    ";
+} else if (isset($error)) {
+    $page_scripts = "
+    // Base path for API calls
+    const BASE_PATH = '" . BASE_PATH . "';
+    
+    // Stock price data not available
+    const stockPriceData = null;
+    
+    // Show error notification
+    document.addEventListener('DOMContentLoaded', function() {
+        showNotification('" . addslashes($error) . "', 'danger');
     });
     ";
 } else {
     $page_scripts = "
-    // Handle add to watchlist from analysis button
-    document.querySelectorAll('.add-to-watchlist-from-analysis').forEach(button => {
-        button.addEventListener('click', function() {
-            const ticker = this.getAttribute('data-ticker');
-            const price = this.getAttribute('data-price');
-            
-            // Populate the add to watchlist form
-            document.getElementById('ticker_symbol_watchlist').value = ticker;
-            document.getElementById('current_price_watchlist').value = price;
-            
-            // Fetch company name
-            fetchStockInfo(ticker, document.getElementById('company_name'), document.getElementById('current_price_watchlist'));
-            
-            // Show the modal
-            const modal = new bootstrap.Modal(document.getElementById('addToWatchlistModal'));
-            modal.show();
-        });
-    });
+    // Base path for API calls
+    const BASE_PATH = '" . BASE_PATH . "';
+    
+    // Stock price data not available
+    const stockPriceData = null;
     ";
 }
-
-// Add general page scripts
-$page_scripts .= "
-// Handle analyze from watchlist button
-document.querySelectorAll('.analyze-from-watchlist').forEach(button => {
-    button.addEventListener('click', function() {
-        const ticker = this.getAttribute('data-ticker');
-        
-        // Populate the analyze form and submit
-        document.getElementById('ticker_symbol').value = ticker;
-        document.getElementById('analyzeStockForm').submit();
-    });
-});
-
-// Handle remove from watchlist button
-document.querySelectorAll('.remove-from-watchlist').forEach(button => {
-    button.addEventListener('click', function() {
-        const watchlistId = this.getAttribute('data-watchlist-id');
-        document.getElementById('remove_watchlist_id').value = watchlistId;
-        
-        // Show the modal
-        const modal = new bootstrap.Modal(document.getElementById('removeFromWatchlistModal'));
-        modal.show();
-    });
-});
-
-// Implement table search functionality
-document.querySelectorAll('input[data-table-search]').forEach(input => {
-    input.addEventListener('keyup', function() {
-        const tableId = this.getAttribute('data-table-search');
-        const searchText = this.value.toLowerCase();
-        const table = document.getElementById(tableId);
-        
-        if (!table) return;
-        
-        table.querySelectorAll('tbody tr').forEach(row => {
-            let found = false;
-            row.querySelectorAll('td').forEach(cell => {
-                if (cell.textContent.toLowerCase().indexOf(searchText) > -1) {
-                    found = true;
-                }
-            });
-            
-            row.style.display = found ? '' : 'none';
-        });
-    });
-});
-";
 
 // Include footer
 require_once 'includes/footer.php';

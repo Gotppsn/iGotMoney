@@ -1,970 +1,694 @@
 /**
- * iGotMoney - Stocks JavaScript
- * Handles functionality for the stock analysis page
+ * iGotMoney - Modern Stock Analysis JavaScript
+ * Handles stock data visualization, real-time updates, and interactive features
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize stock symbol lookup
-    initializeSymbolLookup();
+    // Initialize stock page
+    initializeStockPage();
     
-    // Initialize price alerts
-    initializePriceAlerts();
+    // Setup form submissions and actions
+    setupFormHandlers();
     
-    // Initialize watchlist status indicators
-    initializeWatchlistStatus();
+    // Initialize any data visualizations
+    initializeCharts();
     
-    // Initialize edit watchlist functionality
-    initializeEditWatchlist();
-    
-    // Initialize real-time price updates
-    initializePriceUpdates();
-    
-    // Initialize stock chart if data exists
-    initializeStockChart();
+    // Setup real-time price updates
+    setupRealTimePriceUpdates();
 });
 
 /**
- * Initialize stock symbol lookup
- * Provides autocomplete for stock symbols
+ * Initialize the stock page components
  */
-function initializeSymbolLookup() {
-    const symbolInputs = document.querySelectorAll('#ticker_symbol, #ticker_symbol_watchlist');
+function initializeStockPage() {
+    // Add animations to cards
+    animateCards();
     
-    symbolInputs.forEach(input => {
-        // Add lookup button next to input
-        const inputGroup = input.parentNode;
-        if (inputGroup.classList.contains('input-group')) {
-            const lookupButton = document.createElement('button');
-            lookupButton.className = 'btn btn-outline-secondary';
-            lookupButton.type = 'button';
-            lookupButton.innerHTML = '<i class="fas fa-search"></i>';
-            lookupButton.setAttribute('data-bs-toggle', 'tooltip');
-            lookupButton.setAttribute('title', 'Lookup Symbol');
-            
-            // Insert before the submit button if it exists
-            const submitButton = inputGroup.querySelector('button[type="submit"]');
-            if (submitButton) {
-                inputGroup.insertBefore(lookupButton, submitButton);
-            } else {
-                inputGroup.appendChild(lookupButton);
-            }
-            
-            // Initialize tooltip
-            new bootstrap.Tooltip(lookupButton);
-            
-            // Add click event
-            lookupButton.addEventListener('click', function() {
-                showSymbolLookupModal(input);
-            });
-        }
+    // Initialize tooltips
+    initializeTooltips();
+    
+    // Initialize search functionality
+    initializeSearch();
+}
+
+/**
+ * Add animations to cards with staggered timing
+ */
+function animateCards() {
+    const cards = document.querySelectorAll('.stock-card');
+    
+    cards.forEach((card, index) => {
+        card.style.setProperty('--index', index);
+        card.classList.add('fade-in');
+    });
+}
+
+/**
+ * Initialize tooltips for interactive elements
+ */
+function initializeTooltips() {
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltipTriggerList.forEach(tooltipTriggerEl => {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+}
+
+/**
+ * Initialize search functionality for tables
+ */
+function initializeSearch() {
+    const searchInputs = document.querySelectorAll('.search-input');
+    
+    searchInputs.forEach(input => {
+        const targetTable = document.getElementById(input.getAttribute('data-target'));
         
-        // Add company name auto-fill for watchlist
-        if (input.id === 'ticker_symbol_watchlist') {
-            input.addEventListener('blur', function() {
-                const companyNameInput = document.getElementById('company_name');
-                const currentPriceInput = document.getElementById('current_price_watchlist');
+        if (targetTable) {
+            input.addEventListener('keyup', function() {
+                const searchText = this.value.toLowerCase();
                 
-                if (companyNameInput && this.value && !companyNameInput.value) {
-                    fetchStockInfo(this.value.toUpperCase(), companyNameInput, currentPriceInput);
-                }
+                targetTable.querySelectorAll('tbody tr').forEach(row => {
+                    let found = false;
+                    row.querySelectorAll('td').forEach(cell => {
+                        if (cell.textContent.toLowerCase().indexOf(searchText) > -1) {
+                            found = true;
+                        }
+                    });
+                    
+                    row.style.display = found ? '' : 'none';
+                });
             });
         }
     });
 }
 
 /**
- * Fetch stock information for a ticker symbol
- * @param {string} ticker - Stock ticker symbol
- * @param {HTMLElement} companyNameInput - Input to populate with company name
- * @param {HTMLElement} currentPriceInput - Input to populate with current price
+ * Setup event handlers for forms and button actions
  */
-function fetchStockInfo(ticker, companyNameInput, currentPriceInput) {
-    // Add loading indicators
-    companyNameInput.value = 'Loading...';
-    currentPriceInput.value = '';
-    
-    // In a real app, this would fetch data from an API
-    // For demo, we'll generate mock data
-    
-    // Get base path from meta tag
-    const basePath = document.querySelector('meta[name="base-path"]')?.content || '';
-    
-    // Simulate network delay
-    setTimeout(() => {
-        fetch(`${basePath}/stocks?action=get_stock_price&ticker=${ticker}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data && data.status === 'success') {
-                    companyNameInput.value = `${ticker} Corporation`;
-                    currentPriceInput.value = data.price.toFixed(2);
-                } else {
-                    companyNameInput.value = '';
-                    currentPriceInput.value = '';
-                    showNotification('Could not get stock information. Please try again.', 'danger');
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching stock data:', error);
-                // Fallback to generate company name and price
-                companyNameInput.value = `${ticker} Inc.`;
-                currentPriceInput.value = (Math.random() * 100 + 50).toFixed(2);
-            });
-    }, 500);
-}
-
-/**
- * Show symbol lookup modal
- * @param {HTMLElement} targetInput - Input to populate with selected symbol
- */
-function showSymbolLookupModal(targetInput) {
-    // Check if modal already exists
-    let lookupModal = document.getElementById('symbolLookupModal');
-    
-    if (!lookupModal) {
-        // Create modal
-        lookupModal = document.createElement('div');
-        lookupModal.className = 'modal fade';
-        lookupModal.id = 'symbolLookupModal';
-        lookupModal.tabIndex = '-1';
-        lookupModal.setAttribute('aria-labelledby', 'symbolLookupModalLabel');
-        lookupModal.setAttribute('aria-hidden', 'true');
-        
-        lookupModal.innerHTML = `
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="symbolLookupModalLabel">Stock Symbol Lookup</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="companySearchInput" class="form-label">Search for a company</label>
-                            <input type="text" class="form-control" id="companySearchInput" placeholder="Enter company name...">
-                        </div>
-                        <div id="lookupResults" class="mt-3">
-                            <div class="alert alert-info">
-                                Enter a company name to search for its stock symbol.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(lookupModal);
-        
-        // Add search functionality
-        const searchInput = lookupModal.querySelector('#companySearchInput');
-        const resultsDiv = lookupModal.querySelector('#lookupResults');
-        
-        searchInput.addEventListener('input', function() {
-            if (this.value.length < 2) {
-                resultsDiv.innerHTML = `
-                    <div class="alert alert-info">
-                        Enter a company name to search for its stock symbol.
+function setupFormHandlers() {
+    // Stock analysis form submit
+    const analyzeForm = document.getElementById('analyzeStockForm');
+    if (analyzeForm) {
+        analyzeForm.addEventListener('submit', function(e) {
+            const tickerInput = document.getElementById('ticker_symbol');
+            const resultContainer = document.getElementById('analysisResult');
+            
+            if (resultContainer) {
+                // Show loading state
+                resultContainer.innerHTML = `
+                    <div class="loading-overlay">
+                        <div class="loading-spinner"></div>
                     </div>
                 `;
-                return;
             }
-            
-            // Show loading indicator
-            resultsDiv.innerHTML = `
-                <div class="text-center py-3">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-2">Searching...</p>
-                </div>
-            `;
-            
-            // In a real app, this would make an API call to a stock symbol lookup service
-            // For the demo, we'll use mock data
-            setTimeout(() => {
-                const mockResults = getMockCompanyResults(this.value);
-                displayLookupResults(mockResults, resultsDiv, targetInput);
-            }, 500);
         });
     }
     
-    // Show modal
-    const modal = new bootstrap.Modal(lookupModal);
-    modal.show();
-    
-    // Focus on search input
-    setTimeout(() => {
-        lookupModal.querySelector('#companySearchInput').focus();
-    }, 500);
-}
-
-/**
- * Get mock company results
- * @param {string} query - Search query
- * @returns {Array} - Array of company objects
- */
-function getMockCompanyResults(query) {
-    // Mock data for demonstration
-    const companies = [
-        { symbol: 'AAPL', name: 'Apple Inc.', exchange: 'NASDAQ', price: 175.42 },
-        { symbol: 'MSFT', name: 'Microsoft Corporation', exchange: 'NASDAQ', price: 330.11 },
-        { symbol: 'GOOGL', name: 'Alphabet Inc.', exchange: 'NASDAQ', price: 127.64 },
-        { symbol: 'AMZN', name: 'Amazon.com Inc.', exchange: 'NASDAQ', price: 129.33 },
-        { symbol: 'META', name: 'Meta Platforms Inc.', exchange: 'NASDAQ', price: 312.49 },
-        { symbol: 'TSLA', name: 'Tesla Inc.', exchange: 'NASDAQ', price: 237.01 },
-        { symbol: 'NVDA', name: 'NVIDIA Corporation', exchange: 'NASDAQ', price: 437.53 },
-        { symbol: 'JPM', name: 'JPMorgan Chase & Co.', exchange: 'NYSE', price: 147.10 },
-        { symbol: 'BAC', name: 'Bank of America Corporation', exchange: 'NYSE', price: 29.42 },
-        { symbol: 'WMT', name: 'Walmart Inc.', exchange: 'NYSE', price: 160.25 }
-    ];
-    
-    // Filter companies by name containing the query (case insensitive)
-    return companies.filter(company => 
-        company.name.toLowerCase().includes(query.toLowerCase()) || 
-        company.symbol.toLowerCase().includes(query.toLowerCase())
-    );
-}
-
-/**
- * Display lookup results
- * @param {Array} results - Array of company objects
- * @param {HTMLElement} container - Container to display results
- * @param {HTMLElement} targetInput - Input to populate with selected symbol
- */
-function displayLookupResults(results, container, targetInput) {
-    if (results.length === 0) {
-        container.innerHTML = `
-            <div class="alert alert-warning">
-                No companies found matching your search.
-            </div>
-        `;
-        return;
-    }
-    
-    let resultsHTML = `
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Symbol</th>
-                        <th>Company Name</th>
-                        <th>Exchange</th>
-                        <th>Price</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-    `;
-    
-    results.forEach(company => {
-        resultsHTML += `
-            <tr>
-                <td><strong>${company.symbol}</strong></td>
-                <td>${company.name}</td>
-                <td>${company.exchange}</td>
-                <td>$${company.price.toFixed(2)}</td>
-                <td>
-                    <button type="button" class="btn btn-sm btn-primary select-symbol" 
-                        data-symbol="${company.symbol}" 
-                        data-company="${company.name}" 
-                        data-price="${company.price}">
-                        Select
-                    </button>
-                </td>
-            </tr>
-        `;
+    // Analyze from watchlist buttons
+    const analyzeButtons = document.querySelectorAll('.analyze-from-watchlist');
+    analyzeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const ticker = this.getAttribute('data-ticker');
+            const tickerInput = document.getElementById('ticker_symbol');
+            
+            if (tickerInput) {
+                tickerInput.value = ticker;
+                const form = document.getElementById('analyzeStockForm');
+                if (form) form.submit();
+            }
+        });
     });
     
-    resultsHTML += `
-                </tbody>
-            </table>
-        </div>
-    `;
-    
-    container.innerHTML = resultsHTML;
-    
-    // Add click events to select buttons
-    container.querySelectorAll('.select-symbol').forEach(button => {
+    // Add to watchlist from analysis buttons
+    const addToWatchlistButtons = document.querySelectorAll('.add-to-watchlist-from-analysis');
+    addToWatchlistButtons.forEach(button => {
         button.addEventListener('click', function() {
-            const symbol = this.getAttribute('data-symbol');
-            const company = this.getAttribute('data-company');
+            const ticker = this.getAttribute('data-ticker');
             const price = this.getAttribute('data-price');
+            const company = this.getAttribute('data-company');
             
-            // Populate target input with selected symbol
-            targetInput.value = symbol;
+            // Fill modal form
+            const tickerInput = document.getElementById('ticker_symbol_watchlist');
+            const priceInput = document.getElementById('current_price_watchlist');
+            const companyInput = document.getElementById('company_name');
             
-            // If target is watchlist input, also populate company name and price
-            if (targetInput.id === 'ticker_symbol_watchlist') {
-                document.getElementById('company_name').value = company;
-                document.getElementById('current_price_watchlist').value = price;
-            }
+            if (tickerInput) tickerInput.value = ticker;
+            if (priceInput) priceInput.value = price;
+            if (companyInput) companyInput.value = company || ticker;
             
-            // Close the modal
-            bootstrap.Modal.getInstance(document.getElementById('symbolLookupModal')).hide();
-        });
-    });
-}
-
-/**
- * Initialize price alerts
- * Enables setting alerts for price movements
- */
-function initializePriceAlerts() {
-    // Create alert button for watchlist items
-    const watchlistTable = document.getElementById('watchlistTable');
-    if (!watchlistTable) return;
-    
-    const rows = watchlistTable.querySelectorAll('tbody tr');
-    
-    rows.forEach(row => {
-        const actionsCell = row.querySelector('td:last-child');
-        const symbolCell = row.querySelector('td:first-child');
-        const priceCell = row.querySelector('td:nth-child(3)');
-        
-        if (!actionsCell || !symbolCell || !priceCell) return;
-        
-        const symbol = symbolCell.textContent.trim();
-        const price = parseFloat(priceCell.textContent.replace('$', '').replace(',', ''));
-        
-        // Add alert button if not already present
-        if (!actionsCell.querySelector('.set-price-alert')) {
-            const alertButton = document.createElement('button');
-            alertButton.className = 'btn btn-sm btn-outline-primary set-price-alert ms-1';
-            alertButton.innerHTML = '<i class="fas fa-bell"></i>';
-            alertButton.setAttribute('data-bs-toggle', 'tooltip');
-            alertButton.setAttribute('title', 'Set Price Alert');
-            alertButton.setAttribute('data-symbol', symbol);
-            alertButton.setAttribute('data-current-price', price);
-            
-            actionsCell.appendChild(alertButton);
-            
-            // Initialize tooltip
-            new bootstrap.Tooltip(alertButton);
-            
-            // Add click event
-            alertButton.addEventListener('click', function() {
-                showPriceAlertModal(this.getAttribute('data-symbol'), this.getAttribute('data-current-price'));
-            });
-        }
-    });
-}
-
-/**
- * Show price alert modal
- * @param {string} symbol - Stock symbol
- * @param {number} currentPrice - Current stock price
- */
-function showPriceAlertModal(symbol, currentPrice) {
-    // Check if modal already exists
-    let alertModal = document.getElementById('priceAlertModal');
-    
-    if (!alertModal) {
-        // Create modal
-        alertModal = document.createElement('div');
-        alertModal.className = 'modal fade';
-        alertModal.id = 'priceAlertModal';
-        alertModal.tabIndex = '-1';
-        alertModal.setAttribute('aria-labelledby', 'priceAlertModalLabel');
-        alertModal.setAttribute('aria-hidden', 'true');
-        
-        alertModal.innerHTML = `
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="priceAlertModalLabel">Set Price Alert</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Stock: <span id="alertSymbol" class="fw-bold"></span></label>
-                            <div>Current Price: $<span id="alertCurrentPrice"></span></div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="alertType" class="form-label">Alert Type</label>
-                            <select class="form-select" id="alertType">
-                                <option value="above">Price Above</option>
-                                <option value="below">Price Below</option>
-                            </select>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="alertPrice" class="form-label">Alert Price</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="alertPrice" step="0.01" min="0">
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="alertMethod" class="form-label">Alert Method</label>
-                            <select class="form-select" id="alertMethod">
-                                <option value="email">Email</option>
-                                <option value="sms">SMS</option>
-                                <option value="app">App Notification</option>
-                            </select>
-                        </div>
-                        
-                        <div class="alert alert-info">
-                            <small><i class="fas fa-info-circle me-1"></i> In this demo, alerts are for demonstration only and won't be sent.</small>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="saveAlertButton">Set Alert</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(alertModal);
-        
-        // Add save functionality
-        const saveButton = alertModal.querySelector('#saveAlertButton');
-        
-        saveButton.addEventListener('click', function() {
-            const alertType = document.getElementById('alertType').value;
-            const alertPrice = document.getElementById('alertPrice').value;
-            const alertMethod = document.getElementById('alertMethod').value;
-            
-            if (!alertPrice) {
-                alert('Please enter an alert price.');
-                return;
-            }
-            
-            // In a real app, this would save the alert to the backend
-            // For the demo, we'll just show a success message
-            
-            // Close the modal
-            bootstrap.Modal.getInstance(alertModal).hide();
-            
-            // Show success notification
-            showNotification(
-                `Alert set: ${symbol} ${alertType === 'above' ? 'rises above' : 'falls below'} $${alertPrice}`,
-                'success',
-                5000
-            );
-        });
-    }
-    
-    // Update modal content with current values
-    document.getElementById('alertSymbol').textContent = symbol;
-    document.getElementById('alertCurrentPrice').textContent = parseFloat(currentPrice).toFixed(2);
-    
-    // Set default alert price based on current price and alert type
-    const alertType = document.getElementById('alertType');
-    const alertPrice = document.getElementById('alertPrice');
-    
-    alertType.addEventListener('change', function() {
-        if (this.value === 'above') {
-            alertPrice.value = (parseFloat(currentPrice) * 1.05).toFixed(2); // 5% above current price
-        } else {
-            alertPrice.value = (parseFloat(currentPrice) * 0.95).toFixed(2); // 5% below current price
-        }
-    });
-    
-    // Set initial values
-    alertType.value = 'above';
-    alertPrice.value = (parseFloat(currentPrice) * 1.05).toFixed(2);
-    
-    // Show modal
-    const modal = new bootstrap.Modal(alertModal);
-    modal.show();
-}
-
-/**
- * Initialize watchlist status indicators
- * Visual indicators for stocks in watchlist
- */
-function initializeWatchlistStatus() {
-    const watchlistTable = document.getElementById('watchlistTable');
-    if (!watchlistTable) return;
-    
-    const rows = watchlistTable.querySelectorAll('tbody tr');
-    
-    rows.forEach(row => {
-        const symbolCell = row.querySelector('td:first-child');
-        const priceCell = row.querySelector('td:nth-child(3)');
-        const buyTargetCell = row.querySelector('td:nth-child(4)');
-        const sellTargetCell = row.querySelector('td:nth-child(5)');
-        
-        if (!symbolCell || !priceCell || !buyTargetCell || !sellTargetCell) return;
-        
-        const currentPrice = parseFloat(priceCell.textContent.replace('$', '').replace(',', ''));
-        const buyTargetText = buyTargetCell.textContent.trim();
-        const sellTargetText = sellTargetCell.textContent.trim();
-        
-        const buyTarget = buyTargetText !== 'N/A' ? 
-            parseFloat(buyTargetText.replace('$', '').replace(',', '')) : null;
-        const sellTarget = sellTargetText !== 'N/A' ? 
-            parseFloat(sellTargetText.replace('$', '').replace(',', '')) : null;
-        
-        // Add indicator to price cell
-        let indicator = '';
-        
-        if (buyTarget && currentPrice <= buyTarget) {
-            indicator = '<span class="badge bg-success ms-2" data-bs-toggle="tooltip" title="Below buy target - consider buying">BUY</span>';
-        } else if (sellTarget && currentPrice >= sellTarget) {
-            indicator = '<span class="badge bg-danger ms-2" data-bs-toggle="tooltip" title="Above sell target - consider selling">SELL</span>';
-        }
-        
-        if (indicator) {
-            // Remove any existing indicators
-            const existingIndicator = priceCell.querySelector('.badge');
-            if (existingIndicator) {
-                priceCell.removeChild(existingIndicator);
-            }
-            
-            // Add new indicator
-            priceCell.innerHTML += indicator;
-            
-            // Initialize tooltip
-            const tooltipEl = priceCell.querySelector('[data-bs-toggle="tooltip"]');
-            if (tooltipEl) {
-                new bootstrap.Tooltip(tooltipEl);
-            }
-        }
-    });
-}
-
-/**
- * Initialize edit watchlist functionality
- */
-function initializeEditWatchlist() {
-    const watchlistTable = document.getElementById('watchlistTable');
-    if (!watchlistTable) return;
-    
-    watchlistTable.querySelectorAll('.edit-watchlist').forEach(button => {
-        button.addEventListener('click', function() {
-            const row = this.closest('tr');
-            const watchlistId = this.getAttribute('data-watchlist-id');
-            const tickerSymbol = row.querySelector('td:nth-child(1)').textContent.trim();
-            const companyName = row.querySelector('td:nth-child(2)').textContent.trim();
-            const currentPrice = parseFloat(row.querySelector('td:nth-child(3)').textContent.replace('$', '').replace(',', ''));
-            
-            const buyTargetCell = row.querySelector('td:nth-child(4)');
-            const sellTargetCell = row.querySelector('td:nth-child(5)');
-            
-            const buyTargetText = buyTargetCell.textContent.trim();
-            const sellTargetText = sellTargetCell.textContent.trim();
-            
-            const buyTarget = buyTargetText !== 'N/A' ? 
-                parseFloat(buyTargetText.replace('$', '').replace(',', '')) : '';
-            const sellTarget = sellTargetText !== 'N/A' ? 
-                parseFloat(sellTargetText.replace('$', '').replace(',', '')) : '';
-                
-            // Create edit modal if it doesn't exist
-            let editModal = document.getElementById('editWatchlistModal');
-            if (!editModal) {
-                editModal = document.createElement('div');
-                editModal.className = 'modal fade';
-                editModal.id = 'editWatchlistModal';
-                editModal.tabIndex = '-1';
-                editModal.setAttribute('aria-labelledby', 'editWatchlistModalLabel');
-                editModal.setAttribute('aria-hidden', 'true');
-                
-                editModal.innerHTML = `
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="editWatchlistModalLabel">Edit Watchlist Item</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <form action="/stocks" method="post">
-                                <input type="hidden" name="action" value="update_watchlist_item">
-                                <input type="hidden" name="watchlist_id" id="edit_watchlist_id">
-                                
-                                <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label for="edit_ticker_symbol" class="form-label">Ticker Symbol</label>
-                                        <input type="text" class="form-control" id="edit_ticker_symbol" name="ticker_symbol" required>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="edit_company_name" class="form-label">Company Name</label>
-                                        <input type="text" class="form-control" id="edit_company_name" name="company_name" required>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="edit_current_price" class="form-label">Current Price</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text">$</span>
-                                            <input type="number" class="form-control" id="edit_current_price" name="current_price" step="0.01" min="0" required>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="row mb-3">
-                                        <div class="col-md-6">
-                                            <label for="edit_target_buy_price" class="form-label">Target Buy Price</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">$</span>
-                                                <input type="number" class="form-control" id="edit_target_buy_price" name="target_buy_price" step="0.01" min="0">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="edit_target_sell_price" class="form-label">Target Sell Price</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">$</span>
-                                                <input type="number" class="form-control" id="edit_target_sell_price" name="target_sell_price" step="0.01" min="0">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="edit_notes" class="form-label">Notes</label>
-                                        <textarea class="form-control" id="edit_notes" name="notes" rows="3"></textarea>
-                                    </div>
-                                </div>
-                                
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                `;
-                
-                document.body.appendChild(editModal);
-            }
-            
-            // Fill the form with stock data
-            document.getElementById('edit_watchlist_id').value = watchlistId;
-            document.getElementById('edit_ticker_symbol').value = tickerSymbol;
-            document.getElementById('edit_company_name').value = companyName;
-            document.getElementById('edit_current_price').value = currentPrice.toFixed(2);
-            document.getElementById('edit_target_buy_price').value = buyTarget;
-            document.getElementById('edit_target_sell_price').value = sellTarget;
-            
-            // Try to get notes (if they exist)
-            const notes = row.getAttribute('data-notes') || '';
-            document.getElementById('edit_notes').value = notes;
-            
-            // Show the modal
-            const modal = new bootstrap.Modal(editModal);
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('addToWatchlistModal'));
             modal.show();
         });
     });
+    
+    // Remove from watchlist buttons
+    const removeButtons = document.querySelectorAll('.remove-from-watchlist');
+    removeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const watchlistId = this.getAttribute('data-watchlist-id');
+            const idInput = document.getElementById('remove_watchlist_id');
+            
+            if (idInput) {
+                idInput.value = watchlistId;
+                const modal = new bootstrap.Modal(document.getElementById('removeFromWatchlistModal'));
+                modal.show();
+            }
+        });
+    });
+    
+    // Edit watchlist buttons
+    const editButtons = document.querySelectorAll('.edit-watchlist');
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const watchlistId = this.getAttribute('data-watchlist-id');
+            const row = this.closest('tr');
+            
+            if (row) {
+                // Get data from the row
+                const symbol = row.querySelector('td:nth-child(1)').textContent.trim();
+                const company = row.querySelector('td:nth-child(2)').textContent.trim();
+                const price = row.querySelector('td:nth-child(3)').textContent.trim().replace('$', '');
+                
+                // Get target prices
+                let buyPrice = row.querySelector('td:nth-child(4)').textContent.trim();
+                buyPrice = buyPrice !== '--' ? buyPrice.replace('$', '') : '';
+                
+                let sellPrice = row.querySelector('td:nth-child(5)').textContent.trim();
+                sellPrice = sellPrice !== '--' ? sellPrice.replace('$', '') : '';
+                
+                // Get notes if any
+                const notes = row.getAttribute('data-notes') || '';
+                
+                // Fill the form
+                document.getElementById('edit_watchlist_id').value = watchlistId;
+                document.getElementById('edit_ticker_symbol').value = symbol;
+                document.getElementById('edit_company_name').value = company;
+                document.getElementById('edit_current_price').value = price;
+                document.getElementById('edit_target_buy_price').value = buyPrice;
+                document.getElementById('edit_target_sell_price').value = sellPrice;
+                document.getElementById('edit_notes').value = notes;
+                
+                // Show the modal
+                const modal = new bootstrap.Modal(document.getElementById('editWatchlistModal'));
+                modal.show();
+            }
+        });
+    });
+    
+    // Chart period buttons
+    const periodButtons = document.querySelectorAll('.chart-period-btn');
+    periodButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            periodButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            const period = this.getAttribute('data-period');
+            updateChart(period);
+        });
+    });
 }
 
 /**
- * Initialize real-time price updates
- * Simulates real-time stock price updates for watchlist items
+ * Initialize stock price chart
  */
-function initializePriceUpdates() {
+function initializeCharts() {
+    const chartCanvas = document.getElementById('stockPriceChart');
+    
+    if (chartCanvas && typeof stockPriceData !== 'undefined' && stockPriceData) {
+        // Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js is not loaded. Please make sure it is properly included.');
+            
+            // Create a message to display on the chart canvas
+            const ctx = chartCanvas.getContext('2d');
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#e74c3c';
+            ctx.textAlign = 'center';
+            ctx.fillText('Chart.js is not loaded. Please check your dependencies.', chartCanvas.width / 2, chartCanvas.height / 2);
+            return;
+        }
+        
+        // Check if data is valid
+        if (!stockPriceData.dates || !stockPriceData.prices || 
+            stockPriceData.dates.length === 0 || stockPriceData.prices.length === 0) {
+            console.error('Invalid stock price data:', stockPriceData);
+            
+            // Create a message to display on the chart canvas
+            const ctx = chartCanvas.getContext('2d');
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#e74c3c';
+            ctx.textAlign = 'center';
+            ctx.fillText('No stock data available for chart visualization.', chartCanvas.width / 2, chartCanvas.height / 2);
+            return;
+        }
+        
+        try {
+            const ctx = chartCanvas.getContext('2d');
+            
+            // Set chart gradient
+            const gradientFill = ctx.createLinearGradient(0, 0, 0, chartCanvas.height);
+            gradientFill.addColorStop(0, 'rgba(67, 97, 238, 0.3)');
+            gradientFill.addColorStop(1, 'rgba(67, 97, 238, 0.0)');
+            
+            window.stockChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: stockPriceData.dates,
+                    datasets: [
+                        {
+                            label: 'Price',
+                            data: stockPriceData.prices,
+                            borderColor: 'rgb(67, 97, 238)',
+                            backgroundColor: gradientFill,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointBackgroundColor: 'rgb(67, 97, 238)',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 1,
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index',
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxTicksLimit: 10,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                borderDash: [2],
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 10
+                                },
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '$' + context.parsed.y.toFixed(2);
+                                }
+                            },
+                            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                            padding: 10,
+                            cornerRadius: 4,
+                            displayColors: false
+                        }
+                    }
+                }
+            });
+            
+            // Add volume chart if volume data is available
+            if (stockPriceData.volumes && stockPriceData.volumes.length > 0) {
+                const volumeCanvas = document.getElementById('stockVolumeChart');
+                if (volumeCanvas) {
+                    const volumeCtx = volumeCanvas.getContext('2d');
+                    
+                    window.volumeChart = new Chart(volumeCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: stockPriceData.dates,
+                            datasets: [
+                                {
+                                    label: 'Volume',
+                                    data: stockPriceData.volumes,
+                                    backgroundColor: 'rgba(67, 97, 238, 0.3)',
+                                    borderColor: 'rgba(67, 97, 238, 0.5)',
+                                    borderWidth: 1
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: {
+                                    display: false
+                                },
+                                y: {
+                                    grid: {
+                                        borderDash: [2],
+                                        color: 'rgba(0, 0, 0, 0.05)'
+                                    },
+                                    ticks: {
+                                        font: {
+                                            size: 10
+                                        },
+                                        callback: function(value) {
+                                            if (value >= 1000000) {
+                                                return (value / 1000000).toFixed(1) + 'M';
+                                            } else if (value >= 1000) {
+                                                return (value / 1000).toFixed(1) + 'K';
+                                            }
+                                            return value;
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const value = context.parsed.y;
+                                            if (value >= 1000000) {
+                                                return (value / 1000000).toFixed(2) + ' Million shares';
+                                            } else if (value >= 1000) {
+                                                return (value / 1000).toFixed(2) + ' Thousand shares';
+                                            }
+                                            return value + ' shares';
+                                        }
+                                    },
+                                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                                    padding: 10,
+                                    cornerRadius: 4,
+                                    displayColors: false
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error initializing charts:', error);
+            showNotification('Error initializing chart. Please try again.', 'danger');
+        }
+    }
+}
+
+/**
+ * Update chart based on the selected time period
+ * @param {string} period - Time period to display (1d, 1w, 1m, 3m, 1y)
+ */
+function updateChart(period) {
+    if (!window.stockChart || !stockPriceData) return;
+    
+    // Show loading state
+    const chartContainer = document.querySelector('.stock-chart-container');
+    if (chartContainer) {
+        chartContainer.classList.add('loading');
+        
+        // Create loading overlay if it doesn't exist
+        if (!chartContainer.querySelector('.loading-overlay')) {
+            const loading = document.createElement('div');
+            loading.className = 'loading-overlay';
+            loading.innerHTML = '<div class="loading-spinner"></div>';
+            chartContainer.appendChild(loading);
+        } else {
+            chartContainer.querySelector('.loading-overlay').style.display = 'flex';
+        }
+    }
+    
+    // Simulate API delay (would be replaced with actual API call in production)
+    setTimeout(() => {
+        let dataPoints;
+        
+        switch(period) {
+            case '1w':
+                dataPoints = 7;
+                break;
+            case '1m':
+                dataPoints = 30;
+                break;
+            case '3m':
+                dataPoints = 90;
+                break;
+            case '1y':
+                dataPoints = 365;
+                break;
+            default: // 1d
+                dataPoints = 1;
+        }
+        
+        // Update chart with data slice based on period
+        // In a real implementation, this would be an API call for the correct timeframe
+        const dataLength = stockPriceData.dates.length;
+        const pointsToShow = Math.min(dataLength, dataPoints);
+        
+        window.stockChart.data.labels = stockPriceData.dates.slice(-pointsToShow);
+        window.stockChart.data.datasets[0].data = stockPriceData.prices.slice(-pointsToShow);
+        window.stockChart.update();
+        
+        // Update volume chart if it exists
+        if (window.volumeChart) {
+            window.volumeChart.data.labels = stockPriceData.dates.slice(-pointsToShow);
+            window.volumeChart.data.datasets[0].data = stockPriceData.volumes.slice(-pointsToShow);
+            window.volumeChart.update();
+        }
+        
+        // Hide loading state
+        if (chartContainer) {
+            chartContainer.classList.remove('loading');
+            const loadingOverlay = chartContainer.querySelector('.loading-overlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+    }, 800);
+}
+
+/**
+ * Setup real-time price updates for analyzed stock and watchlist
+ */
+function setupRealTimePriceUpdates() {
+    // Set up real-time updates for the analyzed stock (if present)
+    const currentTickerElement = document.getElementById('currentTickerSymbol');
+    if (currentTickerElement) {
+        const ticker = currentTickerElement.value;
+        if (ticker) {
+            // Update price every 60 seconds (adjust based on API limits)
+            setInterval(() => {
+                updateStockPrice(ticker);
+            }, 60000);
+        }
+    }
+    
+    // Set up real-time updates for watchlist items
+    const watchlistTable = document.getElementById('watchlistTable');
+    if (watchlistTable) {
+        const watchlistItems = watchlistTable.querySelectorAll('tbody tr');
+        
+        if (watchlistItems.length > 0) {
+            // Update all watchlist prices every 5 minutes (adjust based on API limits)
+            setInterval(() => {
+                updateWatchlistPrices();
+            }, 300000);
+        }
+    }
+}
+
+/**
+ * Update the stock price for the currently analyzed stock
+ * @param {string} ticker - Stock ticker symbol
+ */
+function updateStockPrice(ticker) {
+    fetch(`${BASE_PATH}/stocks?action=get_stock_price&ticker=${ticker}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const priceElement = document.getElementById('currentStockPrice');
+                if (priceElement) {
+                    const oldPrice = parseFloat(priceElement.getAttribute('data-price'));
+                    const newPrice = parseFloat(data.price);
+                    
+                    // Update price display
+                    priceElement.textContent = '$' + newPrice.toFixed(2);
+                    priceElement.setAttribute('data-price', newPrice);
+                    
+                    // Add visual indication of price change
+                    priceElement.classList.add('price-updated');
+                    setTimeout(() => {
+                        priceElement.classList.remove('price-updated');
+                    }, 2000);
+                    
+                    // Update price change elements if they exist
+                    const changeElement = document.getElementById('priceChange');
+                    const changePercentElement = document.getElementById('priceChangePercent');
+                    
+                    if (changeElement && changePercentElement) {
+                        const priceDiff = newPrice - oldPrice;
+                        const percentChange = (priceDiff / oldPrice) * 100;
+                        
+                        changeElement.textContent = priceDiff.toFixed(2);
+                        changePercentElement.textContent = percentChange.toFixed(2) + '%';
+                        
+                        // Update classes based on price direction
+                        const container = changeElement.parentElement;
+                        if (container) {
+                            container.classList.remove('positive', 'negative');
+                            container.classList.add(priceDiff >= 0 ? 'positive' : 'negative');
+                            
+                            // Update icon
+                            const icon = container.querySelector('i');
+                            if (icon) {
+                                icon.className = priceDiff >= 0 ? 'fas fa-caret-up' : 'fas fa-caret-down';
+                            }
+                        }
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error updating stock price:', error);
+        });
+}
+
+/**
+ * Update prices for all stocks in the watchlist
+ */
+function updateWatchlistPrices() {
     const watchlistTable = document.getElementById('watchlistTable');
     if (!watchlistTable) return;
     
-    // Set update interval (15 seconds)
-    const updateInterval = 15000;
+    const rows = watchlistTable.querySelectorAll('tbody tr');
+    if (rows.length === 0) return;
     
-    setInterval(() => {
-        watchlistTable.querySelectorAll('tbody tr').forEach(row => {
-            const symbolCell = row.querySelector('td:first-child');
-            const priceCell = row.querySelector('td:nth-child(3)');
-            
-            if (!symbolCell || !priceCell) return;
-            
-            const symbol = symbolCell.textContent.trim();
-            const currentPrice = parseFloat(priceCell.textContent.replace('$', '').replace(',', ''));
-            
-            // Simulate price change (randomly up or down by 0.1% to 0.5%)
-            const changePercent = (Math.random() * 0.4 + 0.1) * (Math.random() < 0.5 ? -1 : 1);
-            const newPrice = currentPrice * (1 + changePercent / 100);
-            
-            // Update price cell with animation
-            const priceText = priceCell.childNodes[0];
-            if (priceText && priceText.nodeType === Node.TEXT_NODE) {
-                const oldHtml = priceCell.innerHTML;
-                
-                // Update price
-                priceText.nodeValue = '$' + newPrice.toFixed(2);
-                
-                // Add change indicator
-                const changeClass = changePercent >= 0 ? 'text-success' : 'text-danger';
-                const changeIcon = changePercent >= 0 ? 'up' : 'down';
-                
-                // Remove any existing change indicator
-                const existingIndicator = priceCell.querySelector('.price-change');
-                if (existingIndicator) {
-                    priceCell.removeChild(existingIndicator);
-                }
-                
-                // Add new change indicator
-                const changeIndicator = document.createElement('small');
-                changeIndicator.className = `${changeClass} ms-1 price-change`;
-                changeIndicator.innerHTML = `<i class="fas fa-arrow-${changeIcon}"></i> ${Math.abs(changePercent).toFixed(2)}%`;
-                
-                priceCell.appendChild(changeIndicator);
-                
-                // Animate the change
-                priceCell.classList.add('price-updated');
-                setTimeout(() => {
-                    priceCell.classList.remove('price-updated');
-                }, 2000);
-                
-                // Update status indicators based on new price
-                updateStatusIndicators(row, newPrice);
-            }
-        });
-    }, updateInterval);
-    
-    // Add CSS for price update animation if not already present
-    if (!document.getElementById('price-update-css')) {
-        const style = document.createElement('style');
-        style.id = 'price-update-css';
-        style.textContent = `
-            .price-updated {
-                animation: price-flash 2s;
-            }
-            @keyframes price-flash {
-                0% { background-color: rgba(0,0,0,0); }
-                20% { background-color: rgba(255,255,0,0.3); }
-                100% { background-color: rgba(0,0,0,0); }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-}
-
-/**
- * Update status indicators based on new price
- * @param {HTMLElement} row - Table row element
- * @param {number} newPrice - New stock price
- */
-function updateStatusIndicators(row, newPrice) {
-    const buyTargetCell = row.querySelector('td:nth-child(4)');
-    const sellTargetCell = row.querySelector('td:nth-child(5)');
-    const priceCell = row.querySelector('td:nth-child(3)');
-    
-    if (!buyTargetCell || !sellTargetCell || !priceCell) return;
-    
-    const buyTargetText = buyTargetCell.textContent.trim();
-    const sellTargetText = sellTargetCell.textContent.trim();
-    
-    const buyTarget = buyTargetText !== 'N/A' ? 
-        parseFloat(buyTargetText.replace('$', '').replace(',', '')) : null;
-    const sellTarget = sellTargetText !== 'N/A' ? 
-        parseFloat(sellTargetText.replace('$', '').replace(',', '')) : null;
-    
-    // Remove existing indicator
-    const existingIndicator = priceCell.querySelector('.badge');
-    if (existingIndicator) {
-        priceCell.removeChild(existingIndicator);
-    }
-    
-    // Add new indicator if needed
-    let indicator = '';
-    
-    if (buyTarget && newPrice <= buyTarget) {
-        indicator = '<span class="badge bg-success ms-2" data-bs-toggle="tooltip" title="Below buy target - consider buying">BUY</span>';
-    } else if (sellTarget && newPrice >= sellTarget) {
-        indicator = '<span class="badge bg-danger ms-2" data-bs-toggle="tooltip" title="Above sell target - consider selling">SELL</span>';
-    }
-    
-    if (indicator) {
-        // Add new indicator
-        priceCell.innerHTML += indicator;
-        
-        // Initialize tooltip
-        const tooltipEl = priceCell.querySelector('[data-bs-toggle="tooltip"]');
-        if (tooltipEl) {
-            new bootstrap.Tooltip(tooltipEl);
-        }
-    }
-}
-
-/**
- * Initialize stock chart
- * Sets up stock price chart if data exists
- */
-function initializeStockChart() {
-    const chartElement = document.getElementById('stockPriceChart');
-    if (!chartElement) return;
-    
-    // Check if stockPriceData exists and has valid data
-    if (typeof stockPriceData === 'undefined' || !stockPriceData || 
-        !stockPriceData.dates || !stockPriceData.prices || 
-        stockPriceData.dates.length === 0) {
-        // Display message if no data
-        chartElement.style.display = 'none';
-        const noDataMessage = document.createElement('div');
-        noDataMessage.className = 'alert alert-info mt-3';
-        noDataMessage.innerHTML = 'No chart data available for this stock.';
-        chartElement.parentNode.appendChild(noDataMessage);
-        return;
-    }
-    
-    const ctx = chartElement.getContext('2d');
-        
-        // Add moving averages to chart data
-        const chartData = {
-            labels: stockPriceData.dates,
-            datasets: [
-                {
-                    label: 'Stock Price',
-                    data: stockPriceData.prices,
-                    borderColor: 'rgba(78, 115, 223, 1)',
-                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
-                    pointRadius: 3,
-                    pointBackgroundColor: 'rgba(78, 115, 223, 1)',
-                    pointBorderColor: 'rgba(78, 115, 223, 1)',
-                    pointHoverRadius: 5,
-                    pointHoverBackgroundColor: 'rgba(78, 115, 223, 1)',
-                    pointHoverBorderColor: 'rgba(78, 115, 223, 1)',
-                    pointHitRadius: 10,
-                    pointBorderWidth: 2,
-                    fill: true
-                }
-            ]
-        };
-        
-        // Add short-term MA if data exists
-        if (typeof shortMaValue !== 'undefined') {
-            const shortMaData = new Array(stockPriceData.dates.length).fill(shortMaValue);
-            chartData.datasets.push({
-                label: '20-Day MA',
-                data: shortMaData,
-                borderColor: 'rgba(28, 200, 138, 1)',
-                borderWidth: 2,
-                pointRadius: 0,
-                fill: false
-            });
-        }
-        
-        // Add long-term MA if data exists
-        if (typeof longMaValue !== 'undefined') {
-            const longMaData = new Array(stockPriceData.dates.length).fill(longMaValue);
-            chartData.datasets.push({
-                label: '50-Day MA',
-                data: longMaData,
-                borderColor: 'rgba(246, 194, 62, 1)',
-                borderWidth: 2,
-                pointRadius: 0,
-                fill: false
-            });
-        }
-        
-        // Add support level if data exists
-        if (typeof supportValue !== 'undefined') {
-            const supportData = new Array(stockPriceData.dates.length).fill(supportValue);
-            chartData.datasets.push({
-                label: 'Support',
-                data: supportData,
-                borderColor: 'rgba(54, 185, 204, 1)',
-                borderWidth: 2,
-                borderDash: [5, 5],
-                pointRadius: 0,
-                fill: false
-            });
-        }
-        
-        // Add resistance level if data exists
-        if (typeof resistanceValue !== 'undefined') {
-            const resistanceData = new Array(stockPriceData.dates.length).fill(resistanceValue);
-            chartData.datasets.push({
-                label: 'Resistance',
-                data: resistanceData,
-                borderColor: 'rgba(231, 74, 59, 1)',
-                borderWidth: 2,
-                borderDash: [5, 5],
-                pointRadius: 0,
-                fill: false
-            });
-        }
-        
-        new Chart(ctx, {
-            type: 'line',
-            data: chartData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: {
-                    padding: {
-                        left: 10,
-                        right: 25,
-                        top: 25,
-                        bottom: 0
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            display: false,
-                            drawBorder: false
-                        },
-                        ticks: {
-                            maxTicksLimit: 7
-                        }
-                    },
-                    y: {
-                        beginAtZero: false,
-                        maxTicksLimit: 5,
-                        padding: 10,
-                        ticks: {
-                            callback: function(value) {
-                                return '$' + value.toFixed(2);
-                            }
-                        },
-                        grid: {
-                            color: "rgb(234, 236, 244)",
-                            zeroLineColor: "rgb(234, 236, 244)",
-                            drawBorder: false,
-                            borderDash: [2],
-                            zeroLineBorderDash: [2]
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    },
-                    tooltip: {
-                        backgroundColor: "rgb(255,255,255)",
-                        bodyFontColor: "#858796",
-                        titleMarginBottom: 10,
-                        titleFontColor: '#6e707e',
-                        titleFontSize: 14,
-                        borderColor: '#dddfeb',
-                        borderWidth: 1,
-                        xPadding: 15,
-                        yPadding: 15,
-                        displayColors: false,
-                        intersect: false,
-                        mode: 'index',
-                        caretPadding: 10,
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                label += '$' + context.parsed.y.toFixed(2);
-                                return label;
-                            }
-                        }
-                    }
-            }
+    // Collect all ticker symbols
+    const symbols = [];
+    rows.forEach(row => {
+        const symbolCell = row.querySelector('td:first-child');
+        if (symbolCell) {
+            const symbol = symbolCell.getAttribute('data-symbol') || symbolCell.textContent.trim();
+            symbols.push(symbol);
         }
     });
+    
+    // Make batch request to update all prices
+    if (symbols.length > 0) {
+        fetch(`${BASE_PATH}/stocks?action=get_stock_data&batch=1&symbols=${symbols.join(',')}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success' && data.quotes) {
+                    rows.forEach(row => {
+                        const symbolCell = row.querySelector('td:first-child');
+                        const priceCell = row.querySelector('td:nth-child(3)');
+                        
+                        if (symbolCell && priceCell) {
+                            const symbol = symbolCell.getAttribute('data-symbol') || symbolCell.textContent.trim();
+                            
+                            if (data.quotes[symbol]) {
+                                const oldPrice = parseFloat(priceCell.getAttribute('data-price') || '0');
+                                const newPrice = parseFloat(data.quotes[symbol].price);
+                                
+                                // Update price display
+                                priceCell.textContent = '$' + newPrice.toFixed(2);
+                                priceCell.setAttribute('data-price', newPrice);
+                                
+                                // Add visual indication
+                                priceCell.classList.add('price-updated');
+                                setTimeout(() => {
+                                    priceCell.classList.remove('price-updated');
+                                }, 2000);
+                                
+                                // Add price change indicator
+                                if (!priceCell.querySelector('.price-indicator')) {
+                                    const indicator = document.createElement('span');
+                                    indicator.className = 'price-indicator ms-2';
+                                    priceCell.appendChild(indicator);
+                                }
+                                
+                                const indicator = priceCell.querySelector('.price-indicator');
+                                if (indicator) {
+                                    indicator.className = 'price-indicator ms-2';
+                                    
+                                    if (newPrice > oldPrice) {
+                                        indicator.className += ' text-success';
+                                        indicator.innerHTML = '<i class="fas fa-caret-up"></i>';
+                                    } else if (newPrice < oldPrice) {
+                                        indicator.className += ' text-danger';
+                                        indicator.innerHTML = '<i class="fas fa-caret-down"></i>';
+                                    }
+                                    
+                                    // Remove indicator after a few seconds
+                                    setTimeout(() => {
+                                        indicator.innerHTML = '';
+                                    }, 5000);
+                                }
+                            }
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error updating watchlist prices:', error);
+            });
+    }
+}
+
+/**
+ * Fetch stock info (name, price) based on ticker symbol
+ * @param {string} ticker - Stock ticker symbol
+ * @param {HTMLElement} companyNameField - Company name input field
+ * @param {HTMLElement} priceField - Price input field
+ */
+function fetchStockInfo(ticker, companyNameField, priceField) {
+    if (!ticker || !companyNameField || !priceField) return;
+    
+    // Show loading state
+    companyNameField.disabled = true;
+    priceField.disabled = true;
+    companyNameField.value = 'Loading...';
+    
+    fetch(`${BASE_PATH}/stocks?action=get_stock_data&ticker=${ticker}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                companyNameField.value = data.company_name || ticker;
+                priceField.value = data.current_price;
+            } else {
+                companyNameField.value = ticker;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching stock info:', error);
+            companyNameField.value = ticker;
+        })
+        .finally(() => {
+            companyNameField.disabled = false;
+            priceField.disabled = false;
+        });
 }
 
 /**
  * Show notification
- * @param {string} message - Message to display
- * @param {string} type - Notification type (success, danger, warning, info)
+ * @param {string} message - Notification message
+ * @param {string} type - Notification type (success, info, warning, danger)
  * @param {number} duration - Duration in milliseconds
  */
 function showNotification(message, type = 'info', duration = 3000) {
-    // Create notification container if it doesn't exist
-    let container = document.getElementById('notification-container');
+    // Check if notification container exists
+    let container = document.querySelector('.notification-container');
+    
     if (!container) {
         container = document.createElement('div');
-        container.id = 'notification-container';
+        container.className = 'notification-container';
         container.style.position = 'fixed';
         container.style.top = '20px';
         container.style.right = '20px';
@@ -972,21 +696,59 @@ function showNotification(message, type = 'info', duration = 3000) {
         document.body.appendChild(container);
     }
     
-    // Create notification
+    // Create notification element
     const notification = document.createElement('div');
-    notification.className = `alert alert-${type} alert-dismissible fade show`;
-    notification.role = 'alert';
+    notification.className = `alert alert-${type} notification`;
+    notification.style.minWidth = '300px';
+    notification.style.boxShadow = '0 3px 10px rgba(0,0,0,0.15)';
+    notification.style.borderRadius = '0.5rem';
+    notification.style.marginBottom = '10px';
+    notification.style.transform = 'translateX(120%)';
+    notification.style.transition = 'transform 0.3s ease';
+    
+    // Set notification content
+    let icon;
+    switch(type) {
+        case 'success':
+            icon = 'check-circle';
+            break;
+        case 'warning':
+            icon = 'exclamation-triangle';
+            break;
+        case 'danger':
+            icon = 'exclamation-circle';
+            break;
+        default: // info
+            icon = 'info-circle';
+    }
+    
     notification.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="d-flex align-items-center">
+            <i class="fas fa-${icon} me-2"></i>
+            <span>${message}</span>
+            <button type="button" class="btn-close ms-auto" aria-label="Close"></button>
+        </div>
     `;
     
-    // Add notification to container
+    // Add close button handler
+    notification.querySelector('.btn-close').addEventListener('click', function() {
+        notification.style.transform = 'translateX(120%)';
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    });
+    
+    // Add to container
     container.appendChild(notification);
     
-    // Auto-dismiss after duration
+    // Show notification with animation
     setTimeout(() => {
-        notification.classList.remove('show');
+        notification.style.transform = 'translateX(0)';
+    }, 10);
+    
+    // Auto-hide after duration
+    setTimeout(() => {
+        notification.style.transform = 'translateX(120%)';
         setTimeout(() => {
             notification.remove();
         }, 300);
