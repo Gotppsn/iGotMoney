@@ -1,1391 +1,756 @@
 /**
- * iGotMoney - Expenses JavaScript
- * Handles functionality for the expense management page
+ * iGotMoney - Expenses Page JavaScript
+ * 
+ * Handles all interactive functionality for the expenses page
  */
 
+// Wait for DOM content to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Get base path from meta tag
-    const basePath = document.querySelector('meta[name="base-path"]') ? 
-        document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
+    console.log('Expenses.js: DOM fully loaded');
     
-    // Initialize category highlighting
-    initializeCategoryHighlighting();
-    
-    // Initialize date range filtering
-    initializeDateRangeFilter();
-    
-    // Initialize expense chart
-    initializeExpenseChart();
-    
-    // Initialize expense analytics
-    initializeExpenseAnalytics();
-    
-    // Initialize form validation
-    initializeFormValidation();
-
-    // Initialize button event handlers
-    initializeButtonHandlers();
-
-    // Initialize recurring options toggle
-    initializeRecurringToggle();
-    
-    // Initialize search functionality
-    initializeSearch();
+    try {
+        // Initialize components with try/catch blocks for better error handling
+        initializeExpenseForms();
+        initializeTableFilters();
+        initializeExpenseActions();
+        initializeChartInteractions();
+        initializeAnalytics();
+        
+        // Add animations
+        animateElements();
+        
+        console.log('Expenses.js: All components initialized successfully');
+    } catch (error) {
+        console.error('Expenses.js: Error during initialization:', error);
+    }
 });
 
 /**
- * Initialize category highlighting
- * Highlights rows in the expense table based on category
+ * Initialize expense forms
  */
-function initializeCategoryHighlighting() {
-    // Get all category options
-    const categorySelect = document.getElementById('category_id');
-    if (!categorySelect) return;
+function initializeExpenseForms() {
+    // Form validation
+    const forms = document.querySelectorAll('.needs-validation');
     
-    // Category colors (matching chart colors)
-    const categoryColors = {
-        1: '#4e73df1a', // Housing - light blue background
-        2: '#1cc88a1a', // Utilities - light green background
-        3: '#36b9cc1a', // Food - light cyan background
-        4: '#f6c23e1a', // Transportation - light yellow background
-        5: '#e74a3b1a', // Insurance - light red background
-        6: '#6f42c11a', // Healthcare - light purple background
-        7: '#fd7e141a', // Debt Payments - light orange background
-        8: '#20c9a61a', // Entertainment - light teal background
-        9: '#5a5c691a', // Shopping - light gray background
-        10: '#8587961a' // Personal Care - light gray-blue background
-    };
-    
-    // Apply highlighting to table rows
-    const expenseTable = document.getElementById('expenseTable');
-    if (!expenseTable) return;
-    
-    const rows = expenseTable.querySelectorAll('tbody tr');
-    if (!rows.length) return;
-    
-    rows.forEach(row => {
-        const categoryCell = row.querySelector('td:nth-child(2)');
-        if (!categoryCell) return;
-        
-        const categoryName = categoryCell.textContent.trim();
-        
-        // Find matching category ID
-        for (let i = 0; i < categorySelect.options.length; i++) {
-            if (categorySelect.options[i].textContent.trim() === categoryName) {
-                const categoryId = categorySelect.options[i].value;
-                if (categoryColors[categoryId]) {
-                    row.style.backgroundColor = categoryColors[categoryId];
-                }
-                break;
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
             }
-        }
+            
+            form.classList.add('was-validated');
+        }, false);
     });
+    
+    // Toggle recurring options in add form
+    const isRecurringCheckbox = document.getElementById('is_recurring');
+    const recurringOptions = document.getElementById('recurring_options');
+    
+    if (isRecurringCheckbox && recurringOptions) {
+        isRecurringCheckbox.addEventListener('change', function() {
+            recurringOptions.style.display = this.checked ? 'block' : 'none';
+        });
+    }
+    
+    // Toggle recurring options in edit form
+    const editIsRecurringCheckbox = document.getElementById('edit_is_recurring');
+    const editRecurringOptions = document.getElementById('edit_recurring_options');
+    
+    if (editIsRecurringCheckbox && editRecurringOptions) {
+        editIsRecurringCheckbox.addEventListener('change', function() {
+            editRecurringOptions.style.display = this.checked ? 'block' : 'none';
+        });
+    }
 }
 
 /**
- * Initialize date range filter
- * Allows filtering expenses by date range
+ * Initialize table filters and search
  */
-function initializeDateRangeFilter() {
-    // Handle date range selection
+function initializeTableFilters() {
+    // Expense search functionality
+    const expenseSearch = document.getElementById('expenseSearch');
+    if (expenseSearch) {
+        expenseSearch.addEventListener('keyup', function() {
+            const tableId = this.getAttribute('data-table-search');
+            const table = document.getElementById(tableId);
+            
+            if (table) {
+                const searchText = this.value.toLowerCase();
+                const rows = table.querySelectorAll('tbody tr');
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchText) ? '' : 'none';
+                });
+                
+                // Show/hide no data message
+                const tableNoData = document.getElementById('tableNoData');
+                if (tableNoData) {
+                    const visibleRows = table.querySelectorAll('tbody tr[style=""]').length;
+                    tableNoData.style.display = visibleRows === 0 ? 'block' : 'none';
+                }
+            }
+        });
+    }
+    
+    // Date range filter
     const dateRangeSelect = document.getElementById('dateRangeSelect');
     const customDateRange = document.getElementById('customDateRange');
-    const startDateInput = document.getElementById('startDate');
-    const endDateInput = document.getElementById('endDate');
-    const applyButton = document.getElementById('applyDateFilter');
+    const applyDateFilter = document.getElementById('applyDateFilter');
     
-    if (!dateRangeSelect || !customDateRange || !startDateInput || !endDateInput || !applyButton) return;
+    if (dateRangeSelect && customDateRange) {
+        dateRangeSelect.addEventListener('change', function() {
+            customDateRange.style.display = this.value === 'custom' ? 'block' : 'none';
+        });
+    }
     
-    dateRangeSelect.addEventListener('change', function() {
-        customDateRange.style.display = this.value === 'custom' ? 'block' : 'none';
-        
-        if (this.value !== 'custom') {
-            // Set default date range based on selection
-            const { startDate, endDate } = getDateRangeFromOption(this.value);
-            startDateInput.value = startDate ? formatDateForInput(startDate) : '';
-            endDateInput.value = endDate ? formatDateForInput(endDate) : '';
-        }
+    if (applyDateFilter) {
+        applyDateFilter.addEventListener('click', function() {
+            const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
+            const selectedRange = dateRangeSelect.value;
+            
+            let startDate, endDate;
+            const now = new Date();
+            
+            // Calculate date range based on selected option
+            switch(selectedRange) {
+                case 'all':
+                    // Redirect to view all expenses
+                    window.location.href = `${basePath}/expenses`;
+                    return;
+                case 'current-month':
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                    break;
+                case 'last-month':
+                    startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+                    break;
+                case 'last-3-months':
+                    startDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+                    endDate = now;
+                    break;
+                case 'last-6-months':
+                    startDate = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+                    endDate = now;
+                    break;
+                case 'current-year':
+                    startDate = new Date(now.getFullYear(), 0, 1);
+                    endDate = new Date(now.getFullYear(), 11, 31);
+                    break;
+                case 'custom':
+                    // Get dates from custom inputs
+                    const startInput = document.getElementById('startDate');
+                    const endInput = document.getElementById('endDate');
+                    
+                    if (startInput.value && endInput.value) {
+                        startDate = new Date(startInput.value);
+                        endDate = new Date(endInput.value);
+                    } else {
+                        // Show error message if dates not selected
+                        alert('Please select both start and end dates for custom range.');
+                        return;
+                    }
+                    break;
+                default:
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            }
+            
+            // Format dates for URL
+            const formatDate = date => {
+                const year = date.getFullYear();
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+            
+            // Redirect with date filter
+            window.location.href = `${basePath}/expenses?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+        });
+    }
+}
+
+/**
+ * Initialize expense actions (edit, delete)
+ */
+function initializeExpenseActions() {
+    // Edit expense action
+    const editButtons = document.querySelectorAll('.edit-expense');
+    
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const expenseId = this.getAttribute('data-expense-id');
+            if (expenseId) {
+                fetchExpenseDetails(expenseId);
+            }
+        });
     });
     
-    // Initialize with current month
-    const { startDate, endDate } = getDateRangeFromOption('current-month');
-    startDateInput.value = formatDateForInput(startDate);
-    endDateInput.value = formatDateForInput(endDate);
+    // Delete expense action
+    const deleteButtons = document.querySelectorAll('.delete-expense');
     
-    // Apply date filter
-    applyButton.addEventListener('click', function() {
-        const startDate = startDateInput.value ? new Date(startDateInput.value) : null;
-        const endDate = endDateInput.value ? new Date(endDateInput.value) : null;
-        
-        if (!startDate || !endDate) {
-            alert('Please select both start and end dates.');
-            return;
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const expenseId = this.getAttribute('data-expense-id');
+            if (expenseId) {
+                document.getElementById('delete_expense_id').value = expenseId;
+                const deleteModal = new bootstrap.Modal(document.getElementById('deleteExpenseModal'));
+                deleteModal.show();
+            }
+        });
+    });
+}
+
+/**
+ * Fetch expense details for editing
+ */
+function fetchExpenseDetails(expenseId) {
+    const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
+    
+    fetch(`${basePath}/expenses?action=get_expense&expense_id=${expenseId}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
         }
-        
-        if (startDate > endDate) {
-            alert('Start date must be before end date.');
-            return;
-        }
-        
-        // Save selected period for analytics
-        window.selectedPeriod = dateRangeSelect.value;
-        window.selectedStartDate = startDateInput.value;
-        window.selectedEndDate = endDateInput.value;
-        
-        // Show loading indicator
-        const tableBody = document.querySelector('#expenseTable tbody');
-        if (tableBody) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="mt-2">Loading expenses...</p>
-                    </td>
-                </tr>
-            `;
-        }
-        
-        // Fetch expenses from server with selected date range
-        const basePath = document.querySelector('meta[name="base-path"]') ? 
-            document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
-        
-        fetch(`${basePath}/expenses?action=get_expenses_by_date&start_date=${startDateInput.value}&end_date=${endDateInput.value}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    // Update table with filtered data
-                    updateExpenseTable(data.expenses);
-                    
-                    // Update chart with filtered data
-                    updateChartWithData(data.expenses);
-                    
-                    // Close dropdown
-                    const dropdownMenu = document.querySelector('#dateFilterDropdown + .dropdown-menu');
-                    if (dropdownMenu) {
-                        const bsDropdown = bootstrap.Dropdown.getInstance(document.getElementById('dateFilterDropdown'));
-                        if (bsDropdown) {
-                            bsDropdown.hide();
-                        }
-                    }
-                    
-                    // Show notification
-                    showNotification(`Showing expenses from ${formatDateForDisplay(startDate)} to ${formatDateForDisplay(endDate)}`, 'info');
-                } else {
-                    showNotification('Failed to load expenses: ' + (data.message || 'Unknown error'), 'danger');
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching expenses:', error);
-                showNotification('An error occurred while loading expenses.', 'danger');
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Populate form fields
+                document.getElementById('edit_expense_id').value = data.expense.expense_id;
                 
-                // Clear table
-                if (tableBody) {
-                    tableBody.innerHTML = `
-                        <tr>
-                            <td colspan="7" class="text-center py-4">
-                                <div class="alert alert-danger mb-0">
-                                    Failed to load expenses. Please try again.
-                                </div>
-                            </td>
-                        </tr>
-                    `;
+                // Safely set values with error handling
+                const categoryField = document.getElementById('edit_category_id');
+                if (categoryField) categoryField.value = data.expense.category_id;
+                
+                const descriptionField = document.getElementById('edit_description');
+                if (descriptionField) descriptionField.value = data.expense.description;
+                
+                const amountField = document.getElementById('edit_amount');
+                if (amountField) amountField.value = data.expense.amount;
+                
+                const dateField = document.getElementById('edit_expense_date');
+                if (dateField) dateField.value = data.expense.expense_date;
+                
+                const isRecurring = data.expense.is_recurring === '1' || data.expense.is_recurring === 1;
+                
+                const recurringField = document.getElementById('edit_is_recurring');
+                if (recurringField) recurringField.checked = isRecurring;
+                
+                const recurringOptions = document.getElementById('edit_recurring_options');
+                if (recurringOptions) recurringOptions.style.display = isRecurring ? 'block' : 'none';
+                
+                if (isRecurring) {
+                    const frequencyField = document.getElementById('edit_frequency');
+                    if (frequencyField) frequencyField.value = data.expense.frequency;
                 }
-            });
-    });
+                
+                // Show modal
+                const editModal = new bootstrap.Modal(document.getElementById('editExpenseModal'));
+                editModal.show();
+            } else {
+                console.error('Error fetching expense details:', data.message);
+                showNotification('Failed to fetch expense details', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while fetching expense details', 'danger');
+        });
 }
 
 /**
- * Update expense table with filtered data
- * @param {Array} expenses - Array of expense objects
+ * Initialize chart interactions
  */
-function updateExpenseTable(expenses) {
-    const tableBody = document.querySelector('#expenseTable tbody');
-    if (!tableBody) return;
+function initializeChartInteractions() {
+    // Chart period dropdown handler
+    const chartPeriodOptions = document.querySelectorAll('.chart-period');
     
-    if (expenses.length === 0) {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="7" class="text-center py-4">
-                    <p>No expenses found for the selected period.</p>
-                </td>
-            </tr>
-        `;
-        
-        // Show "no data" message
-        const tableNoData = document.getElementById('tableNoData');
-        if (tableNoData) {
-            tableNoData.style.display = 'block';
-        }
-        return;
-    }
-    
-    // Hide "no data" message
-    const tableNoData = document.getElementById('tableNoData');
-    if (tableNoData) {
-        tableNoData.style.display = 'none';
-    }
-    
-    // Generate table rows
-    let rowsHTML = '';
-    
-    expenses.forEach(expense => {
-        // Format date
-        const expenseDate = new Date(expense.expense_date);
-        const formattedDate = formatDateForDisplay(expenseDate);
-        
-        // Format frequency
-        const frequency = expense.frequency.replace(/-/g, ' ');
-        const capitalizedFrequency = frequency.charAt(0).toUpperCase() + frequency.slice(1);
-        
-        rowsHTML += `
-            <tr>
-                <td>${escapeHTML(expense.description)}</td>
-                <td>${escapeHTML(expense.category_name)}</td>
-                <td>$${parseFloat(expense.amount).toFixed(2)}</td>
-                <td>${formattedDate}</td>
-                <td>${capitalizedFrequency}</td>
-                <td>
-                    <span class="badge ${expense.is_recurring == 1 ? 'bg-info' : 'bg-secondary'}">
-                        ${expense.is_recurring == 1 ? 'Yes' : 'No'}
-                    </span>
-                </td>
-                <td>
-                    <button type="button" class="btn btn-sm btn-info edit-expense" data-expense-id="${expense.expense_id}">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-danger delete-expense" data-expense-id="${expense.expense_id}">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-    });
-    
-    tableBody.innerHTML = rowsHTML;
-    
-    // Reinitialize button handlers for new rows
-    initializeButtonHandlers();
-    
-    // Reapply category highlighting
-    initializeCategoryHighlighting();
-}
-
-/**
- * Initialize expense chart
- * Creates and configures the expense category chart
- */
-function initializeExpenseChart() {
-    const chartCanvas = document.getElementById('expenseCategoryChart');
-    if (!chartCanvas) return;
-    
-    // Get chart data from meta tags
-    const labelsStr = document.querySelector('meta[name="chart-labels"]') ? 
-        document.querySelector('meta[name="chart-labels"]').getAttribute('content') : '[]';
-    
-    const dataStr = document.querySelector('meta[name="chart-data"]') ? 
-        document.querySelector('meta[name="chart-data"]').getAttribute('content') : '[]';
-    
-    const colorsStr = document.querySelector('meta[name="chart-colors"]') ? 
-        document.querySelector('meta[name="chart-colors"]').getAttribute('content') : '[]';
-    
-    const labels = JSON.parse(labelsStr);
-    const data = JSON.parse(dataStr);
-    const colors = JSON.parse(colorsStr);
-    
-    // Create hover colors (darker)
-    const hoverColors = colors.map(color => {
-        return adjustColor(color, -20);
-    });
-    
-    // Initialize the chart
-    window.expenseCategoryChart = new Chart(chartCanvas.getContext('2d'), {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: colors,
-                hoverBackgroundColor: hoverColors,
-                hoverBorderColor: 'rgba(234, 236, 244, 1)',
-            }]
-        },
-        options: {
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'bottom',
-                    labels: {
-                        font: {
-                            size: 12
-                        },
-                        padding: 20
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.raw || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = Math.round((value / total) * 100);
-                            return `${label}: $${value.toFixed(2)} (${percentage}%)`;
-                        }
-                    }
-                }
-            },
-            cutout: '60%',
-        }
-    });
-    
-    // Show/hide no data message
-    const chartNoData = document.getElementById('chartNoData');
-    if (chartNoData) {
-        chartNoData.style.display = labels.length > 0 ? 'none' : 'block';
-    }
-    
-    // Handle chart period dropdown
-    const chartPeriodLinks = document.querySelectorAll('.chart-period');
-    chartPeriodLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
+    chartPeriodOptions.forEach(option => {
+        option.addEventListener('click', function(e) {
             e.preventDefault();
             
             // Update dropdown button text
-            const periodText = this.textContent;
             const dropdownButton = document.getElementById('chartPeriodDropdown');
             if (dropdownButton) {
-                dropdownButton.innerHTML = `<i class="fas fa-calendar-alt me-1"></i> ${periodText}`;
+                dropdownButton.textContent = this.textContent.trim();
             }
             
-            // Get date range based on period
-            const period = this.getAttribute('data-period');
-            const { startDate, endDate } = getDateRangeFromOption(period);
+            // Remove active class from all options
+            chartPeriodOptions.forEach(opt => opt.classList.remove('active'));
             
-            // Update chart for date range
-            if (startDate && endDate) {
-                // Update chart via AJAX
-                const basePath = document.querySelector('meta[name="base-path"]') ? 
-                    document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
-                
-                const formattedStartDate = formatDateForInput(startDate);
-                const formattedEndDate = formatDateForInput(endDate);
-                
-                fetch(`${basePath}/expenses?action=get_expenses_by_date&start_date=${formattedStartDate}&end_date=${formattedEndDate}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            // Update chart
-                            updateChartWithData(data.expenses);
-                            
-                            // Update top expenses
-                            updateTopExpenses(data.expenses);
-                        } else {
-                            console.error('Failed to load expense data:', data.message);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching expense data:', error);
-                    });
-            }
+            // Add active class to selected option
+            this.classList.add('active');
+            
+            // Update chart with new data for selected period
+            updateChartForPeriod(this.getAttribute('data-period'));
         });
     });
 }
 
 /**
- * Adjust color brightness
- * @param {string} color - Hex color
- * @param {number} amount - Amount to adjust (positive = lighter, negative = darker)
- * @returns {string} - Adjusted color
+ * Update chart for different time periods
  */
-function adjustColor(color, amount) {
-    // Convert hex to RGB
-    let r = parseInt(color.substring(1, 3), 16);
-    let g = parseInt(color.substring(3, 5), 16);
-    let b = parseInt(color.substring(5, 7), 16);
-    
-    // Adjust colors
-    r = Math.max(0, Math.min(255, r + amount));
-    g = Math.max(0, Math.min(255, g + amount));
-    b = Math.max(0, Math.min(255, b + amount));
-    
-    // Convert back to hex
-    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-}
-
-/**
- * Update chart with data
- * @param {Array} expenses - Array of expense objects
- */
-function updateChartWithData(expenses) {
-    if (!window.expenseCategoryChart) return;
-    
-    // Group expenses by category
-    const categories = {};
-    
-    expenses.forEach(expense => {
-        const categoryName = expense.category_name;
-        
-        if (!categories[categoryName]) {
-            categories[categoryName] = 0;
-        }
-        
-        categories[categoryName] += parseFloat(expense.amount);
-    });
-    
-    // Convert to arrays for chart
-    const categoryNames = Object.keys(categories);
-    const categoryTotals = categoryNames.map(name => categories[name]);
-    
-    // Get chart colors
-    const chartColorsStr = document.querySelector('meta[name="chart-colors"]') ? 
-        document.querySelector('meta[name="chart-colors"]').getAttribute('content') : '[]';
-    
-    const chartColors = JSON.parse(chartColorsStr);
-    
-    // Ensure we have enough colors
-    while (chartColors.length < categoryNames.length) {
-        const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
-        chartColors.push(randomColor);
-    }
-    
-    // Create hover colors
-    const hoverColors = chartColors.map(color => adjustColor(color, -20));
-    
-    // Update chart data
-    window.expenseCategoryChart.data.labels = categoryNames;
-    window.expenseCategoryChart.data.datasets[0].data = categoryTotals;
-    window.expenseCategoryChart.data.datasets[0].backgroundColor = chartColors.slice(0, categoryNames.length);
-    window.expenseCategoryChart.data.datasets[0].hoverBackgroundColor = hoverColors.slice(0, categoryNames.length);
-    
-    // Update chart
-    window.expenseCategoryChart.update();
-    
-    // Show/hide no data message
+function updateChartForPeriod(period) {
+    const chartContainer = document.querySelector('.chart-container');
     const chartNoData = document.getElementById('chartNoData');
-    if (chartNoData) {
-        chartNoData.style.display = categoryNames.length > 0 ? 'none' : 'block';
-    }
     
-    // Update top expenses
-    updateTopExpenses(expenses);
-}
-
-/**
- * Update top expenses
- * @param {Array} expenses - Array of expense objects
- */
-function updateTopExpenses(expenses) {
-    const topExpensesContent = document.getElementById('topExpensesContent');
-    if (!topExpensesContent) return;
-    
-    // Group expenses by category
-    const categories = {};
-    
-    expenses.forEach(expense => {
-        const categoryName = expense.category_name;
-        
-        if (!categories[categoryName]) {
-            categories[categoryName] = 0;
-        }
-        
-        // Make sure the expense amount is treated as a number
-        const expenseAmount = parseFloat(expense.amount) || 0;
-        categories[categoryName] += expenseAmount;
-    });
-    
-    // Convert to array and sort
-    const categoryData = Object.entries(categories)
-        .map(([name, total]) => ({ name, total }))
-        .sort((a, b) => b.total - a.total)
-        .slice(0, 5); // Top 5 categories
-    
-    if (categoryData.length === 0) {
-        topExpensesContent.innerHTML = '<p>No expense data available for the selected period.</p>';
-        return;
-    }
-    
-    // Calculate total expenses
-    const totalExpenses = categoryData.reduce((sum, category) => sum + category.total, 0);
-    
-    let html = '';
-    
-    categoryData.forEach(category => {
-        // Ensure values are numbers before calculations
-        const total = parseFloat(category.total) || 0;
-        const percentage = totalExpenses > 0 ? (total / totalExpenses) * 100 : 0;
-        
-        let colorClass = 'bg-info';
-        
-        if (percentage > 30) {
-            colorClass = 'bg-danger';
-        } else if (percentage > 20) {
-            colorClass = 'bg-warning';
-        } else if (percentage > 10) {
-            colorClass = 'bg-primary';
-        }
-        
-        html += `
-            <h4 class="small font-weight-bold">
-                ${escapeHTML(category.name)}
-                <span class="float-end">$${total.toFixed(2)}</span>
-            </h4>
-            <div class="progress mb-4">
-                <div class="progress-bar ${colorClass}" role="progressbar" 
-                    style="width: ${Math.min(100, percentage)}%" 
-                    aria-valuenow="${percentage}" 
-                    aria-valuemin="0" aria-valuemax="100">
-                </div>
-            </div>
-        `;
-    });
-    
-    topExpensesContent.innerHTML = html;
-}
-
-/**
- * Initialize expense analytics
- * Calculates and displays expense analytics
- */
-function initializeExpenseAnalytics() {
-    const calculateButton = document.getElementById('calculateAnalytics');
-    if (!calculateButton) return;
-    
-    calculateButton.addEventListener('click', function() {
-        const analyticsContent = document.getElementById('analyticsContent');
-        if (!analyticsContent) return;
-        
-        // Show loading state
-        analyticsContent.style.display = 'block';
-        analyticsContent.innerHTML = `
-            <div class="col-12 text-center py-3">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-2">Calculating expense analytics...</p>
-            </div>
-        `;
-        
-        // Get current date filter state
-        const period = window.selectedPeriod || 'current-month';
-        const startDate = window.selectedStartDate || formatDateForInput(getDateRangeFromOption('current-month').startDate);
-        const endDate = window.selectedEndDate || formatDateForInput(getDateRangeFromOption('current-month').endDate);
+    if (chartContainer) {
+        // Show loading indicator
+        chartContainer.style.opacity = 0.5;
+        const spinner = document.createElement('div');
+        spinner.className = 'position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center';
+        spinner.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
+        chartContainer.appendChild(spinner);
         
         // Get base path
-        const basePath = document.querySelector('meta[name="base-path"]') ? 
-            document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
+        const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
         
-        // Fetch analytics data from server
-        fetch(`${basePath}/expenses?action=get_expense_analytics&period=${period}&start_date=${startDate}&end_date=${endDate}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
+        // Calculate date range based on period
+        let startDate, endDate;
+        const now = new Date();
+        
+        switch(period) {
+            case 'last-month':
+                startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+                break;
+            case 'quarter':
+                const quarter = Math.floor(now.getMonth() / 3);
+                startDate = new Date(now.getFullYear(), quarter * 3, 1);
+                endDate = new Date(now.getFullYear(), (quarter + 1) * 3, 0);
+                break;
+            case 'last-3-months':
+                startDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+                endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                break;
+            case 'current-year':
+                startDate = new Date(now.getFullYear(), 0, 1);
+                endDate = new Date(now.getFullYear(), 11, 31);
+                break;
+            case 'all':
+                startDate = new Date(2000, 0, 1); // Far back enough to include all data
+                endDate = new Date(now.getFullYear() + 10, 11, 31); // Far ahead enough to include all data
+                break;
+            default: // current-month
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        }
+        
+        // Format dates for API
+        const formatDate = date => {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        
+        // Fetch data for the specified period
+        fetch(`${basePath}/expenses?action=get_expenses_by_date&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
             .then(data => {
+                // Remove spinner
+                spinner.remove();
+                chartContainer.style.opacity = 1;
+                
                 if (data.success) {
-                    // Show analytics
-                    displayAnalytics(data.analytics);
+                    if (data.expenses.length > 0) {
+                        // Process data for chart
+                        const categoryTotals = {};
+                        
+                        // Calculate totals by category
+                        data.expenses.forEach(expense => {
+                            const category = expense.category_name;
+                            if (!categoryTotals[category]) {
+                                categoryTotals[category] = 0;
+                            }
+                            categoryTotals[category] += parseFloat(expense.amount);
+                        });
+                        
+                        // Sort categories by amount
+                        const sortedCategories = Object.entries(categoryTotals)
+                            .sort((a, b) => b[1] - a[1])
+                            .slice(0, 10); // Limit to top 10 categories
+                        
+                        // Prepare chart data
+                        const labels = sortedCategories.map(item => item[0]);
+                        const values = sortedCategories.map(item => item[1]);
+                        
+                        // Update chart
+                        if (window.expenseCategoryChart) {
+                            window.expenseCategoryChart.data.labels = labels;
+                            window.expenseCategoryChart.data.datasets[0].data = values;
+                            window.expenseCategoryChart.update();
+                            
+                            // Show chart and hide no data message
+                            chartContainer.style.display = 'block';
+                            chartNoData.style.display = 'none';
+                        }
+                        
+                        // Also update the top expenses list
+                        updateTopExpensesList(sortedCategories, data.total);
+                        
+                        showNotification(`Chart updated to ${period.replace('-', ' ')} view`, 'info');
+                    } else {
+                        // Show no data message
+                        chartContainer.style.display = 'none';
+                        chartNoData.style.display = 'block';
+                    }
                 } else {
-                    throw new Error(data.message || 'Failed to get analytics');
+                    console.error('Error fetching data for chart:', data.message);
+                    // Show no data message
+                    chartContainer.style.display = 'none';
+                    chartNoData.style.display = 'block';
                 }
             })
             .catch(error => {
-                console.error('Error calculating analytics:', error);
+                // Remove spinner
+                spinner.remove();
+                chartContainer.style.opacity = 1;
                 
-                // Show error message
-                analyticsContent.innerHTML = `
-                    <div class="col-12">
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-circle me-2"></i>
-                            Failed to calculate analytics. Please try again.
-                        </div>
-                    </div>
-                `;
+                console.error('Error:', error);
+                // Show no data message
+                chartContainer.style.display = 'none';
+                chartNoData.style.display = 'block';
             });
-    });
+    }
 }
 
 /**
- * Display analytics
- * @param {Object} analytics - Analytics data
+ * Update top expenses list with new data
+ */
+function updateTopExpensesList(categories, totalAmount) {
+    const topExpensesContainer = document.querySelector('.chart-card:nth-child(2) .card-body');
+    
+    if (topExpensesContainer && categories.length > 0) {
+        // Create HTML content
+        let html = '';
+        
+        // Add top 5 categories or fewer if less available
+        const displayCategories = categories.slice(0, 5);
+        
+        displayCategories.forEach(([category, amount]) => {
+            const percentage = (amount / totalAmount) * 100;
+            let colorClass = 'bg-info';
+            
+            if (percentage > 30) {
+                colorClass = 'bg-danger';
+            } else if (percentage > 20) {
+                colorClass = 'bg-warning';
+            } else if (percentage > 10) {
+                colorClass = 'bg-primary';
+            }
+            
+            html += `
+            <div class="expense-item">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="expense-category">${category}</span>
+                    <span class="expense-amount">$${amount.toFixed(2)}</span>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar ${colorClass}" role="progressbar" 
+                        style="width: ${Math.min(100, percentage)}%" 
+                        aria-valuenow="${percentage}" 
+                        aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+            </div>`;
+        });
+        
+        // If no categories, show empty state
+        if (categories.length === 0) {
+            html = `
+            <div class="text-center py-4 empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <h4>No expenses found</h4>
+                <p>No expense data available for the selected period</p>
+            </div>`;
+        }
+        
+        // Update the content with animation
+        topExpensesContainer.style.opacity = 0;
+        setTimeout(() => {
+            topExpensesContainer.innerHTML = html;
+            topExpensesContainer.style.opacity = 1;
+        }, 300);
+    }
+}
+
+/**
+ * Initialize analytics functionality
+ */
+function initializeAnalytics() {
+    const calculateAnalyticsBtn = document.getElementById('calculateAnalytics');
+    const analyticsContent = document.getElementById('analyticsContent');
+    const analyticsPlaceholder = document.getElementById('analyticsPlaceholder');
+    
+    if (calculateAnalyticsBtn && analyticsContent && analyticsPlaceholder) {
+        calculateAnalyticsBtn.addEventListener('click', function() {
+            // Show loading state
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Calculating...';
+            analyticsPlaceholder.style.display = 'none';
+            
+            // Fetch analytics data
+            fetchAnalyticsData();
+        });
+    }
+}
+
+/**
+ * Fetch analytics data
+ */
+function fetchAnalyticsData() {
+    const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
+    const analyticsContent = document.getElementById('analyticsContent');
+    const calculateAnalyticsBtn = document.getElementById('calculateAnalytics');
+    
+    fetch(`${basePath}/expenses?action=get_expense_analytics&period=current-month`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reset button state
+                calculateAnalyticsBtn.disabled = false;
+                calculateAnalyticsBtn.innerHTML = '<i class="fas fa-calculator me-1"></i> Recalculate';
+                
+                // Populate analytics content
+                displayAnalytics(data.analytics);
+                
+                // Show analytics content with animation
+                analyticsContent.style.opacity = 0;
+                analyticsContent.style.display = 'flex';
+                setTimeout(() => {
+                    analyticsContent.style.opacity = 1;
+                }, 50);
+                
+                showNotification('Analytics calculated successfully', 'success');
+            } else {
+                console.error('Error fetching analytics:', data.message);
+                showNotification('Failed to fetch analytics', 'danger');
+                
+                // Reset button state
+                calculateAnalyticsBtn.disabled = false;
+                calculateAnalyticsBtn.innerHTML = '<i class="fas fa-calculator me-1"></i> Calculate';
+                
+                // Show placeholder
+                document.getElementById('analyticsPlaceholder').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred', 'danger');
+            
+            // Reset button state
+            calculateAnalyticsBtn.disabled = false;
+            calculateAnalyticsBtn.innerHTML = '<i class="fas fa-calculator me-1"></i> Calculate';
+            
+            // Show placeholder
+            document.getElementById('analyticsPlaceholder').style.display = 'block';
+        });
+}
+
+/**
+ * Display analytics data
  */
 function displayAnalytics(analytics) {
     const analyticsContent = document.getElementById('analyticsContent');
-    if (!analyticsContent) return;
     
-    // Make sure values are numbers before using toFixed
-    const dailyAverage = parseFloat(analytics.daily_average) || 0;
-    const highestAmount = parseFloat(analytics.highest_amount) || 0;
-    const projectedMonthly = parseFloat(analytics.projected_monthly) || 0;
+    // Format date range
+    const startDate = new Date(analytics.start_date);
+    const endDate = new Date(analytics.end_date);
+    const dateOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+    const formattedStartDate = startDate.toLocaleDateString('en-US', dateOptions);
+    const formattedEndDate = endDate.toLocaleDateString('en-US', dateOptions);
     
-    // Update the analytics UI
-    analyticsContent.innerHTML = `
-        <div class="col-md-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Average Daily Expense</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgDailyExpense">$${dailyAverage.toFixed(2)}</div>
-                            <div class="small text-muted">Based on ${analytics.days_in_period} days</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
+    // Create HTML content
+    let html = `
+    <div class="col-12 mb-3">
+        <div class="alert alert-info mb-0">
+            <i class="fas fa-info-circle me-2"></i>
+            Showing analytics for period: <strong>${formattedStartDate}</strong> to <strong>${formattedEndDate}</strong>
+            (${analytics.days_in_period} days)
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="analytics-item h-100">
+            <h6><i class="fas fa-money-bill-wave me-2"></i>Total Expenses</h6>
+            <div class="value">$${analytics.total_amount.toFixed(2)}</div>
+            <div class="description">${analytics.expense_count} expense entries</div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="analytics-item h-100">
+            <h6><i class="fas fa-calendar-day me-2"></i>Daily Average</h6>
+            <div class="value">$${analytics.daily_average.toFixed(2)}</div>
+            <div class="description">Average expense per day</div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="analytics-item h-100">
+            <h6><i class="fas fa-chart-line me-2"></i>Monthly Projection</h6>
+            <div class="value">$${analytics.projected_monthly.toFixed(2)}</div>
+            <div class="description">Projected monthly total</div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="analytics-item h-100">
+            <h6><i class="fas fa-chart-pie me-2"></i>Highest Category</h6>
+            <div class="value">${analytics.highest_category}</div>
+            <div class="description">$${analytics.highest_amount.toFixed(2)}</div>
+        </div>
+    </div>`;
+    
+    // Add category breakdown if available
+    if (Object.keys(analytics.category_totals).length > 0) {
+        html += `
+        <div class="col-12 mt-2">
+            <h6 class="mb-3">Category Breakdown</h6>
+            <div class="row">`;
+        
+        // Get sorted categories
+        const categories = Object.entries(analytics.category_totals);
+        categories.sort((a, b) => b[1] - a[1]);
+        
+        // Add each category
+        categories.forEach(([category, amount]) => {
+            const percentage = ((amount / analytics.total_amount) * 100).toFixed(1);
+            html += `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="expense-item px-3 py-2 rounded">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="expense-category">${category}</span>
+                        <span class="expense-amount">$${amount.toFixed(2)}</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-primary" role="progressbar" 
+                            style="width: ${percentage}%" 
+                            aria-valuenow="${percentage}" 
+                            aria-valuemin="0" aria-valuemax="100">
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Highest Expense</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="highestExpense">$${highestAmount.toFixed(2)}</div>
-                            <div class="small" id="highestExpenseCategory">${analytics.highest_category}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-arrow-up fa-2x text-gray-300"></i>
-                        </div>
+                    <div class="text-end mt-1">
+                        <small class="text-muted">${percentage}% of total</small>
                     </div>
                 </div>
+            </div>`;
+        });
+        
+        html += `
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-left-danger shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                Projected Monthly Total</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="projectedMonthly">$${projectedMonthly.toFixed(2)}</div>
-                            <div class="small text-muted">Based on daily average</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
+        </div>`;
+    }
+    
+    // Update the content
+    analyticsContent.innerHTML = html;
+    
+    // Add animation to items
+    setTimeout(() => {
+        const items = analyticsContent.querySelectorAll('.analytics-item, .expense-item');
+        items.forEach((item, index) => {
+            item.style.opacity = 0;
+            item.style.transform = 'translateY(10px)';
+            item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            
+            setTimeout(() => {
+                item.style.opacity = 1;
+                item.style.transform = 'translateY(0)';
+            }, 50 * index);
+        });
+    }, 100);
 }
 
 /**
- * Calculate expense analytics
- * @param {Array} expenses - Array of expense objects
+ * Add animations to page elements
  */
-function calculateExpenseAnalytics(expenses) {
-    // Calculate total expense amount
-    const totalAmount = expenses.reduce((sum, expense) => {
-        const amount = parseFloat(expense.amount) || 0;
-        return sum + amount;
-    }, 0);
-    
-    // Find date range
-    const dates = expenses.map(expense => new Date(expense.expense_date));
-    const minDate = dates.length ? new Date(Math.min.apply(null, dates)) : new Date();
-    const maxDate = dates.length ? new Date(Math.max.apply(null, dates)) : new Date();
-    
-    // Calculate days in range
-    const daysDiff = Math.max(1, Math.round((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1);
-    
-    // Calculate average daily expense
-    const avgDaily = totalAmount / daysDiff;
-    
-    // Find highest expense
-    const highestExpense = expenses.length ? expenses.reduce((max, expense) => {
-        const currentAmount = parseFloat(expense.amount) || 0;
-        const maxAmount = parseFloat(max.amount) || 0;
-        return currentAmount > maxAmount ? expense : max;
-    }, expenses[0]) : { amount: 0, category_name: 'N/A' };
-    
-    // Calculate projected monthly total
-    const daysInMonth = 30;
-    const projectedMonthly = avgDaily * daysInMonth;
-    
-    return {
-        totalAmount,
-        daysDiff,
-        avgDaily,
-        highestExpense,
-        projectedMonthly
-    };
-}
-
-/**
- * Initialize form validation
- * Validates expense forms before submission
- */
-function initializeFormValidation() {
-    // Add form validation
-    const addForm = document.getElementById('addExpenseForm');
-    const editForm = document.getElementById('editExpenseForm');
-    
-    if (addForm) {
-        addForm.addEventListener('submit', function(event) {
-            if (!this.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            
-            this.classList.add('was-validated');
-        });
-    }
-    
-    if (editForm) {
-        editForm.addEventListener('submit', function(event) {
-            if (!this.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            
-            this.classList.add('was-validated');
-        });
-    }
-    
-    // Reset form when modal is closed
-    const addModal = document.getElementById('addExpenseModal');
-    if (addModal) {
-        addModal.addEventListener('hidden.bs.modal', function() {
-            if (addForm) {
-                addForm.reset();
-                addForm.classList.remove('was-validated');
-            }
-            
-            const recurringOptions = document.getElementById('recurring_options');
-            if (recurringOptions) {
-                recurringOptions.style.display = 'none';
-            }
-        });
-    }
-    
-    const editModal = document.getElementById('editExpenseModal');
-    if (editModal) {
-        editModal.addEventListener('hidden.bs.modal', function() {
-            if (editForm) {
-                editForm.reset();
-                editForm.classList.remove('was-validated');
-            }
-            
-            const editRecurringOptions = document.getElementById('edit_recurring_options');
-            if (editRecurringOptions) {
-                editRecurringOptions.style.display = 'none';
-            }
-        });
-    }
-}
-
-/**
- * Initialize recurring options toggle
- */
-function initializeRecurringToggle() {
-    // Toggle recurring options when checkbox is clicked
-    const isRecurringCheckbox = document.getElementById('is_recurring');
-    if (isRecurringCheckbox) {
-        isRecurringCheckbox.addEventListener('change', function() {
-            const recurringOptions = document.getElementById('recurring_options');
-            if (recurringOptions) {
-                recurringOptions.style.display = this.checked ? 'block' : 'none';
-            }
-            
-            // Set default frequency for one-time expenses
-            const frequencySelect = document.getElementById('frequency');
-            if (frequencySelect) {
-                if (!this.checked) {
-                    frequencySelect.value = 'one-time';
-                } else {
-                    frequencySelect.value = 'monthly';
-                }
-            }
-        });
-    }
-
-    // Toggle edit recurring options when checkbox is clicked
-    const editIsRecurringCheckbox = document.getElementById('edit_is_recurring');
-    if (editIsRecurringCheckbox) {
-        editIsRecurringCheckbox.addEventListener('change', function() {
-            const editRecurringOptions = document.getElementById('edit_recurring_options');
-            if (editRecurringOptions) {
-                editRecurringOptions.style.display = this.checked ? 'block' : 'none';
-            }
-            
-            // Set frequency value
-            const editFrequencySelect = document.getElementById('edit_frequency');
-            if (editFrequencySelect) {
-                if (!this.checked) {
-                    editFrequencySelect.value = 'one-time';
-                }
-            }
-        });
-    }
-}
-
-/**
- * Initialize button handlers
- * Sets up event listeners for edit and delete buttons
- */
-function initializeButtonHandlers() {
-    // Get base path
-    const basePath = document.querySelector('meta[name="base-path"]') ? 
-        document.querySelector('meta[name="base-path"]').getAttribute('content') : '';
-    
-    // Handle edit expense button clicks
-    document.querySelectorAll('.edit-expense').forEach(button => {
-        button.addEventListener('click', function() {
-            const expenseId = this.getAttribute('data-expense-id');
-            document.getElementById('edit_expense_id').value = expenseId;
-            
-            // Reset form validation
-            const form = document.getElementById('editExpenseForm');
-            if (form) {
-                form.classList.remove('was-validated');
-            }
-            
-            // Show modal
-            const editModal = document.getElementById('editExpenseModal');
-            if (editModal) {
-                try {
-                    const modal = new bootstrap.Modal(editModal);
-                    modal.show();
-                    
-                    // Show loading state
-                    editModal.querySelector('.modal-body').innerHTML = `
-                        <div class="text-center py-4">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p class="mt-3">Loading expense data...</p>
-                        </div>
-                    `;
-                    
-                    // Fetch expense data
-                    fetch(`${basePath}/expenses?action=get_expense&expense_id=${expenseId}`)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error('Network response was not ok');
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            if (data.success) {
-                                // Restore modal content
-                                editModal.querySelector('.modal-body').innerHTML = `
-                                    <div class="mb-3">
-                                        <label for="edit_category_id" class="form-label">Category</label>
-                                        <select class="form-select" id="edit_category_id" name="category_id" required>
-                                            <option value="">Select a category</option>
-                                            ${Array.from(document.getElementById('category_id').options).map(option => 
-                                                `<option value="${option.value}">${option.textContent}</option>`
-                                            ).join('')}
-                                        </select>
-                                        <div class="invalid-feedback">Please select a category.</div>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="edit_description" class="form-label">Description</label>
-                                        <input type="text" class="form-control" id="edit_description" name="description" required>
-                                        <div class="invalid-feedback">Please provide a description.</div>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="edit_amount" class="form-label">Amount</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text">$</span>
-                                            <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0.01" required>
-                                            <div class="invalid-feedback">Please enter a valid amount greater than zero.</div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="edit_expense_date" class="form-label">Date</label>
-                                        <input type="date" class="form-control" id="edit_expense_date" name="expense_date" required>
-                                        <div class="invalid-feedback">Please select a date.</div>
-                                    </div>
-                                    
-                                    <div class="mb-3 form-check">
-                                        <input type="checkbox" class="form-check-input" id="edit_is_recurring" name="is_recurring">
-                                        <label class="form-check-label" for="edit_is_recurring">Recurring Expense</label>
-                                    </div>
-                                    
-                                    <div id="edit_recurring_options" style="display: none;">
-                                        <div class="mb-3">
-                                            <label for="edit_frequency" class="form-label">Frequency</label>
-                                            <select class="form-select" id="edit_frequency" name="frequency">
-                                                <option value="daily">Daily</option>
-                                                <option value="weekly">Weekly</option>
-                                                <option value="bi-weekly">Bi-Weekly</option>
-                                                <option value="monthly">Monthly</option>
-                                                <option value="quarterly">Quarterly</option>
-                                                <option value="annually">Annually</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                `;
-                                
-                                // Reinitialize recurring toggle
-                                const editIsRecurringCheckbox = document.getElementById('edit_is_recurring');
-                                if (editIsRecurringCheckbox) {
-                                    editIsRecurringCheckbox.addEventListener('change', function() {
-                                        const editRecurringOptions = document.getElementById('edit_recurring_options');
-                                        if (editRecurringOptions) {
-                                            editRecurringOptions.style.display = this.checked ? 'block' : 'none';
-                                        }
-                                    });
-                                }
-                                
-                                // Populate form fields
-                                document.getElementById('edit_expense_id').value = data.expense.expense_id;
-                                document.getElementById('edit_category_id').value = data.expense.category_id;
-                                document.getElementById('edit_description').value = data.expense.description;
-                                document.getElementById('edit_amount').value = data.expense.amount;
-                                document.getElementById('edit_expense_date').value = data.expense.expense_date;
-                                document.getElementById('edit_is_recurring').checked = data.expense.is_recurring == 1;
-                                document.getElementById('edit_frequency').value = data.expense.frequency;
-                                
-                                // Show/hide recurring options
-                                document.getElementById('edit_recurring_options').style.display = 
-                                    data.expense.is_recurring == 1 ? 'block' : 'none';
-                            } else {
-                                // Show error
-                                showNotification('Failed to load expense data: ' + data.message, 'danger');
-                                modal.hide();
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error fetching expense data:', error);
-                            showNotification('An error occurred while loading expense data.', 'danger');
-                            modal.hide();
-                        });
-                } catch (e) {
-                    console.error('Error showing modal:', e);
-                    showNotification('Could not open edit form. Please try again.', 'danger');
-                }
-            }
-        });
-    });
-
-    // Handle delete expense button clicks
-    document.querySelectorAll('.delete-expense').forEach(button => {
-        button.addEventListener('click', function() {
-            const expenseId = this.getAttribute('data-expense-id');
-            const deleteExpenseIdInput = document.getElementById('delete_expense_id');
-            if (deleteExpenseIdInput) {
-                deleteExpenseIdInput.value = expenseId;
-            }
-            
-            // Show modal
-            const deleteModal = document.getElementById('deleteExpenseModal');
-            if (deleteModal) {
-                try {
-                    const modal = new bootstrap.Modal(deleteModal);
-                    modal.show();
-                } catch (e) {
-                    console.error('Error showing delete modal:', e);
-                    showNotification('Could not open delete confirmation. Please try again.', 'danger');
-                }
-            }
-        });
+function animateElements() {
+    // Animate progress bars
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach((bar, index) => {
+        setTimeout(() => {
+            const width = bar.getAttribute('aria-valuenow') + '%';
+            bar.style.width = width;
+        }, 100 + (index * 50));
     });
     
-    // Handle delete form submission
-    const deleteForm = document.getElementById('deleteExpenseForm');
-    if (deleteForm) {
-        deleteForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            const expenseId = document.getElementById('delete_expense_id').value;
-            
-            // Show loading state
-            const submitButton = this.querySelector('button[type="submit"]');
-            const originalButtonText = submitButton.innerHTML;
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
-            
-            // Submit form with AJAX
-            const formData = new FormData(this);
-            
-            fetch(this.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Close modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteExpenseModal'));
-                modal.hide();
-                
-                if (data.success) {
-                    // Show success notification
-                    showNotification(data.message, 'success');
-                    
-                    // Reload page to refresh data
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    // Show error notification
-                    showNotification(data.message, 'danger');
-                    
-                    // Reset button
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
-                }
-            })
-            .catch(error => {
-                console.error('Error deleting expense:', error);
-                
-                // Show error notification
-                showNotification('An error occurred while deleting the expense.', 'danger');
-                
-                // Reset button
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalButtonText;
-            });
-        });
-    }
-    
-    // Handle add form submission
-    const addForm = document.getElementById('addExpenseForm');
-    if (addForm) {
-        addForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            if (!this.checkValidity()) {
-                this.classList.add('was-validated');
-                return;
-            }
-            
-            // Show loading state
-            const submitButton = this.querySelector('button[type="submit"]');
-            const originalButtonText = submitButton.innerHTML;
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
-            
-            // Submit form with AJAX
-            const formData = new FormData(this);
-            
-            fetch(this.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Close modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('addExpenseModal'));
-                modal.hide();
-                
-                if (data.success) {
-                    // Show success notification
-                    showNotification(data.message, 'success');
-                    
-                    // Reload page to refresh data
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    // Show error notification
-                    showNotification(data.message, 'danger');
-                    
-                    // Reset button
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
-                }
-            })
-            .catch(error => {
-                console.error('Error adding expense:', error);
-                
-                // Show error notification
-                showNotification('An error occurred while adding the expense.', 'danger');
-                
-                // Reset button
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalButtonText;
-            });
-        });
-    }
-    
-    // Handle edit form submission
-    const editForm = document.getElementById('editExpenseForm');
-    if (editForm) {
-        editForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            if (!this.checkValidity()) {
-                this.classList.add('was-validated');
-                return;
-            }
-            
-            // Show loading state
-            const submitButton = this.querySelector('button[type="submit"]');
-            const originalButtonText = submitButton.innerHTML;
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-            
-            // Submit form with AJAX
-            const formData = new FormData(this);
-            
-            fetch(this.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Close modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('editExpenseModal'));
-                modal.hide();
-                
-                if (data.success) {
-                    // Show success notification
-                    showNotification(data.message, 'success');
-                    
-                    // Reload page to refresh data
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    // Show error notification
-                    showNotification(data.message, 'danger');
-                    
-                    // Reset button
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
-                }
-            })
-            .catch(error => {
-                console.error('Error updating expense:', error);
-                
-                // Show error notification
-                showNotification('An error occurred while updating the expense.', 'danger');
-                
-                // Reset button
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalButtonText;
-            });
-        });
-    }
-}
-
-/**
- * Initialize search functionality
- */
-function initializeSearch() {
-    const searchInput = document.getElementById('expenseSearch');
-    if (!searchInput) return;
-    
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        const tableId = this.getAttribute('data-table-search');
-        const table = document.getElementById(tableId);
+    // Animate card entrance
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.opacity = 0;
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
         
-        if (!table) return;
-        
-        const rows = table.querySelectorAll('tbody tr');
-        let visibleRows = 0;
-        
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            const isVisible = text.includes(searchTerm);
-            row.style.display = isVisible ? '' : 'none';
-            
-            if (isVisible) {
-                visibleRows++;
-            }
-        });
-        
-        // Show "no data" message if no rows visible
-        const tableNoData = document.getElementById('tableNoData');
-        if (tableNoData) {
-            tableNoData.style.display = visibleRows > 0 ? 'none' : 'block';
-        }
+        setTimeout(() => {
+            card.style.opacity = 1;
+            card.style.transform = 'translateY(0)';
+        }, 100 + (index * 100));
     });
-}
-
-/**
- * Get date range from option
- * @param {string} option - Date range option
- * @returns {Object} - Start and end dates
- */
-function getDateRangeFromOption(option) {
-    const now = new Date();
-    const startDate = new Date();
-    const endDate = new Date();
-    
-    switch (option) {
-        case 'current-month':
-            startDate.setDate(1);
-            endDate.setMonth(now.getMonth() + 1, 0);
-            break;
-        case 'last-month':
-            startDate.setMonth(now.getMonth() - 1, 1);
-            endDate.setDate(0);
-            break;
-        case 'last-3-months':
-            startDate.setMonth(now.getMonth() - 3, 1);
-            endDate.setMonth(now.getMonth() + 1, 0);
-            break;
-        case 'last-6-months':
-            startDate.setMonth(now.getMonth() - 6, 1);
-            endDate.setMonth(now.getMonth() + 1, 0);
-            break;
-        case 'current-year':
-            startDate.setMonth(0, 1);
-            startDate.setHours(0, 0, 0, 0);
-            endDate.setMonth(11, 31);
-            endDate.setHours(23, 59, 59, 999);
-            break;
-        case 'quarter':
-            // Current quarter
-            const currentQuarter = Math.floor(now.getMonth() / 3);
-            startDate.setMonth(currentQuarter * 3, 1);
-            endDate.setMonth(currentQuarter * 3 + 3, 0);
-            break;
-        case 'all':
-            startDate.setFullYear(2000, 0, 1); // Far past date
-            endDate.setFullYear(now.getFullYear() + 10, 11, 31); // Far future date
-            break;
-        case 'custom':
-            // Let user choose dates
-            return { startDate: null, endDate: null };
-        default:
-            return { startDate: null, endDate: null };
-    }
-    
-    return { startDate, endDate };
-}
-
-/**
- * Format date for input field
- * @param {Date} date - Date to format
- * @returns {string} - Formatted date string (YYYY-MM-DD)
- */
-function formatDateForInput(date) {
-    if (!date) return '';
-    
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}`;
-}
-
-/**
- * Format date for display
- * @param {Date} date - Date to format
- * @returns {string} - Formatted date string (MMM D, YYYY)
- */
-function formatDateForDisplay(date) {
-    if (!date) return '';
-    
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
-}
-
-/**
- * Escape HTML special characters
- * @param {string} text - Text to escape
- * @returns {string} - Escaped text
- */
-function escapeHTML(text) {
-    if (text === null || text === undefined) return '';
-    
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
 }
 
 /**
  * Show notification
- * @param {string} message - Message to display
- * @param {string} type - Notification type (success, info, warning, danger)
- * @param {number} duration - Duration in milliseconds
  */
-function showNotification(message, type = 'info', duration = 3000) {
-    // Check if notification container exists
-    let container = document.getElementById('notification-container');
+function showNotification(message, type = 'info') {
+    // First, remove any existing notifications
+    const existingNotifications = document.querySelectorAll('.expense-notification');
+    existingNotifications.forEach(notification => {
+        notification.remove();
+    });
     
-    if (!container) {
-        // Create container
-        container = document.createElement('div');
-        container.id = 'notification-container';
-        container.style.position = 'fixed';
-        container.style.top = '20px';
-        container.style.right = '20px';
-        container.style.zIndex = '9999';
-        container.style.width = '300px';
-        document.body.appendChild(container);
-    }
-    
-    // Create notification
+    // Create notification element
     const notification = document.createElement('div');
-    notification.className = `alert alert-${type} alert-dismissible fade show`;
-    notification.style.marginBottom = '10px';
-    notification.style.boxShadow = '0 0.25rem 0.75rem rgba(0, 0, 0, 0.1)';
+    notification.className = `expense-notification alert alert-${type} alert-dismissible fade show`;
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.maxWidth = '300px';
+    notification.style.zIndex = '9999';
+    notification.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+    notification.style.opacity = '0';
+    notification.style.transform = 'translateX(50px)';
+    notification.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
     
-    // Add content
+    // Set notification content
     notification.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
     
-    // Add to container
-    container.appendChild(notification);
+    // Add to document
+    document.body.appendChild(notification);
     
-    // Initialize Bootstrap alert
-    const bsAlert = new bootstrap.Alert(notification);
-    
-    // Auto close after duration
+    // Trigger animation
     setTimeout(() => {
-        bsAlert.close();
-    }, duration);
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(0)';
+    }, 10);
     
-    // Remove from DOM after closing animation
-    notification.addEventListener('closed.bs.alert', function() {
-        notification.remove();
+    // Remove after timeout
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(50px)';
         
-        // Remove container if empty
-        if (container.children.length === 0) {
-            container.remove();
-        }
-    });
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 4000);
 }
