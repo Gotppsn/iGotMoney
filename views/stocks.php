@@ -25,6 +25,10 @@ require_once 'includes/header.php';
         <div class="stock-card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>Stock Analysis</h5>
+                <div class="d-flex align-items-center">
+                    <span class="small text-muted me-2">Alt+S to search</span>
+                    <span class="badge bg-primary rounded-pill me-2 <?php echo isset($stock_analysis) && isset($stock_analysis['is_demo_data']) ? '' : 'd-none'; ?>">Demo Data</span>
+                </div>
             </div>
             <div class="card-body">
                 <!-- Analysis Form -->
@@ -36,7 +40,7 @@ require_once 'includes/header.php';
                         <input type="text" class="form-control" id="ticker_symbol" name="ticker_symbol" placeholder="Enter stock ticker (e.g., AAPL, MSFT, GOOG)" required>
                         <button class="btn btn-primary search-btn" type="submit">Analyze</button>
                     </div>
-                    <div class="form-text text-center mt-2">Enter the ticker symbol of the stock you want to analyze.</div>
+                    <div class="form-text text-center mt-2">Enter the ticker symbol of the stock you want to analyze</div>
                 </form>
                 
                 <!-- Analysis Results -->
@@ -76,6 +80,9 @@ require_once 'includes/header.php';
                                             $<span id="priceChange"><?php echo number_format($stock_analysis['price_change'], 2); ?></span>
                                             (<span id="priceChangePercent"><?php echo number_format($stock_analysis['price_change_percent'], 2); ?>%</span>)
                                         </div>
+                                        <div class="price-updated-time small text-muted mt-1">
+                                            Auto-updates every minute
+                                        </div>
                                     </div>
                                     
                                     <!-- Technical Indicators -->
@@ -94,6 +101,16 @@ require_once 'includes/header.php';
                                                 <span class="indicator-label">RSI (14-day)</span>
                                                 <span class="indicator-value"><?php echo number_format($stock_analysis['rsi'], 2); ?></span>
                                             </li>
+                                            <?php if (isset($stock_analysis['bollinger_upper'])): ?>
+                                            <li class="indicator-item">
+                                                <span class="indicator-label">Bollinger Upper</span>
+                                                <span class="indicator-value">$<?php echo number_format($stock_analysis['bollinger_upper'], 2); ?></span>
+                                            </li>
+                                            <li class="indicator-item">
+                                                <span class="indicator-label">Bollinger Lower</span>
+                                                <span class="indicator-value">$<?php echo number_format($stock_analysis['bollinger_lower'], 2); ?></span>
+                                            </li>
+                                            <?php else: ?>
                                             <li class="indicator-item">
                                                 <span class="indicator-label">Support Level</span>
                                                 <span class="indicator-value">$<?php echo number_format($stock_analysis['support'], 2); ?></span>
@@ -102,6 +119,7 @@ require_once 'includes/header.php';
                                                 <span class="indicator-label">Resistance Level</span>
                                                 <span class="indicator-value">$<?php echo number_format($stock_analysis['resistance'], 2); ?></span>
                                             </li>
+                                            <?php endif; ?>
                                         </ul>
                                     </div>
                                     
@@ -130,6 +148,18 @@ require_once 'includes/header.php';
                                             <i class="fas fa-<?php echo $rec_icon; ?>"></i>
                                             <?php echo ucfirst($stock_analysis['recommendation']); ?> Recommendation
                                         </h4>
+                                        
+                                        <?php if (isset($stock_analysis['recommendation_reasons']) && !empty($stock_analysis['recommendation_reasons'])): ?>
+                                        <p class="mt-2 mb-2">
+                                            <strong>Analysis:</strong>
+                                        </p>
+                                        <ul class="mb-2">
+                                            <?php foreach ($stock_analysis['recommendation_reasons'] as $reason): ?>
+                                                <li><?php echo htmlspecialchars($reason); ?></li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                        <?php endif; ?>
+                                        
                                         <hr>
                                         
                                         <?php if (!empty($stock_analysis['buy_points'])): ?>
@@ -175,7 +205,7 @@ require_once 'includes/header.php';
                                         <canvas id="stockPriceChart" class="stock-chart"></canvas>
                                     </div>
                                     
-                                    <!-- Volume Chart (optional) -->
+                                    <!-- Volume Chart -->
                                     <?php if (isset($stockPriceData['volumes']) && !empty($stockPriceData['volumes'])): ?>
                                     <div class="stock-chart-container mt-3" style="height: 200px;">
                                         <div class="chart-header">
@@ -293,7 +323,7 @@ require_once 'includes/header.php';
                 <ul class="insights-list">
                     <li>Moving Averages (MA) - Short vs Long term trends</li>
                     <li>Relative Strength Index (RSI) - Overbought/Oversold conditions</li>
-                    <li>Support & Resistance - Price level boundaries</li>
+                    <li>Bollinger Bands - Volatility and price levels</li>
                     <li>MACD - Momentum and trend direction</li>
                 </ul>
             </div>
@@ -343,28 +373,38 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="addToWatchlistModalLabel"><i class="fas fa-plus-circle me-2"></i>Add Stock to Watchlist</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/stocks" method="post" class="modal-form">
+            <form action="<?php echo BASE_PATH; ?>/stocks" method="post" class="modal-form needs-validation" novalidate>
                 <input type="hidden" name="action" value="add_to_watchlist">
                 
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="ticker_symbol_watchlist" class="form-label">Ticker Symbol</label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="ticker_symbol_watchlist" name="ticker_symbol" required>
+                            <input type="text" class="form-control" id="ticker_symbol_watchlist" name="ticker_symbol" required 
+                                   pattern="[A-Za-z0-9.]{1,10}" maxlength="10">
+                            <div class="invalid-feedback">
+                                Please enter a valid ticker symbol (1-10 characters).
+                            </div>
                         </div>
                         <div class="form-text">Enter the stock's ticker symbol (e.g., AAPL for Apple Inc.)</div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="company_name" class="form-label">Company Name</label>
-                        <input type="text" class="form-control" id="company_name" name="company_name" required>
+                        <input type="text" class="form-control" id="company_name" name="company_name" required maxlength="100">
+                        <div class="invalid-feedback">
+                            Please enter the company name.
+                        </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="current_price_watchlist" class="form-label">Current Price</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" id="current_price_watchlist" name="current_price" step="0.01" min="0" required>
+                            <input type="number" class="form-control" id="current_price_watchlist" name="current_price" step="0.01" min="0.01" required>
+                            <div class="invalid-feedback">
+                                Please enter a valid price (greater than 0).
+                            </div>
                         </div>
                     </div>
                     
@@ -373,14 +413,14 @@ require_once 'includes/header.php';
                             <label for="target_buy_price" class="form-label">Target Buy Price (Optional)</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="target_buy_price" name="target_buy_price" step="0.01" min="0">
+                                <input type="number" class="form-control" id="target_buy_price" name="target_buy_price" step="0.01" min="0.01">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label for="target_sell_price" class="form-label">Target Sell Price (Optional)</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="target_sell_price" name="target_sell_price" step="0.01" min="0">
+                                <input type="number" class="form-control" id="target_sell_price" name="target_sell_price" step="0.01" min="0.01">
                             </div>
                         </div>
                     </div>
@@ -434,26 +474,36 @@ require_once 'includes/header.php';
                 <h5 class="modal-title" id="editWatchlistModalLabel"><i class="fas fa-edit me-2"></i>Edit Watchlist Item</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/stocks" method="post" class="modal-form">
+            <form action="<?php echo BASE_PATH; ?>/stocks" method="post" class="modal-form needs-validation" novalidate>
                 <input type="hidden" name="action" value="update_watchlist_item">
                 <input type="hidden" name="watchlist_id" id="edit_watchlist_id">
                 
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="edit_ticker_symbol" class="form-label">Ticker Symbol</label>
-                        <input type="text" class="form-control" id="edit_ticker_symbol" name="ticker_symbol" required>
+                        <input type="text" class="form-control" id="edit_ticker_symbol" name="ticker_symbol" required 
+                               pattern="[A-Za-z0-9.]{1,10}" maxlength="10" readonly>
+                        <div class="invalid-feedback">
+                            Please enter a valid ticker symbol (1-10 characters).
+                        </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="edit_company_name" class="form-label">Company Name</label>
-                        <input type="text" class="form-control" id="edit_company_name" name="company_name" required>
+                        <input type="text" class="form-control" id="edit_company_name" name="company_name" required maxlength="100">
+                        <div class="invalid-feedback">
+                            Please enter the company name.
+                        </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="edit_current_price" class="form-label">Current Price</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" id="edit_current_price" name="current_price" step="0.01" min="0" required>
+                            <input type="number" class="form-control" id="edit_current_price" name="current_price" step="0.01" min="0.01" required>
+                            <div class="invalid-feedback">
+                                Please enter a valid price (greater than 0).
+                            </div>
                         </div>
                     </div>
                     
@@ -462,14 +512,14 @@ require_once 'includes/header.php';
                             <label for="edit_target_buy_price" class="form-label">Target Buy Price</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="edit_target_buy_price" name="target_buy_price" step="0.01" min="0">
+                                <input type="number" class="form-control" id="edit_target_buy_price" name="target_buy_price" step="0.01" min="0.01">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label for="edit_target_sell_price" class="form-label">Target Sell Price</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="edit_target_sell_price" name="target_sell_price" step="0.01" min="0">
+                                <input type="number" class="form-control" id="edit_target_sell_price" name="target_sell_price" step="0.01" min="0.01">
                             </div>
                         </div>
                     </div>
@@ -526,6 +576,58 @@ if (isset($stock_analysis) && $stock_analysis['status'] === 'success') {
     const stockPriceData = null;
     ";
 }
+
+// Add custom CSS for the stock analysis page
+$page_head_scripts = "
+<style>
+    .updating {
+        position: relative;
+    }
+    
+    .updating::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+    }
+    
+    .updating::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 20px;
+        height: 20px;
+        border: 2px solid #4361ee;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 0.8s linear infinite;
+        z-index: 3;
+    }
+    
+    @keyframes spin {
+        to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    
+    .price-indicator {
+        display: inline-block;
+        animation: fadeIn 0.3s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+";
 
 // Include footer
 require_once 'includes/footer.php';

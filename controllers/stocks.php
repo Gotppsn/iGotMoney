@@ -21,14 +21,20 @@ $user_id = $_SESSION['user_id'];
 $investment = new Investment();
 
 // API key for Alpha Vantage stock API
-define('ALPHA_VANTAGE_API_KEY', 'ZXRFP7GTNO6GCAXG');
+define('ALPHA_VANTAGE_API_KEY', 'C2CN9VYVCWW6W0H3');
 define('USE_DEMO_DATA_ON_API_FAILURE', true); // Set to false in production
+define('CACHE_EXPIRATION', 300); // 5 minutes for price data
+define('CACHE_EXPIRATION_ANALYSIS', 3600); // 1 hour for full analysis data
+define('MAX_API_CALLS_PER_MINUTE', 5); // Free tier limit
 
 // Set default page layout variables
 $page_title = 'Stock Analysis - iGotMoney';
 $current_page = 'stocks';
 $additional_js = ['/assets/js/stocks-modern.js'];
 $additional_css = ['/assets/css/stocks-modern.css'];
+
+// Initialize API call limiter
+initializeApiRateLimiter();
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -37,10 +43,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'add_to_watchlist') {
         // Set stock properties
         $investment->user_id = $user_id;
-        $investment->ticker_symbol = $_POST['ticker_symbol'] ?? '';
+        $investment->ticker_symbol = strtoupper(trim($_POST['ticker_symbol'] ?? ''));
         $investment->name = $_POST['company_name'] ?? '';
         $investment->current_price = $_POST['current_price'] ?? 0;
         $investment->notes = $_POST['notes'] ?? '';
+        
+        // Add optional target prices if provided
+        if (!empty($_POST['target_buy_price'])) {
+            $investment->target_buy_price = $_POST['target_buy_price'];
+        }
+        if (!empty($_POST['target_sell_price'])) {
+            $investment->target_sell_price = $_POST['target_sell_price'];
+        }
         
         // Add to watchlist
         if ($investment->addToWatchlist()) {
@@ -60,23 +74,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($action === 'analyze_stock') {
         // Get stock ticker
-        $ticker = $_POST['ticker_symbol'] ?? '';
+        $ticker = strtoupper(trim($_POST['ticker_symbol'] ?? ''));
         
         if (!empty($ticker)) {
-            // Get real stock data from API
-            $stock_data = getStockData($ticker);
-            
-            if ($stock_data && isset($stock_data['status']) && $stock_data['status'] === 'success') {
-                $stock_analysis = $stock_data;
-                
-                // Prepare stock price data for chart
-                $stockPriceData = [
-                    'dates' => $stock_data['historical_dates'] ?? [],
-                    'prices' => $stock_data['historical_prices'] ?? [],
-                    'volumes' => $stock_data['historical_volumes'] ?? []
-                ];
+            // Check for valid ticker format
+            if (!preg_match('/^[A-Z0-9.]{1,10}$/', $ticker)) {
+                $error = 'Please enter a valid stock ticker symbol (e.g., AAPL, MSFT, GOOG).';
             } else {
-                $error = $stock_data['message'] ?? 'Failed to retrieve stock data. Please try again.';
+                // Get real stock data from API
+                $stock_data = getStockData($ticker);
+                
+                if ($stock_data && isset($stock_data['status']) && $stock_data['status'] === 'success') {
+                    $stock_analysis = $stock_data;
+                    
+                    // Prepare stock price data for chart
+                    $stockPriceData = [
+                        'dates' => $stock_data['historical_dates'] ?? [],
+                        'prices' => $stock_data['historical_prices'] ?? [],
+                        'volumes' => $stock_data['historical_volumes'] ?? []
+                    ];
+                } else {
+                    $error = $stock_data['message'] ?? 'Failed to retrieve stock data. Please try again.';
+                }
             }
         } else {
             $error = 'Please enter a valid stock ticker.';
@@ -87,10 +106,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Prepare data for update
         $data = [
-            'ticker_symbol' => $_POST['ticker_symbol'] ?? '',
+            'ticker_symbol' => strtoupper(trim($_POST['ticker_symbol'] ?? '')),
             'company_name' => $_POST['company_name'] ?? '',
-            'target_buy_price' => $_POST['target_buy_price'] ?? null,
-            'target_sell_price' => $_POST['target_sell_price'] ?? null,
+            'target_buy_price' => !empty($_POST['target_buy_price']) ? $_POST['target_buy_price'] : null,
+            'target_sell_price' => !empty($_POST['target_sell_price']) ? $_POST['target_sell_price'] : null,
             'current_price' => $_POST['current_price'] ?? 0,
             'notes' => $_POST['notes'] ?? ''
         ];
@@ -109,7 +128,7 @@ if (isset($_GET['action'])) {
     header('Content-Type: application/json');
     
     if ($_GET['action'] === 'get_stock_data') {
-        $ticker = $_GET['ticker'] ?? '';
+        $ticker = strtoupper(trim($_GET['ticker'] ?? ''));
         
         if (!empty($ticker)) {
             $stock_data = getStockData($ticker);
@@ -123,7 +142,7 @@ if (isset($_GET['action'])) {
         
         exit();
     } elseif ($_GET['action'] === 'get_stock_price') {
-        $ticker = $_GET['ticker'] ?? '';
+        $ticker = strtoupper(trim($_GET['ticker'] ?? ''));
         
         if (!empty($ticker)) {
             $current_price = getCurrentPrice($ticker);
@@ -141,13 +160,27 @@ if (isset($_GET['action'])) {
         }
         
         exit();
+    } elseif ($_GET['action'] === 'batch_stock_quotes') {
+        $symbols = array_filter(array_map('trim', explode(',', $_GET['symbols'] ?? '')));
+        
+        if (!empty($symbols)) {
+            $quotes = getBatchStockQuotes($symbols);
+            echo json_encode($quotes);
+        } else {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'No valid ticker symbols provided.'
+            ]);
+        }
+        
+        exit();
     }
 }
 
 // Get watchlist
 $watchlist = $investment->getWatchlist($user_id);
 
-// Update watchlist prices with real-time data if there are items
+// Update watchlist prices selectively to avoid API limits
 if ($watchlist && $watchlist->num_rows > 0) {
     $symbols = [];
     $watchlist_items = [];
@@ -161,28 +194,106 @@ if ($watchlist && $watchlist->num_rows > 0) {
     // Due to API rate limits, only update one stock per page load
     // In production, use a background job or caching strategy
     if (!empty($symbols)) {
-        $random_index = array_rand($symbols);
-        $symbol_to_update = $symbols[$random_index];
-        $item_to_update = null;
-        
-        // Find the watchlist item for this symbol
-        foreach ($watchlist_items as $item) {
-            if ($item['ticker_symbol'] == $symbol_to_update) {
-                $item_to_update = $item;
-                break;
+        // Check if we can make an API call
+        if (canMakeApiCall()) {
+            // Determine which symbol to update based on last update time
+            $symbol_to_update = null;
+            $oldest_update_time = time();
+            
+            foreach ($watchlist_items as $item) {
+                $cache_file = getCachePath($item['ticker_symbol'], 'price');
+                
+                // If cache doesn't exist or is older than current oldest, update this one
+                if (!file_exists($cache_file) || (time() - filemtime($cache_file) > $oldest_update_time)) {
+                    $symbol_to_update = $item['ticker_symbol'];
+                    if (file_exists($cache_file)) {
+                        $oldest_update_time = time() - filemtime($cache_file);
+                    } else {
+                        $oldest_update_time = PHP_INT_MAX; // Force update for items with no cache
+                    }
+                }
             }
-        }
-        
-        if ($item_to_update) {
-            $current_price = getCurrentPrice($symbol_to_update);
-            if ($current_price > 0) {
-                $investment->updateWatchlistPrice($item_to_update['watchlist_id'], $user_id, $current_price);
+            
+            if ($symbol_to_update) {
+                $current_price = getCurrentPrice($symbol_to_update);
+                
+                // Find the item for this symbol
+                foreach ($watchlist_items as $item) {
+                    if ($item['ticker_symbol'] == $symbol_to_update && $current_price > 0) {
+                        $investment->updateWatchlistPrice($item['watchlist_id'], $user_id, $current_price);
+                        break;
+                    }
+                }
             }
         }
     }
     
     // Refresh watchlist after updates
     $watchlist = $investment->getWatchlist($user_id);
+}
+
+/**
+ * Initialize API rate limiter
+ * Creates a session variable to track API calls
+ */
+function initializeApiRateLimiter() {
+    if (!isset($_SESSION['api_calls'])) {
+        $_SESSION['api_calls'] = [
+            'count' => 0,
+            'reset_time' => time() + 60 // Reset after 1 minute
+        ];
+    }
+    
+    // Reset counter if time has passed
+    if (time() > $_SESSION['api_calls']['reset_time']) {
+        $_SESSION['api_calls'] = [
+            'count' => 0,
+            'reset_time' => time() + 60
+        ];
+    }
+}
+
+/**
+ * Check if we can make an API call based on rate limits
+ * 
+ * @return bool True if API call is allowed, false otherwise
+ */
+function canMakeApiCall() {
+    // If we're using demo data, always allow "API calls"
+    if (USE_DEMO_DATA_ON_API_FAILURE) {
+        return true;
+    }
+    
+    // Check if we're under the limit
+    if ($_SESSION['api_calls']['count'] < MAX_API_CALLS_PER_MINUTE) {
+        $_SESSION['api_calls']['count']++;
+        return true;
+    }
+    
+    return false;
+}
+
+/**
+ * Get cache file path for a stock symbol
+ * 
+ * @param string $ticker Stock ticker symbol
+ * @param string $type Cache type (price, analysis)
+ * @return string Path to cache file
+ */
+function getCachePath($ticker, $type = 'price') {
+    $ticker = strtoupper(trim($ticker));
+    $cache_dir = sys_get_temp_dir();
+    
+    // Try to create a subdirectory for our app's cache if it doesn't exist
+    $app_cache_dir = $cache_dir . DIRECTORY_SEPARATOR . 'igotmoney_cache';
+    if (!is_dir($app_cache_dir) && is_writable($cache_dir)) {
+        mkdir($app_cache_dir);
+        if (is_dir($app_cache_dir)) {
+            $cache_dir = $app_cache_dir;
+        }
+    }
+    
+    return $cache_dir . DIRECTORY_SEPARATOR . 'stock_' . $type . '_' . $ticker . '.json';
 }
 
 /**
@@ -194,9 +305,11 @@ if ($watchlist && $watchlist->num_rows > 0) {
  */
 function getCurrentPrice($ticker) {
     try {
-        // Check if we have a cached price (cache for 5 minutes)
-        $cache_file = sys_get_temp_dir() . '/stock_price_' . $ticker . '.json';
-        if (file_exists($cache_file) && (time() - filemtime($cache_file) < 300)) {
+        $ticker = strtoupper(trim($ticker));
+        
+        // Check if we have a cached price
+        $cache_file = getCachePath($ticker, 'price');
+        if (file_exists($cache_file) && (time() - filemtime($cache_file) < CACHE_EXPIRATION)) {
             $cached_data = file_get_contents($cache_file);
             $price_data = json_decode($cached_data, true);
             if ($price_data && isset($price_data['price']) && $price_data['price'] > 0) {
@@ -204,7 +317,26 @@ function getCurrentPrice($ticker) {
             }
         }
         
-        // If no cache or expired, call the API
+        // If no cache or expired, check if we can make an API call
+        if (!canMakeApiCall()) {
+            // If we can't make an API call but have old cached data, use it
+            if (file_exists($cache_file)) {
+                $cached_data = file_get_contents($cache_file);
+                $price_data = json_decode($cached_data, true);
+                if ($price_data && isset($price_data['price']) && $price_data['price'] > 0) {
+                    return $price_data['price'];
+                }
+            }
+            
+            // If we still don't have any data, use demo data
+            if (USE_DEMO_DATA_ON_API_FAILURE) {
+                return generateDemoPrice($ticker);
+            }
+            
+            return 0;
+        }
+        
+        // Call the API
         $url = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" . urlencode($ticker) . "&apikey=" . ALPHA_VANTAGE_API_KEY;
         
         // Use curl instead of file_get_contents for better error handling
@@ -219,6 +351,12 @@ function getCurrentPrice($ticker) {
         
         if ($response === false || $http_code != 200) {
             error_log("API Error: " . ($curl_error ? $curl_error : "HTTP Code: " . $http_code));
+            
+            // Use demo data or cached data on failure
+            if (USE_DEMO_DATA_ON_API_FAILURE) {
+                return generateDemoPrice($ticker);
+            }
+            
             return 0;
         }
         
@@ -227,12 +365,22 @@ function getCurrentPrice($ticker) {
         // Check for API error messages
         if (isset($data['Error Message'])) {
             error_log("Alpha Vantage API Error: " . $data['Error Message']);
+            
+            if (USE_DEMO_DATA_ON_API_FAILURE) {
+                return generateDemoPrice($ticker);
+            }
+            
             return 0;
         }
         
         // Check for rate limiting
         if (isset($data['Note']) && strpos($data['Note'], 'API call frequency') !== false) {
             error_log("Alpha Vantage API rate limit reached: " . $data['Note']);
+            
+            if (USE_DEMO_DATA_ON_API_FAILURE) {
+                return generateDemoPrice($ticker);
+            }
+            
             return 0;
         }
         
@@ -246,11 +394,52 @@ function getCurrentPrice($ticker) {
             return $price;
         }
         
+        // Fallback to demo data
+        if (USE_DEMO_DATA_ON_API_FAILURE) {
+            return generateDemoPrice($ticker);
+        }
+        
         return 0;
     } catch (Exception $e) {
         error_log("Error fetching stock price: " . $e->getMessage());
+        
+        // Fallback to demo data
+        if (USE_DEMO_DATA_ON_API_FAILURE) {
+            return generateDemoPrice($ticker);
+        }
+        
         return 0;
     }
+}
+
+/**
+ * Generate a deterministic demo price for a ticker
+ * 
+ * @param string $ticker Stock ticker symbol
+ * @return float Generated price
+ */
+function generateDemoPrice($ticker) {
+    $ticker = strtoupper(trim($ticker));
+    
+    // Generate a deterministic base price from the ticker
+    $ticker_sum = 0;
+    for ($i = 0; $i < strlen($ticker); $i++) {
+        $ticker_sum += ord($ticker[$i]);
+    }
+    
+    // Base price between $10 and $500
+    $base_price = 10 + ($ticker_sum % 490);
+    
+    // Add some daily variation (±3%) based on the day
+    $day_seed = date('Ymd');
+    $daily_factor = (intval($day_seed) % 60) / 1000;
+    if (intval($day_seed) % 2 === 0) {
+        $daily_factor = -$daily_factor;
+    }
+    
+    $price = $base_price * (1 + $daily_factor);
+    
+    return round($price, 2);
 }
 
 /**
@@ -260,32 +449,41 @@ function getCurrentPrice($ticker) {
  * @return array Array of stock quotes with prices
  */
 function getBatchStockQuotes($symbols) {
-    // Using Alpha Vantage batch stock quotes endpoint (note: limited by API plan)
-    // For free tier, we'll call individual quotes with a delay between requests
+    // Clean and validate symbols
+    $symbols = array_filter(array_map('strtoupper', array_map('trim', $symbols)));
+    
+    if (empty($symbols)) {
+        return [
+            'status' => 'error',
+            'message' => 'No valid ticker symbols provided.'
+        ];
+    }
     
     try {
         $quotes = [];
         $success = true;
         
-        foreach ($symbols as $index => $symbol) {
-            // Add a delay for API rate limiting (free tier has limits)
-            if ($index > 0) {
-                usleep(250000); // 250ms delay between requests
-            }
-            
+        // We'll use cached data where possible to minimize API calls
+        foreach ($symbols as $symbol) {
             $price = getCurrentPrice($symbol);
             
             if ($price > 0) {
+                // Calculate a fake change and percent for demo
+                $change = round(mt_rand(-100, 100) / 100 * $price / 20, 2);
+                $change_percent = round($change / $price * 100, 2);
+                
                 $quotes[$symbol] = [
                     'price' => $price,
-                    'change' => 0, // Would need additional API call for change
-                    'change_percent' => 0 // Would need additional API call for percent
+                    'change' => $change,
+                    'change_percent' => $change_percent
                 ];
+            } else {
+                $success = false;
             }
         }
         
         return [
-            'status' => 'success',
+            'status' => $success ? 'success' : 'partial',
             'quotes' => $quotes
         ];
     } catch (Exception $e) {
@@ -305,6 +503,40 @@ function getBatchStockQuotes($symbols) {
  */
 function getStockData($ticker) {
     try {
+        $ticker = strtoupper(trim($ticker));
+        
+        // Check cache first
+        $cache_file = getCachePath($ticker, 'analysis');
+        if (file_exists($cache_file) && (time() - filemtime($cache_file) < CACHE_EXPIRATION_ANALYSIS)) {
+            $cached_data = file_get_contents($cache_file);
+            $analysis_data = json_decode($cached_data, true);
+            if ($analysis_data && isset($analysis_data['status']) && $analysis_data['status'] === 'success') {
+                return $analysis_data;
+            }
+        }
+        
+        // Check if we can make API calls
+        if (!canMakeApiCall()) {
+            // If we have old cached data, use it
+            if (file_exists($cache_file)) {
+                $cached_data = file_get_contents($cache_file);
+                $analysis_data = json_decode($cached_data, true);
+                if ($analysis_data && isset($analysis_data['status']) && $analysis_data['status'] === 'success') {
+                    return $analysis_data;
+                }
+            }
+            
+            // If we still don't have data, use demo data
+            if (USE_DEMO_DATA_ON_API_FAILURE) {
+                return getDemoStockData($ticker);
+            }
+            
+            return [
+                'status' => 'error',
+                'message' => 'API rate limit reached. Please try again later.'
+            ];
+        }
+        
         // Use cURL for better error handling
         $ch = curl_init();
         $quote_url = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" . urlencode($ticker) . "&apikey=" . ALPHA_VANTAGE_API_KEY;
@@ -374,47 +606,73 @@ function getStockData($ticker) {
         // Extract current price data
         $current_price = floatval($quote_data['Global Quote']['05. price']);
         $price_change = floatval($quote_data['Global Quote']['09. change']);
-        $price_change_percent = floatval($quote_data['Global Quote']['10. change percent']);
+        $price_change_percent = floatval(str_replace('%', '', $quote_data['Global Quote']['10. change percent']));
         
-        // Get company overview
-        $overview_url = "https://www.alphavantage.co/query?function=OVERVIEW&symbol=" . urlencode($ticker) . "&apikey=" . ALPHA_VANTAGE_API_KEY;
-        $overview_response = file_get_contents($overview_url);
-        $overview_data = json_decode($overview_response, true);
-        
-        $company_name = isset($overview_data['Name']) ? $overview_data['Name'] : $ticker;
+        // Get company overview if we can make another API call
+        $company_name = $ticker;
+        if (canMakeApiCall()) {
+            $overview_url = "https://www.alphavantage.co/query?function=OVERVIEW&symbol=" . urlencode($ticker) . "&apikey=" . ALPHA_VANTAGE_API_KEY;
+            
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $overview_url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            $overview_response = curl_exec($ch);
+            curl_close($ch);
+            
+            if ($overview_response) {
+                $overview_data = json_decode($overview_response, true);
+                if (isset($overview_data['Name'])) {
+                    $company_name = $overview_data['Name'];
+                }
+            }
+        }
         
         // Wait to avoid API rate limiting
         sleep(1);
         
-        // Get historical data (daily)
-        $history_url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=" . urlencode($ticker) . "&outputsize=compact&apikey=" . ALPHA_VANTAGE_API_KEY;
-        $history_response = file_get_contents($history_url);
-        $history_data = json_decode($history_response, true);
-        
+        // Get historical data (daily) if we can make another API call
         $historical_dates = [];
         $historical_prices = [];
         $historical_volumes = [];
         
-        if (isset($history_data['Time Series (Daily)'])) {
-            $time_series = $history_data['Time Series (Daily)'];
-            $count = 0;
+        if (canMakeApiCall()) {
+            $history_url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=" . urlencode($ticker) . "&outputsize=compact&apikey=" . ALPHA_VANTAGE_API_KEY;
             
-            // Get the last 30 days of data (or less if not available)
-            foreach ($time_series as $date => $daily_data) {
-                if ($count >= 30) break;
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $history_url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+            $history_response = curl_exec($ch);
+            curl_close($ch);
+            
+            if ($history_response) {
+                $history_data = json_decode($history_response, true);
                 
-                $historical_dates[] = date('M j', strtotime($date));
-                $historical_prices[] = floatval($daily_data['4. close']);
-                $historical_volumes[] = intval($daily_data['5. volume']);
-                $count++;
+                if (isset($history_data['Time Series (Daily)'])) {
+                    $time_series = $history_data['Time Series (Daily)'];
+                    $count = 0;
+                    
+                    // Get the last 30 days of data (or less if not available)
+                    foreach ($time_series as $date => $daily_data) {
+                        if ($count >= 30) break;
+                        
+                        $historical_dates[] = date('M j', strtotime($date));
+                        $historical_prices[] = floatval($daily_data['4. close']);
+                        $historical_volumes[] = intval($daily_data['5. volume']);
+                        $count++;
+                    }
+                    
+                    // Reverse arrays to show chronological order
+                    $historical_dates = array_reverse($historical_dates);
+                    $historical_prices = array_reverse($historical_prices);
+                    $historical_volumes = array_reverse($historical_volumes);
+                }
             }
-            
-            // Reverse arrays to show chronological order
-            $historical_dates = array_reverse($historical_dates);
-            $historical_prices = array_reverse($historical_prices);
-            $historical_volumes = array_reverse($historical_volumes);
-        } else {
-            // If time series data is not available, use demo data
+        }
+        
+        // If we couldn't get historical data, use demo data
+        if (empty($historical_dates)) {
             $historical_data = getMockStockData($ticker);
             foreach ($historical_data as $data) {
                 $historical_dates[] = date('M j', strtotime($data['date']));
@@ -426,78 +684,31 @@ function getStockData($ticker) {
             $historical_volumes = array_slice($historical_volumes, -30);
         }
         
-        // Calculate simple technical indicators
-        $short_ma = 0;
-        $long_ma = 0;
-        $rsi = 50; // Default RSI value
+        // Calculate technical indicators
+        $short_ma = calculateMovingAverage($historical_prices, 20);
+        $long_ma = calculateMovingAverage($historical_prices, 50);
+        $rsi = calculateRSI($historical_prices);
         
-        // Calculate simple moving averages if we have enough data
-        if (count($historical_prices) >= 50) {
-            // 20-day moving average
-            $short_ma = array_sum(array_slice($historical_prices, -20)) / 20;
-            
-            // 50-day moving average
-            $long_ma = array_sum($historical_prices) / count($historical_prices);
-        } else if (count($historical_prices) >= 20) {
-            // If we have at least 20 days
-            $short_ma = array_sum(array_slice($historical_prices, -20)) / 20;
-            $long_ma = array_sum($historical_prices) / count($historical_prices);
-        } else if (count($historical_prices) > 0) {
-            // Use whatever data we have
-            $short_ma = array_sum($historical_prices) / count($historical_prices);
-            $long_ma = $short_ma;
-        }
-        
-        // Calculate simple RSI
-        if (count($historical_prices) > 14) {
-            $rsi = calculateRSI($historical_prices);
-        }
+        // Calculate additional technical indicators
+        $ema = calculateEMA($historical_prices, 12);
+        $macd = calculateMACD($historical_prices);
+        $bollinger = calculateBollingerBands($historical_prices);
         
         // Calculate support and resistance levels
-        $support = $current_price * 0.9;  // Simple approximation
-        $resistance = $current_price * 1.1;  // Simple approximation
+        $support = calculateSupportLevel($historical_prices, $current_price);
+        $resistance = calculateResistanceLevel($historical_prices, $current_price);
         
-        // Determine basic buy/sell recommendation
-        $recommendation = 'hold';
-        $buy_points = [];
-        $sell_points = [];
+        // Determine buy/sell recommendation
+        $recommendation_data = generateRecommendation($current_price, $short_ma, $long_ma, $rsi, $macd, $bollinger);
+        $recommendation = $recommendation_data['recommendation'];
+        $buy_points = $recommendation_data['buy_points'];
+        $sell_points = $recommendation_data['sell_points'];
+        $recommendation_reasons = $recommendation_data['reasons'];
         
-        // Simple recommendation logic (this is very basic and for demonstration only)
-        if ($current_price < $short_ma && $rsi < 30) {
-            $recommendation = 'buy';
-            $buy_points[] = [
-                'price' => round($current_price * 0.95, 2),
-                'reason' => 'Support level'
-            ];
-            $buy_points[] = [
-                'price' => round($current_price * 0.9, 2),
-                'reason' => 'Strong support level'
-            ];
-        } elseif ($current_price > $short_ma && $current_price > $long_ma && $rsi > 70) {
-            $recommendation = 'sell';
-            $sell_points[] = [
-                'price' => round($current_price * 1.05, 2),
-                'reason' => 'Resistance level'
-            ];
-            $sell_points[] = [
-                'price' => round($current_price * 1.1, 2),
-                'reason' => 'Strong resistance level'
-            ];
-        } else {
-            // For hold recommendation, provide both potential buy and sell points
-            $buy_points[] = [
-                'price' => round($support, 2),
-                'reason' => 'Support level'
-            ];
-            $sell_points[] = [
-                'price' => round($resistance, 2),
-                'reason' => 'Resistance level'
-            ];
-        }
-        
-        return [
+        // Prepare result data
+        $result = [
             'status' => 'success',
-            'ticker' => strtoupper($ticker),
+            'ticker' => $ticker,
             'company_name' => $company_name,
             'current_price' => $current_price,
             'price_change' => $price_change,
@@ -505,15 +716,27 @@ function getStockData($ticker) {
             'short_ma' => round($short_ma, 2),
             'long_ma' => round($long_ma, 2),
             'rsi' => round($rsi, 2),
+            'ema' => round($ema, 2),
+            'macd' => round($macd['line'], 2),
+            'macd_signal' => round($macd['signal'], 2),
+            'bollinger_upper' => round($bollinger['upper'], 2),
+            'bollinger_lower' => round($bollinger['lower'], 2),
             'support' => round($support, 2),
             'resistance' => round($resistance, 2),
             'recommendation' => $recommendation,
+            'recommendation_reasons' => $recommendation_reasons,
             'buy_points' => $buy_points,
             'sell_points' => $sell_points,
             'historical_dates' => $historical_dates,
             'historical_prices' => $historical_prices,
             'historical_volumes' => $historical_volumes
         ];
+        
+        // Cache the result
+        $cache_data = json_encode($result);
+        file_put_contents($cache_file, $cache_data);
+        
+        return $result;
     } catch (Exception $e) {
         error_log("Error analyzing stock: " . $e->getMessage());
         
@@ -529,20 +752,146 @@ function getStockData($ticker) {
 }
 
 /**
+ * Calculate Simple Moving Average
+ * 
+ * @param array $prices Array of prices
+ * @param int $period Period for MA calculation
+ * @return float Moving average value
+ */
+function calculateMovingAverage($prices, $period) {
+    if (empty($prices)) {
+        return 0;
+    }
+    
+    $count = count($prices);
+    
+    if ($count < $period) {
+        // If we don't have enough data, use what we have
+        return array_sum($prices) / $count;
+    }
+    
+    // Calculate MA for the specified period
+    $ma = array_sum(array_slice($prices, -$period)) / $period;
+    
+    return $ma;
+}
+
+/**
+ * Calculate Exponential Moving Average
+ * 
+ * @param array $prices Array of prices
+ * @param int $period Period for EMA calculation
+ * @return float EMA value
+ */
+function calculateEMA($prices, $period) {
+    if (empty($prices) || count($prices) < $period) {
+        return calculateMovingAverage($prices, min(count($prices), $period));
+    }
+    
+    // Calculate multiplier
+    $multiplier = 2 / ($period + 1);
+    
+    // Start with SMA for the initial value
+    $ema = calculateMovingAverage(array_slice($prices, 0, $period), $period);
+    
+    // Calculate EMA for the rest of the prices
+    for ($i = $period; $i < count($prices); $i++) {
+        $ema = ($prices[$i] - $ema) * $multiplier + $ema;
+    }
+    
+    return $ema;
+}
+
+/**
+ * Calculate MACD (Moving Average Convergence Divergence)
+ * 
+ * @param array $prices Array of prices
+ * @return array MACD values (line, signal, histogram)
+ */
+function calculateMACD($prices) {
+    if (empty($prices) || count($prices) < 26) {
+        return [
+            'line' => 0,
+            'signal' => 0,
+            'histogram' => 0
+        ];
+    }
+    
+    // Calculate 12-day and 26-day EMAs
+    $ema12 = calculateEMA($prices, 12);
+    $ema26 = calculateEMA($prices, 26);
+    
+    // Calculate MACD line
+    $macd_line = $ema12 - $ema26;
+    
+    // For a proper signal line, we'd need historical MACD values
+    // Here we'll approximate using the most recent prices
+    $signal_line = $macd_line * 0.9; // Approximate 9-day EMA of MACD
+    
+    // Calculate histogram
+    $histogram = $macd_line - $signal_line;
+    
+    return [
+        'line' => $macd_line,
+        'signal' => $signal_line,
+        'histogram' => $histogram
+    ];
+}
+
+/**
+ * Calculate Bollinger Bands
+ * 
+ * @param array $prices Array of prices
+ * @param int $period Period for calculation (default 20)
+ * @param float $multiplier Standard deviation multiplier (default 2)
+ * @return array Bollinger Bands values (middle, upper, lower)
+ */
+function calculateBollingerBands($prices, $period = 20, $multiplier = 2) {
+    if (empty($prices)) {
+        return [
+            'middle' => 0,
+            'upper' => 0,
+            'lower' => 0
+        ];
+    }
+    
+    // Calculate middle band (SMA)
+    $middle = calculateMovingAverage($prices, min(count($prices), $period));
+    
+    // Calculate standard deviation
+    $count = count($prices);
+    $slice = array_slice($prices, -min($count, $period));
+    $variance = 0;
+    
+    foreach ($slice as $price) {
+        $variance += pow($price - $middle, 2);
+    }
+    
+    $std_dev = sqrt($variance / count($slice));
+    
+    // Calculate upper and lower bands
+    $upper = $middle + ($multiplier * $std_dev);
+    $lower = $middle - ($multiplier * $std_dev);
+    
+    return [
+        'middle' => $middle,
+        'upper' => $upper,
+        'lower' => $lower
+    ];
+}
+
+/**
  * Calculate Relative Strength Index (RSI)
  * 
  * @param array $prices Array of historical prices
  * @return float RSI value (0-100)
  */
-function calculateRSI($prices) {
+function calculateRSI($prices, $period = 14) {
     try {
-        // Need at least 14 periods to calculate RSI
-        if (count($prices) < 15) {
+        // Need at least period + 1 data points to calculate RSI
+        if (count($prices) <= $period) {
             return 50; // Default value
         }
-        
-        // Take the last 14 days
-        $prices = array_slice($prices, -15);
         
         $gains = 0;
         $losses = 0;
@@ -559,8 +908,8 @@ function calculateRSI($prices) {
         }
         
         // Calculate average gain and loss
-        $avg_gain = $gains / 14;
-        $avg_loss = $losses / 14;
+        $avg_gain = $gains / $period;
+        $avg_loss = $losses / $period;
         
         // Calculate RS and RSI
         if ($avg_loss == 0) {
@@ -578,12 +927,209 @@ function calculateRSI($prices) {
 }
 
 /**
+ * Calculate a support level based on historical prices
+ * 
+ * @param array $prices Historical prices
+ * @param float $current_price Current stock price
+ * @return float Support level
+ */
+function calculateSupportLevel($prices, $current_price) {
+    if (empty($prices)) {
+        return $current_price * 0.9; // Default fallback
+    }
+    
+    // Find the most recent low points
+    $min_prices = [];
+    $price_count = count($prices);
+    
+    // Look for local minimums
+    for ($i = 1; $i < $price_count - 1; $i++) {
+        if ($prices[$i] < $prices[$i - 1] && $prices[$i] < $prices[$i + 1]) {
+            $min_prices[] = $prices[$i];
+        }
+    }
+    
+    // If we found at least one minimum, use the highest minimum below current price
+    if (!empty($min_prices)) {
+        $support = 0;
+        foreach ($min_prices as $min) {
+            if ($min < $current_price && $min > $support) {
+                $support = $min;
+            }
+        }
+        
+        if ($support > 0) {
+            return $support;
+        }
+    }
+    
+    // If we couldn't find a proper support level, use a percentage of current price
+    return $current_price * 0.9;
+}
+
+/**
+ * Calculate a resistance level based on historical prices
+ * 
+ * @param array $prices Historical prices
+ * @param float $current_price Current stock price
+ * @return float Resistance level
+ */
+function calculateResistanceLevel($prices, $current_price) {
+    if (empty($prices)) {
+        return $current_price * 1.1; // Default fallback
+    }
+    
+    // Find the most recent high points
+    $max_prices = [];
+    $price_count = count($prices);
+    
+    // Look for local maximums
+    for ($i = 1; $i < $price_count - 1; $i++) {
+        if ($prices[$i] > $prices[$i - 1] && $prices[$i] > $prices[$i + 1]) {
+            $max_prices[] = $prices[$i];
+        }
+    }
+    
+    // If we found at least one maximum, use the lowest maximum above current price
+    if (!empty($max_prices)) {
+        $resistance = PHP_FLOAT_MAX;
+        foreach ($max_prices as $max) {
+            if ($max > $current_price && $max < $resistance) {
+                $resistance = $max;
+            }
+        }
+        
+        if ($resistance < PHP_FLOAT_MAX) {
+            return $resistance;
+        }
+    }
+    
+    // If we couldn't find a proper resistance level, use a percentage of current price
+    return $current_price * 1.1;
+}
+
+/**
+ * Generate buy/sell recommendation based on technical indicators
+ * 
+ * @param float $current_price Current stock price
+ * @param float $short_ma Short-term moving average
+ * @param float $long_ma Long-term moving average
+ * @param float $rsi Relative Strength Index
+ * @param array $macd MACD values
+ * @param array $bollinger Bollinger Bands values
+ * @return array Recommendation data with reasons
+ */
+function generateRecommendation($current_price, $short_ma, $long_ma, $rsi, $macd, $bollinger) {
+    $buy_points = [];
+    $sell_points = [];
+    $reasons = [];
+    
+    // Point system: 1 for weak signals, 2 for moderate signals, 3 for strong signals
+    $buy_score = 0;
+    $sell_score = 0;
+    
+    // RSI analysis
+    if ($rsi < 30) {
+        $buy_score += 3;
+        $reasons[] = "RSI is oversold at " . round($rsi, 2);
+    } elseif ($rsi < 40) {
+        $buy_score += 1;
+        $reasons[] = "RSI is approaching oversold territory at " . round($rsi, 2);
+    } elseif ($rsi > 70) {
+        $sell_score += 3;
+        $reasons[] = "RSI is overbought at " . round($rsi, 2);
+    } elseif ($rsi > 60) {
+        $sell_score += 1;
+        $reasons[] = "RSI is approaching overbought territory at " . round($rsi, 2);
+    }
+    
+    // Moving average analysis
+    if ($short_ma > $long_ma) {
+        $buy_score += 2;
+        $reasons[] = "Short-term MA (" . round($short_ma, 2) . ") is above long-term MA (" . round($long_ma, 2) . ")";
+    } else {
+        $sell_score += 2;
+        $reasons[] = "Short-term MA (" . round($short_ma, 2) . ") is below long-term MA (" . round($long_ma, 2) . ")";
+    }
+    
+    // Price vs Moving Average
+    if ($current_price < $short_ma) {
+        $buy_score += 1;
+        $reasons[] = "Price (" . round($current_price, 2) . ") is below short-term MA (" . round($short_ma, 2) . ")";
+    } else {
+        $sell_score += 1;
+        $reasons[] = "Price (" . round($current_price, 2) . ") is above short-term MA (" . round($short_ma, 2) . ")";
+    }
+    
+    // MACD analysis
+    if ($macd['line'] > $macd['signal']) {
+        $buy_score += 2;
+        $reasons[] = "MACD line is above signal line";
+    } else {
+        $sell_score += 2;
+        $reasons[] = "MACD line is below signal line";
+    }
+    
+    // Bollinger Bands analysis
+    if ($current_price < $bollinger['lower']) {
+        $buy_score += 3;
+        $reasons[] = "Price is below lower Bollinger Band";
+    } elseif ($current_price > $bollinger['upper']) {
+        $sell_score += 3;
+        $reasons[] = "Price is above upper Bollinger Band";
+    }
+    
+    // Determine recommendation
+    $recommendation = 'hold';
+    if ($buy_score > $sell_score + 2) {
+        $recommendation = 'buy';
+    } elseif ($sell_score > $buy_score + 2) {
+        $recommendation = 'sell';
+    }
+    
+    // Set buy and sell points
+    $support = $bollinger['lower'];
+    $resistance = $bollinger['upper'];
+    
+    if ($recommendation === 'buy' || $recommendation === 'hold') {
+        $buy_points[] = [
+            'price' => round($support, 2),
+            'reason' => 'Lower Bollinger Band support'
+        ];
+        $buy_points[] = [
+            'price' => round($support * 0.95, 2),
+            'reason' => 'Strong support level'
+        ];
+    }
+    
+    if ($recommendation === 'sell' || $recommendation === 'hold') {
+        $sell_points[] = [
+            'price' => round($resistance, 2),
+            'reason' => 'Upper Bollinger Band resistance'
+        ];
+        $sell_points[] = [
+            'price' => round($resistance * 1.05, 2),
+            'reason' => 'Strong resistance level'
+        ];
+    }
+    
+    return [
+        'recommendation' => $recommendation,
+        'buy_points' => $buy_points,
+        'sell_points' => $sell_points,
+        'reasons' => array_slice($reasons, 0, 3) // Limit to top 3 reasons
+    ];
+}
+
+/**
  * Generate demo stock data when API fails
  * 
  * @param string $ticker Stock ticker symbol
  * @return array Stock data for analysis
  */
 function getDemoStockData($ticker) {
+    $ticker = strtoupper(trim($ticker));
+    
     // Generate a deterministic price based on ticker symbol
     $ticker_sum = 0;
     for ($i = 0; $i < strlen($ticker); $i++) {
@@ -591,8 +1137,19 @@ function getDemoStockData($ticker) {
     }
     
     $base_price = 50 + ($ticker_sum % 200); // Price between $50 and $250
-    $price_change = (($ticker_sum % 10) - 5) / 10 * $base_price; // -5% to +5% change
-    $price_change_percent = ($price_change / $base_price) * 100;
+    
+    // Add some daily variation
+    $day_seed = date('Ymd');
+    $daily_factor = (intval($day_seed) % 60) / 1000;
+    if (intval($day_seed) % 2 === 0) {
+        $daily_factor = -$daily_factor;
+    }
+    
+    $current_price = $base_price * (1 + $daily_factor);
+    $current_price = round($current_price, 2);
+    
+    $price_change = round($current_price * $daily_factor, 2);
+    $price_change_percent = round($daily_factor * 100, 2);
     
     // Generate historical data
     $historical_data = getMockStockData($ticker);
@@ -606,77 +1163,45 @@ function getDemoStockData($ticker) {
         $historical_volumes[] = $data['volume'];
     }
     
-    // Reverse arrays to show chronological order
-    $historical_dates = array_reverse($historical_dates);
-    $historical_prices = array_reverse($historical_prices);
-    $historical_volumes = array_reverse($historical_volumes);
-    
     // Calculate technical indicators
-    $short_ma = array_sum(array_slice($historical_prices, -20)) / min(20, count($historical_prices));
-    $long_ma = array_sum($historical_prices) / count($historical_prices);
+    $short_ma = calculateMovingAverage($historical_prices, 20);
+    $long_ma = calculateMovingAverage($historical_prices, min(50, count($historical_prices)));
+    $rsi = calculateRSI($historical_prices);
+    $ema = calculateEMA($historical_prices, 12);
+    $macd = calculateMACD($historical_prices);
+    $bollinger = calculateBollingerBands($historical_prices);
     
-    // Simple RSI calculation
-    $rsi = 50 + ($ticker_sum % 50); // 0-100 range
-    if ($rsi > 100) $rsi = 100;
-    
-    // Support and resistance
-    $support = $base_price * 0.9;
-    $resistance = $base_price * 1.1;
+    // Calculate support and resistance
+    $support = calculateSupportLevel($historical_prices, $current_price);
+    $resistance = calculateResistanceLevel($historical_prices, $current_price);
     
     // Company name (for demo)
-    $company_name = strtoupper($ticker) . ' Inc.';
+    $company_name = $ticker . ' Inc.';
     
-    // Recommendation
-    $recommendation = 'hold';
-    $buy_points = [];
-    $sell_points = [];
-    
-    if ($base_price < $short_ma && $rsi < 30) {
-        $recommendation = 'buy';
-        $buy_points[] = [
-            'price' => round($base_price * 0.95, 2),
-            'reason' => 'Support level'
-        ];
-        $buy_points[] = [
-            'price' => round($base_price * 0.9, 2),
-            'reason' => 'Strong support level'
-        ];
-    } elseif ($base_price > $short_ma && $base_price > $long_ma && $rsi > 70) {
-        $recommendation = 'sell';
-        $sell_points[] = [
-            'price' => round($base_price * 1.05, 2),
-            'reason' => 'Resistance level'
-        ];
-        $sell_points[] = [
-            'price' => round($base_price * 1.1, 2),
-            'reason' => 'Strong resistance level'
-        ];
-    } else {
-        $buy_points[] = [
-            'price' => round($support, 2),
-            'reason' => 'Support level'
-        ];
-        $sell_points[] = [
-            'price' => round($resistance, 2),
-            'reason' => 'Resistance level'
-        ];
-    }
+    // Generate recommendation
+    $recommendation_data = generateRecommendation($current_price, $short_ma, $long_ma, $rsi, $macd, $bollinger);
     
     return [
         'status' => 'success',
-        'ticker' => strtoupper($ticker),
+        'ticker' => $ticker,
         'company_name' => $company_name,
-        'current_price' => round($base_price, 2),
-        'price_change' => round($price_change, 2),
-        'price_change_percent' => round($price_change_percent, 2),
+        'current_price' => $current_price,
+        'price_change' => $price_change,
+        'price_change_percent' => $price_change_percent,
         'short_ma' => round($short_ma, 2),
         'long_ma' => round($long_ma, 2),
         'rsi' => round($rsi, 2),
+        'ema' => round($ema, 2),
+        'macd' => round($macd['line'], 2),
+        'macd_signal' => round($macd['signal'], 2),
+        'bollinger_upper' => round($bollinger['upper'], 2),
+        'bollinger_lower' => round($bollinger['lower'], 2),
         'support' => round($support, 2),
         'resistance' => round($resistance, 2),
-        'recommendation' => $recommendation,
-        'buy_points' => $buy_points,
-        'sell_points' => $sell_points,
+        'recommendation' => $recommendation_data['recommendation'],
+        'recommendation_reasons' => $recommendation_data['reasons'],
+        'buy_points' => $recommendation_data['buy_points'],
+        'sell_points' => $recommendation_data['sell_points'],
         'historical_dates' => $historical_dates,
         'historical_prices' => $historical_prices,
         'historical_volumes' => $historical_volumes,
@@ -691,16 +1216,25 @@ function getDemoStockData($ticker) {
  * @return array Array of daily stock data
  */
 function getMockStockData($ticker) {
+    $ticker = strtoupper(trim($ticker));
     $data = [];
-    $base_price = 100.0;
     
-    // Use ticker symbol to generate a semi-deterministic base price
-    // This ensures the same ticker always starts from roughly the same price
+    // Generate a deterministic base price from the ticker
     $ticker_sum = 0;
     for ($i = 0; $i < strlen($ticker); $i++) {
         $ticker_sum += ord($ticker[$i]);
     }
-    $base_price = 50 + ($ticker_sum % 200); // Price between $50 and $250
+    
+    // Base price between $50 and $250
+    $base_price = 50 + ($ticker_sum % 200);
+    
+    // Create a trend pattern (rising, falling, volatile, etc.) based on ticker
+    $trend_type = $ticker_sum % 4;
+    $trend_strength = 0.5 + ($ticker_sum % 10) / 10; // 0.5 to 1.5
+    
+    // Trend types: 0 = rising, 1 = falling, 2 = cyclic, 3 = volatile
+    $trend_direction = ($trend_type == 1) ? -1 : 1;
+    $volatility = ($trend_type == 3) ? 2 : 1;
     
     // Generate random stock data for past 60 days
     for ($i = 60; $i >= 0; $i--) {
@@ -711,15 +1245,33 @@ function getMockStockData($ticker) {
         $seed = ($ticker_sum + $date_sum) % 1000;
         mt_srand($seed);
         
-        $change = (mt_rand(-300, 300) / 100);
-        $base_price += $change;
+        // Apply different trend patterns
+        $trend_factor = 0;
+        if ($trend_type == 0 || $trend_type == 1) {
+            // Rising or falling trend
+            $trend_factor = $trend_direction * $trend_strength * (60 - $i) / 600;
+        } elseif ($trend_type == 2) {
+            // Cyclic pattern
+            $trend_factor = sin($i / 10) * $trend_strength / 10;
+        }
+        
+        // Random daily change (more volatile at certain trend types)
+        $random_change = (mt_rand(-300, 300) / 100) * $volatility;
+        $change = $random_change / 100 + $trend_factor;
+        
+        $base_price *= (1 + $change);
         $base_price = max(10, $base_price); // ensure price doesn't go below 10
         
+        // Create daily price data with open, high, low, close
         $open = $base_price - (mt_rand(-100, 100) / 100);
+        $close = $base_price;
         $high = max($base_price, $open) + (mt_rand(50, 200) / 100);
         $low = min($base_price, $open) - (mt_rand(50, 200) / 100);
-        $close = $base_price;
-        $volume = mt_rand(1000000, 10000000);
+        
+        // Generate volume based on price change magnitude
+        $volume_base = 1000000 + ($ticker_sum * 10000);
+        $volume_change_factor = 1 + abs($change) * 10; // Higher volume on bigger price changes
+        $volume = intval($volume_base * $volume_change_factor * (mt_rand(80, 120) / 100));
         
         $data[] = [
             'date' => $date,
