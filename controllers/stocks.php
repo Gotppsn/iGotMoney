@@ -1237,29 +1237,40 @@ function generateRecommendation($current_price, $short_ma, $long_ma, $rsi, $macd
         $recommendation = 'sell';
     }
     
-    // Set buy and sell points
-    $support = $bollinger['lower'];
-    $resistance = $bollinger['upper'];
+    // SIMPLIFIED APPROACH FOR BUY/SELL TARGETS
+    // Fixed percentage-based targets regardless of Bollinger Bands
     
+    // Buy points - 15% and 10% below current price
+    $buy_point1 = $current_price * 0.85; 
+    $buy_point2 = $current_price * 0.9;  
+    
+    // Sell points - 15% and 10% above current price
+    $sell_point1 = $current_price * 1.15; 
+    $sell_point2 = $current_price * 1.1;  
+    
+    // Create buy points with clear reasons
     if ($recommendation === 'buy' || $recommendation === 'hold') {
         $buy_points[] = [
-            'price' => round($support, 2),
-            'reason' => 'Lower Bollinger Band support'
+            'price' => round($buy_point1, 2),
+            'reason' => 'Strategic entry point (15% below current price)'
         ];
+        
         $buy_points[] = [
-            'price' => round($support * 0.95, 2),
-            'reason' => 'Strong support level'
+            'price' => round($buy_point2, 2),
+            'reason' => 'Conservative entry point (10% below current price)'
         ];
     }
     
+    // Create sell points with clear reasons
     if ($recommendation === 'sell' || $recommendation === 'hold') {
         $sell_points[] = [
-            'price' => round($resistance, 2),
-            'reason' => 'Upper Bollinger Band resistance'
+            'price' => round($sell_point1, 2),
+            'reason' => 'Strategic exit point (15% above current price)'
         ];
+        
         $sell_points[] = [
-            'price' => round($resistance * 1.05, 2),
-            'reason' => 'Strong resistance level'
+            'price' => round($sell_point2, 2),
+            'reason' => 'Conservative exit point (10% above current price)'
         ];
     }
     
