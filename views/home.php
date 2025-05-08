@@ -7,19 +7,24 @@ require_once 'includes/header.php';
 ?>
 
 <!-- Hero Section -->
-<div class="container-fluid bg-primary text-white py-5">
+<div class="hero-section">
     <div class="container py-5">
         <div class="row align-items-center">
-            <div class="col-lg-6">
+            <div class="col-lg-7 hero-content">
+                <span class="badge bg-primary-light text-primary mb-3">Personal Finance Management</span>
                 <h1 class="display-4 fw-bold mb-4">Take Control of Your Finances</h1>
                 <p class="lead mb-4">iGotMoney helps you manage your finances, track expenses, set budgets, and achieve your financial goals - all in one place.</p>
-                <div class="d-flex gap-3">
-                    <a href="<?php echo BASE_PATH; ?>/register" class="btn btn-light btn-lg px-4">Get Started</a>
-                    <a href="#features" class="btn btn-outline-light btn-lg px-4">Learn More</a>
+                <div class="d-flex gap-3 hero-buttons">
+                    <a href="<?php echo BASE_PATH; ?>/register" class="btn btn-primary btn-lg">Get Started</a>
+                    <a href="#features" class="btn btn-outline-primary btn-lg">Learn More</a>
                 </div>
             </div>
-            <div class="col-lg-6 d-none d-lg-block">
-                <img src="<?php echo BASE_PATH; ?>/assets/images/hero-image.svg" alt="Financial Management" class="img-fluid">
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="hero-shape">
+                    <div class="hero-shape-1"></div>
+                    <div class="hero-shape-2"></div>
+                    <div class="hero-shape-3"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -28,79 +33,80 @@ require_once 'includes/header.php';
 <!-- Features Section -->
 <div id="features" class="container py-5">
     <div class="text-center mb-5">
-        <h2 class="fw-bold">Powerful Financial Tools</h2>
-        <p class="text-muted">Everything you need to manage your financial life</p>
+        <span class="badge bg-primary-light text-primary mb-2">POWERFUL TOOLS</span>
+        <h2 class="fw-bold">Financial Tools for Everyone</h2>
+        <p class="text-muted mx-auto" style="max-width: 700px;">Everything you need to manage your financial life in one secure, easy-to-use platform</p>
     </div>
     
     <div class="row g-4">
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center p-4">
-                    <div class="rounded-circle bg-primary text-white d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
-                        <i class="fas fa-wallet fa-2x"></i>
-                    </div>
-                    <h4 class="card-title">Income & Expense Tracking</h4>
-                    <p class="card-text">Easily track all your income sources and expenses in one place. Categorize and analyze your spending habits.</p>
+            <div class="feature-card h-100">
+                <div class="feature-icon bg-primary-light">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="feature-content">
+                    <h4>Income & Expense Tracking</h4>
+                    <p>Easily track all your income sources and expenses in one place. Categorize and analyze your spending habits.</p>
                 </div>
             </div>
         </div>
         
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center p-4">
-                    <div class="rounded-circle bg-success text-white d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
-                        <i class="fas fa-chart-pie fa-2x"></i>
-                    </div>
-                    <h4 class="card-title">Budgeting</h4>
-                    <p class="card-text">Create and manage budgets for different categories. Get alerts when you're approaching your limits.</p>
+            <div class="feature-card h-100">
+                <div class="feature-icon bg-success-light">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="feature-content">
+                    <h4>Budgeting</h4>
+                    <p>Create and manage budgets for different categories. Get alerts when you're approaching your limits.</p>
                 </div>
             </div>
         </div>
         
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center p-4">
-                    <div class="rounded-circle bg-info text-white d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
-                        <i class="fas fa-bullseye fa-2x"></i>
-                    </div>
-                    <h4 class="card-title">Financial Goals</h4>
-                    <p class="card-text">Set and track progress toward your financial goals. Whether it's saving for a home, a vacation, or retirement.</p>
+            <div class="feature-card h-100">
+                <div class="feature-icon bg-info-light">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div class="feature-content">
+                    <h4>Financial Goals</h4>
+                    <p>Set and track progress toward your financial goals. Whether it's saving for a home, a vacation, or retirement.</p>
                 </div>
             </div>
         </div>
         
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center p-4">
-                    <div class="rounded-circle bg-warning text-white d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
-                        <i class="fas fa-chart-line fa-2x"></i>
-                    </div>
-                    <h4 class="card-title">Investment Tracking</h4>
-                    <p class="card-text">Monitor your investments and analyze their performance over time. Make informed decisions about your portfolio.</p>
+            <div class="feature-card h-100">
+                <div class="feature-icon bg-warning-light">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="feature-content">
+                    <h4>Investment Tracking</h4>
+                    <p>Monitor your investments and analyze their performance over time. Make informed decisions about your portfolio.</p>
                 </div>
             </div>
         </div>
         
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center p-4">
-                    <div class="rounded-circle bg-danger text-white d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
-                        <i class="fas fa-exchange-alt fa-2x"></i>
-                    </div>
-                    <h4 class="card-title">Stock Analysis</h4>
-                    <p class="card-text">Analyze stocks and identify optimal buying and selling points. Keep track of your stock watchlist.</p>
+            <div class="feature-card h-100">
+                <div class="feature-icon bg-danger-light">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+                <div class="feature-content">
+                    <h4>Stock Analysis</h4>
+                    <p>Analyze stocks and identify optimal buying and selling points. Keep track of your stock watchlist.</p>
                 </div>
             </div>
         </div>
         
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center p-4">
-                    <div class="rounded-circle bg-secondary text-white d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
-                        <i class="fas fa-file-invoice-dollar fa-2x"></i>
-                    </div>
-                    <h4 class="card-title">Tax Planning</h4>
-                    <p class="card-text">Get assistance with tax planning and estimation. Maximize your deductions and minimize your tax burden.</p>
+            <div class="feature-card h-100">
+                <div class="feature-icon bg-secondary-light">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <div class="feature-content">
+                    <h4>Tax Planning</h4>
+                    <p>Get assistance with tax planning and estimation. Maximize your deductions and minimize your tax burden.</p>
                 </div>
             </div>
         </div>
@@ -108,176 +114,295 @@ require_once 'includes/header.php';
 </div>
 
 <!-- How It Works Section -->
-<div class="bg-light py-5">
+<div class="how-it-works-section py-5">
     <div class="container py-3">
         <div class="text-center mb-5">
+            <span class="badge bg-primary-light text-primary mb-2">SIMPLE PROCESS</span>
             <h2 class="fw-bold">How It Works</h2>
-            <p class="text-muted">Simple steps to financial freedom</p>
+            <p class="text-muted mx-auto" style="max-width: 700px;">Four simple steps to financial freedom and peace of mind</p>
         </div>
         
-        <div class="row g-4">
-            <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body text-center p-4">
-                        <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center mx-auto mb-3" style="width: 50px; height: 50px;">
-                            <h4 class="mb-0">1</h4>
-                        </div>
-                        <h5 class="card-title">Sign Up</h5>
-                        <p class="card-text">Create your free account and set up your profile in minutes.</p>
+        <div class="steps-container">
+            <div class="steps-line"></div>
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h5 class="step-title">Sign Up</h5>
+                        <p class="step-description">Create your free account and set up your profile in minutes.</p>
                     </div>
                 </div>
-            </div>
-            
-            <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body text-center p-4">
-                        <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center mx-auto mb-3" style="width: 50px; height: 50px;">
-                            <h4 class="mb-0">2</h4>
-                        </div>
-                        <h5 class="card-title">Add Income & Expenses</h5>
-                        <p class="card-text">Add your income sources and begin tracking your expenses.</p>
+                
+                <div class="col-md-3">
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h5 class="step-title">Add Income & Expenses</h5>
+                        <p class="step-description">Add your income sources and begin tracking your expenses.</p>
                     </div>
                 </div>
-            </div>
-            
-            <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body text-center p-4">
-                        <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center mx-auto mb-3" style="width: 50px; height: 50px;">
-                            <h4 class="mb-0">3</h4>
-                        </div>
-                        <h5 class="card-title">Set Budgets & Goals</h5>
-                        <p class="card-text">Create budgets for different categories and set your financial goals.</p>
+                
+                <div class="col-md-3">
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h5 class="step-title">Set Budgets & Goals</h5>
+                        <p class="step-description">Create budgets for different categories and set your financial goals.</p>
                     </div>
                 </div>
-            </div>
-            
-            <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body text-center p-4">
-                        <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center mx-auto mb-3" style="width: 50px; height: 50px;">
-                            <h4 class="mb-0">4</h4>
-                        </div>
-                        <h5 class="card-title">Track & Improve</h5>
-                        <p class="card-text">Monitor your progress and use insights to improve your financial health.</p>
+                
+                <div class="col-md-3">
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <h5 class="step-title">Track & Improve</h5>
+                        <p class="step-description">Monitor your progress and use insights to improve your financial health.</p>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- Testimonials Section -->
-<div class="container py-5">
-    <div class="text-center mb-5">
-        <h2 class="fw-bold">What Our Users Say</h2>
-        <p class="text-muted">Join thousands of satisfied users managing their finances with iGotMoney</p>
     </div>
     
-    <div class="row g-4">
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex mb-3">
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                    </div>
-                    <p class="card-text mb-4">"iGotMoney has completely transformed how I manage my finances. I've paid off my debt and started saving for my first home!"</p>
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center me-3" style="width: 40px; height: 40px;">
-                            <span class="fw-bold">JD</span>
-                        </div>
-                        <div>
-                            <h6 class="mb-0">John Doe</h6>
-                            <small class="text-muted">Small Business Owner</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex mb-3">
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                    </div>
-                    <p class="card-text mb-4">"The budgeting and goal-setting features are fantastic. I've finally been able to stick to a budget and save consistently!"</p>
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle bg-success text-white d-flex justify-content-center align-items-center me-3" style="width: 40px; height: 40px;">
-                            <span class="fw-bold">JS</span>
-                        </div>
-                        <div>
-                            <h6 class="mb-0">Jane Smith</h6>
-                            <small class="text-muted">Marketing Specialist</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex mb-3">
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                    </div>
-                    <p class="card-text mb-4">"The investment tracking and stock analysis tools have helped me make better investment decisions and grow my portfolio."</p>
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle bg-info text-white d-flex justify-content-center align-items-center me-3" style="width: 40px; height: 40px;">
-                            <span class="fw-bold">RJ</span>
-                        </div>
-                        <div>
-                            <h6 class="mb-0">Robert Johnson</h6>
-                            <small class="text-muted">Software Engineer</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- CTA Section -->
-<div class="bg-primary text-white py-5">
-    <div class="container py-3">
-        <div class="row align-items-center">
-            <div class="col-lg-8 mb-4 mb-lg-0">
-                <h2 class="fw-bold">Ready to Take Control of Your Finances?</h2>
-                <p class="lead mb-0">Join thousands of users who have improved their financial health with iGotMoney.</p>
-            </div>
-            <div class="col-lg-4 text-lg-end">
-                <a href="<?php echo BASE_PATH; ?>/register" class="btn btn-light btn-lg px-4">Get Started for Free</a>
-            </div>
-        </div>
+    <div class="text-center mt-5">
+        <a href="<?php echo BASE_PATH; ?>/register" class="btn btn-primary btn-lg">Get Started For Free</a>
     </div>
 </div>
 
 <!-- Custom styles for homepage -->
 <style>
+    /* Hero Section */
     .hero-section {
-        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+        color: white;
+        position: relative;
+        overflow: hidden;
+        padding: 5rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 2rem 2rem;
     }
     
-    .rounded-circle {
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .badge {
+        font-size: 0.85rem;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+    }
+    
+    .bg-primary-light {
+        background-color: rgba(255, 255, 255, 0.15);
+    }
+    
+    .hero-buttons .btn {
+        padding: 0.75rem 1.75rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .hero-buttons .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .hero-shape {
+        position: relative;
+        height: 400px;
+    }
+    
+    .hero-shape-1,
+    .hero-shape-2,
+    .hero-shape-3 {
+        position: absolute;
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(5px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+    
+    .hero-shape-1 {
+        width: 200px;
+        height: 200px;
+        top: 20%;
+        left: 20%;
+        transform: rotate(15deg);
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    .hero-shape-2 {
+        width: 150px;
+        height: 150px;
+        top: 50%;
+        left: 50%;
+        transform: rotate(-15deg);
+        animation: float 8s ease-in-out infinite;
+        animation-delay: 1s;
+    }
+    
+    .hero-shape-3 {
+        width: 100px;
+        height: 100px;
+        top: 30%;
+        left: 60%;
+        transform: rotate(45deg);
+        animation: float 7s ease-in-out infinite;
+        animation-delay: 2s;
+    }
+    
+    @keyframes float {
+        0% { transform: translateY(0) rotate(0); }
+        50% { transform: translateY(-20px) rotate(5deg); }
+        100% { transform: translateY(0) rotate(0); }
+    }
+    
+    /* Feature Cards */
+    .feature-card {
+        background-color: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .feature-icon {
+        width: 60px;
+        height: 60px;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 1.5rem;
+        border-radius: 1rem;
+        margin-bottom: 1.25rem;
     }
     
-    body {
-        overflow-x: hidden;
+    .bg-success-light {
+        background-color: rgba(46, 204, 113, 0.1);
+        color: #2ecc71;
+    }
+    
+    .bg-info-light {
+        background-color: rgba(52, 152, 219, 0.1);
+        color: #3498db;
+    }
+    
+    .bg-warning-light {
+        background-color: rgba(243, 156, 18, 0.1);
+        color: #f39c12;
+    }
+    
+    .bg-danger-light {
+        background-color: rgba(231, 76, 60, 0.1);
+        color: #e74c3c;
+    }
+    
+    .bg-secondary-light {
+        background-color: rgba(108, 117, 125, 0.1);
+        color: #6c757d;
+    }
+    
+    .feature-content h4 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: #333;
+    }
+    
+    .feature-content p {
+        color: #6c757d;
+        margin-bottom: 0;
+    }
+    
+    /* How It Works Section */
+    .how-it-works-section {
+        background-color: #f8f9fa;
+        position: relative;
+        border-radius: 2rem;
+        margin: 2rem 0;
+    }
+    
+    .steps-container {
+        position: relative;
+        padding: 1rem 0;
+    }
+    
+    .steps-line {
+        position: absolute;
+        top: 50%;
+        left: 10%;
+        right: 10%;
+        height: 3px;
+        background-color: #e9ecef;
+        z-index: 1;
+    }
+    
+    .step-card {
+        background-color: white;
+        border-radius: 1rem;
+        padding: 2rem 1.5rem;
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        height: 100%;
+    }
+    
+    .step-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .step-number {
+        width: 50px;
+        height: 50px;
+        background-color: #4361ee;
+        color: white;
+        font-size: 1.25rem;
+        font-weight: 700;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.25rem;
+    }
+    
+    .step-title {
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: #333;
+    }
+    
+    .step-description {
+        color: #6c757d;
+        margin-bottom: 0;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+        .hero-section {
+            padding: 3rem 0;
+        }
+        
+        .hero-shape {
+            display: none;
+        }
+        
+        .steps-line {
+            display: none;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .step-card {
+            margin-bottom: 1.5rem;
+        }
     }
 </style>
 
