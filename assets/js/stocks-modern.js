@@ -154,6 +154,121 @@ function initializeStockAnalysis() {
 }
 
 /**
+ * Extract target buy and sell prices based on technical indicators
+ */
+function extractAndSetTargetPrices() {
+    // Get current price - try multiple selectors to ensure we get it
+    let currentPrice = 0;
+    
+    // First, try the main price display
+    const priceElement = document.getElementById('currentStockPrice');
+    if (priceElement) {
+        // Get from text content first
+        const priceText = priceElement.textContent.trim();
+        const priceMatch = priceText.match(/\$?(\d+(\.\d+)?)/);
+        if (priceMatch) {
+            currentPrice = parseFloat(priceMatch[1]);
+        } 
+        // If that fails, try data attribute
+        else if (priceElement.getAttribute('data-price')) {
+            currentPrice = parseFloat(priceElement.getAttribute('data-price'));
+        }
+    }
+    
+    // If we couldn't get the price, try other elements
+    if (!currentPrice) {
+        const priceDisplays = document.querySelectorAll('.stock-price, h2, h3, [class*="price"]');
+        for (const el of priceDisplays) {
+            const text = el.textContent.trim();
+            if (text.includes('$') && /\$\d+\.\d+/.test(text)) {
+                const match = text.match(/\$(\d+\.\d+)/);
+                if (match) {
+                    currentPrice = parseFloat(match[1]);
+                    break;
+                }
+            }
+        }
+    }
+    
+    console.log("Found current price:", currentPrice);
+    
+    // Get technical indicators (Bollinger Bands)
+    let bollingerLower = 0;
+    let bollingerUpper = 0;
+    
+    // Find Bollinger values from the page
+    document.querySelectorAll('.indicator-item, tr, td, li').forEach(el => {
+        const text = el.textContent.trim();
+        
+        if (text.includes('Bollinger Lower') || text.includes('Lower Bollinger')) {
+            const match = text.match(/\$(\d+\.\d+)/);
+            if (match) {
+                bollingerLower = parseFloat(match[1]);
+            } else {
+                // Try to find in next element or sibling
+                const valueEl = el.nextElementSibling || el.querySelector('.indicator-value');
+                if (valueEl) {
+                    const valueMatch = valueEl.textContent.match(/\$(\d+\.\d+)/);
+                    if (valueMatch) {
+                        bollingerLower = parseFloat(valueMatch[1]);
+                    }
+                }
+            }
+        }
+        
+        if (text.includes('Bollinger Upper') || text.includes('Upper Bollinger')) {
+            const match = text.match(/\$(\d+\.\d+)/);
+            if (match) {
+                bollingerUpper = parseFloat(match[1]);
+            } else {
+                // Try to find in next element or sibling
+                const valueEl = el.nextElementSibling || el.querySelector('.indicator-value');
+                if (valueEl) {
+                    const valueMatch = valueEl.textContent.match(/\$(\d+\.\d+)/);
+                    if (valueMatch) {
+                        bollingerUpper = parseFloat(valueMatch[1]);
+                    }
+                }
+            }
+        }
+    });
+    
+    console.log("Found Bollinger Upper:", bollingerUpper);
+    console.log("Found Bollinger Lower:", bollingerLower);
+    
+    // Calculate reasonable buy and sell targets
+    let buyPrice = 0;
+    let sellPrice = 0;
+    
+    // If we have Bollinger Bands, use them
+    if (bollingerLower > 0 && bollingerUpper > 0) {
+        // Use Bollinger Bands for targets
+        buyPrice = bollingerLower;
+        sellPrice = bollingerUpper;
+    } 
+    // If we have current price, use percentage-based targets
+    else if (currentPrice > 0) {
+        buyPrice = Math.round(currentPrice * 0.95 * 100) / 100; // 5% below current
+        sellPrice = Math.round(currentPrice * 1.1 * 100) / 100;  // 10% above current
+    }
+    
+    // Set the prices in the form fields
+    const buyPriceInput = document.getElementById('target_buy_price');
+    const sellPriceInput = document.getElementById('target_sell_price');
+    
+    if (buyPriceInput && buyPrice > 0) {
+        buyPriceInput.value = buyPrice.toFixed(2);
+    }
+    
+    if (sellPriceInput && sellPrice > 0) {
+        sellPriceInput.value = sellPrice.toFixed(2);
+    }
+    
+    console.log("Set buy price:", buyPrice);
+    console.log("Set sell price:", sellPrice);
+}
+
+/**
  * Fetch basic ticker information
  * @param {string} ticker Stock ticker symbol
  */
@@ -949,42 +1064,43 @@ function initializeModals() {
     // Add to Watchlist Modal - Pre-populate fields when clicking "Add to Watchlist" from analysis
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('add-to-watchlist-from-analysis') || 
-            e.target.closest('.add-to-watchlist-from-analysis')) {
+            e.target.closest('.add-to-watchlist-from-analysis') ||
+            (e.target.textContent.includes('Add to Watchlist') && e.target.tagName === 'BUTTON')) {
                 
             const button = e.target.classList.contains('add-to-watchlist-from-analysis') ? 
-                        e.target : e.target.closest('.add-to-watchlist-from-analysis');
+                        e.target : e.target.closest('.add-to-watchlist-from-analysis') || e.target;
                 
-            const ticker = button.getAttribute('data-ticker');
-            const price = button.getAttribute('data-price');
-            const company = button.getAttribute('data-company');
+            // Using dataset attributes if available, otherwise try to find from page context
+            const ticker = button.getAttribute('data-ticker') || 
+                          document.getElementById('currentTickerSymbol')?.value ||
+                          document.querySelector('.stock-info h3')?.textContent;
+                          
+            const price = button.getAttribute('data-price') || 
+                         document.getElementById('currentStockPrice')?.getAttribute('data-price') ||
+                         parseFloat(document.getElementById('currentStockPrice')?.textContent.replace('$', ''));
+                         
+            const company = button.getAttribute('data-company') || 
+                           document.querySelector('.stock-info p')?.textContent ||
+                           document.querySelector('.company-name')?.textContent;
             
-            if (ticker && price) {
-                document.getElementById('ticker_symbol_watchlist').value = ticker;
-                document.getElementById('company_name').value = company;
-                document.getElementById('current_price_watchlist').value = price;
-                
-                // Set default target prices (optional)
-                const buyPoints = document.querySelectorAll('.price-points li');
-                if (buyPoints.length > 0) {
-                    buyPoints.forEach(point => {
-                        if (point.textContent.toLowerCase().includes('buy') || 
-                            point.textContent.toLowerCase().includes('support')) {
-                            const priceText = point.querySelector('.price-point-value')?.textContent;
-                            if (priceText) {
-                                const buyPrice = parseFloat(priceText.replace('$', ''));
-                                document.getElementById('target_buy_price').value = buyPrice;
-                            }
-                        }
-                        
-                        if (point.textContent.toLowerCase().includes('sell') || 
-                            point.textContent.toLowerCase().includes('resistance')) {
-                            const priceText = point.querySelector('.price-point-value')?.textContent;
-                            if (priceText) {
-                                const sellPrice = parseFloat(priceText.replace('$', ''));
-                                document.getElementById('target_sell_price').value = sellPrice;
-                            }
-                        }
-                    });
+            if (ticker) {
+                const modal = document.getElementById('addToWatchlistModal');
+                if (modal) {
+                    // Pre-fill the form
+                    const tickerInput = document.getElementById('ticker_symbol_watchlist');
+                    const companyInput = document.getElementById('company_name');
+                    const priceInput = document.getElementById('current_price_watchlist');
+                    
+                    if (tickerInput) tickerInput.value = ticker;
+                    if (companyInput && company) companyInput.value = company;
+                    if (priceInput && price) priceInput.value = typeof price === 'number' ? price.toFixed(2) : price;
+                    
+                    // Show the modal
+                    const modalInstance = new bootstrap.Modal(modal);
+                    modalInstance.show();
+                    
+                    // Extract and set target prices after modal is shown
+                    setTimeout(extractAndSetTargetPrices, 100);
                 }
             }
         }
@@ -1020,6 +1136,14 @@ function initializeModals() {
             }
         });
     }
+    
+    // Also bind to the modal shown event to make sure we have access to the DOM
+    document.addEventListener('shown.bs.modal', function(event) {
+        if (event.target.id === 'addToWatchlistModal') {
+            // Try to extract and set prices again when modal is fully shown
+            extractAndSetTargetPrices();
+        }
+    });
     
     // Enhance form validation for all modals
     document.querySelectorAll('.modal form').forEach(form => {

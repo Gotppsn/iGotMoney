@@ -20,12 +20,12 @@ $user_id = $_SESSION['user_id'];
 // Initialize Investment object
 $investment = new Investment();
 
-// API key for Alpha Vantage stock API
-define('ALPHA_VANTAGE_API_KEY', 'C2CN9VYVCWW6W0H3');
+// Finnhub API key
+define('FINNHUB_API_KEY', 'd0edd11r01qj9mg6802gd0edd11r01qj9mg68030');
 define('USE_DEMO_DATA_ON_API_FAILURE', true); // Set to false in production
 define('CACHE_EXPIRATION', 300); // 5 minutes for price data
 define('CACHE_EXPIRATION_ANALYSIS', 3600); // 1 hour for full analysis data
-define('MAX_API_CALLS_PER_MINUTE', 5); // Free tier limit
+define('MAX_API_CALLS_PER_MINUTE', 60); // Finnhub free tier limit
 
 // Set default page layout variables
 $page_title = 'Stock Analysis - iGotMoney';
@@ -264,7 +264,7 @@ function canMakeApiCall() {
         return true;
     }
     
-    // Check if we're under the limit
+    // Check if we're under the limit (60 calls per minute for Finnhub free tier)
     if ($_SESSION['api_calls']['count'] < MAX_API_CALLS_PER_MINUTE) {
         $_SESSION['api_calls']['count']++;
         return true;
@@ -297,7 +297,7 @@ function getCachePath($ticker, $type = 'price') {
 }
 
 /**
- * Get current stock price from Alpha Vantage API
+ * Get current stock price from Finnhub API
  * Uses caching to avoid API rate limits
  * 
  * @param string $ticker Stock ticker symbol
@@ -309,6 +309,8 @@ function getCurrentPrice($ticker) {
         
         // Check if we have a cached price
         $cache_file = getCachePath($ticker, 'price');
+        
+        // Check if cache exists and isn't expired
         if (file_exists($cache_file) && (time() - filemtime($cache_file) < CACHE_EXPIRATION)) {
             $cached_data = file_get_contents($cache_file);
             $price_data = json_decode($cached_data, true);
@@ -317,97 +319,75 @@ function getCurrentPrice($ticker) {
             }
         }
         
-        // If no cache or expired, check if we can make an API call
-        if (!canMakeApiCall()) {
-            // If we can't make an API call but have old cached data, use it
-            if (file_exists($cache_file)) {
-                $cached_data = file_get_contents($cache_file);
-                $price_data = json_decode($cached_data, true);
-                if ($price_data && isset($price_data['price']) && $price_data['price'] > 0) {
-                    return $price_data['price'];
-                }
+        // If we can't make an API call but have old cached data, use it
+        if (!canMakeApiCall() && file_exists($cache_file)) {
+            $cached_data = file_get_contents($cache_file);
+            $price_data = json_decode($cached_data, true);
+            if ($price_data && isset($price_data['price']) && $price_data['price'] > 0) {
+                return $price_data['price'];
             }
-            
-            // If we still don't have any data, use demo data
+        }
+        
+        // If we can't make an API call and don't have cached data, use demo data
+        if (!canMakeApiCall()) {
             if (USE_DEMO_DATA_ON_API_FAILURE) {
                 return generateDemoPrice($ticker);
             }
-            
             return 0;
         }
         
-        // Call the API
-        $url = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" . urlencode($ticker) . "&apikey=" . ALPHA_VANTAGE_API_KEY;
+        // Call the Finnhub API for quote data
+        $url = "https://finnhub.io/api/v1/quote?symbol={$ticker}&token=" . FINNHUB_API_KEY;
         
-        // Use curl instead of file_get_contents for better error handling
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'iGotMoney/1.0');
         $response = curl_exec($ch);
-        $curl_error = curl_error($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         
         if ($response === false || $http_code != 200) {
-            error_log("API Error: " . ($curl_error ? $curl_error : "HTTP Code: " . $http_code));
+            error_log("Finnhub API Error fetching price for $ticker: HTTP Code: $http_code");
             
-            // Use demo data or cached data on failure
             if (USE_DEMO_DATA_ON_API_FAILURE) {
                 return generateDemoPrice($ticker);
             }
-            
             return 0;
         }
         
         $data = json_decode($response, true);
         
-        // Check for API error messages
-        if (isset($data['Error Message'])) {
-            error_log("Alpha Vantage API Error: " . $data['Error Message']);
+        // For Finnhub, current price is in 'c' field
+        if (isset($data['c']) && $data['c'] > 0) {
+            $price = floatval($data['c']);
             
-            if (USE_DEMO_DATA_ON_API_FAILURE) {
-                return generateDemoPrice($ticker);
-            }
-            
-            return 0;
-        }
-        
-        // Check for rate limiting
-        if (isset($data['Note']) && strpos($data['Note'], 'API call frequency') !== false) {
-            error_log("Alpha Vantage API rate limit reached: " . $data['Note']);
-            
-            if (USE_DEMO_DATA_ON_API_FAILURE) {
-                return generateDemoPrice($ticker);
-            }
-            
-            return 0;
-        }
-        
-        if (isset($data['Global Quote']) && isset($data['Global Quote']['05. price'])) {
-            $price = floatval($data['Global Quote']['05. price']);
-            
-            // Cache the result
-            $cache_data = json_encode(['price' => $price, 'timestamp' => time()]);
+            // Cache the result with timestamp
+            $cache_data = json_encode([
+                'price' => $price,
+                'timestamp' => time()
+            ]);
             file_put_contents($cache_file, $cache_data);
             
             return $price;
         }
         
-        // Fallback to demo data
+        // If API returned invalid data, log and use fallback
+        error_log("Invalid data from Finnhub for $ticker: " . json_encode($data));
+        
+        // Fall back to demo data
         if (USE_DEMO_DATA_ON_API_FAILURE) {
             return generateDemoPrice($ticker);
         }
         
         return 0;
     } catch (Exception $e) {
-        error_log("Error fetching stock price: " . $e->getMessage());
+        error_log("Error fetching stock price for $ticker: " . $e->getMessage());
         
-        // Fallback to demo data
         if (USE_DEMO_DATA_ON_API_FAILURE) {
             return generateDemoPrice($ticker);
         }
-        
         return 0;
     }
 }
@@ -463,12 +443,38 @@ function getBatchStockQuotes($symbols) {
         $quotes = [];
         $success = true;
         
+        // Finnhub doesn't have a batch API, so we'll query each symbol individually
         // We'll use cached data where possible to minimize API calls
         foreach ($symbols as $symbol) {
             $price = getCurrentPrice($symbol);
             
             if ($price > 0) {
-                // Calculate a fake change and percent for demo
+                // Get more details if we can make another API call
+                if (canMakeApiCall()) {
+                    $url = "https://finnhub.io/api/v1/quote?symbol={$symbol}&token=" . FINNHUB_API_KEY;
+                    
+                    $ch = curl_init();
+                    curl_setopt($ch, CURLOPT_URL, $url);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+                    curl_setopt($ch, CURLOPT_USERAGENT, 'iGotMoney/1.0');
+                    $response = curl_exec($ch);
+                    curl_close($ch);
+                    
+                    if ($response) {
+                        $data = json_decode($response, true);
+                        if (isset($data['c']) && isset($data['d']) && isset($data['dp'])) {
+                            $quotes[$symbol] = [
+                                'price' => $data['c'],
+                                'change' => $data['d'],
+                                'change_percent' => $data['dp']
+                            ];
+                            continue;
+                        }
+                    }
+                }
+                
+                // Fallback if API call fails
                 $change = round(mt_rand(-100, 100) / 100 * $price / 20, 2);
                 $change_percent = round($change / $price * 100, 2);
                 
@@ -537,20 +543,20 @@ function getStockData($ticker) {
             ];
         }
         
-        // Use cURL for better error handling
-        $ch = curl_init();
-        $quote_url = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" . urlencode($ticker) . "&apikey=" . ALPHA_VANTAGE_API_KEY;
+        // Step 1: Get the basic quote data
+        $quote_url = "https://finnhub.io/api/v1/quote?symbol={$ticker}&token=" . FINNHUB_API_KEY;
         
+        $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $quote_url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'iGotMoney/1.0');
         $quote_response = curl_exec($ch);
-        $curl_error = curl_error($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         
         if ($quote_response === false || $http_code != 200) {
-            error_log("API Error: " . ($curl_error ? $curl_error : "HTTP Code: " . $http_code));
+            error_log("Finnhub API Error: HTTP Code: $http_code");
             
             if (USE_DEMO_DATA_ON_API_FAILURE) {
                 return getDemoStockData($ticker);
@@ -564,109 +570,88 @@ function getStockData($ticker) {
         
         $quote_data = json_decode($quote_response, true);
         
-        // Check for API errors or empty response
-        if (isset($quote_data['Error Message']) || (isset($quote_data['Global Quote']) && empty($quote_data['Global Quote']))) {
-            error_log("Alpha Vantage API Error: " . (isset($quote_data['Error Message']) ? $quote_data['Error Message'] : "Empty response"));
-            
+        // Check for valid response with current price
+        if (!isset($quote_data['c']) || $quote_data['c'] <= 0) {
             if (USE_DEMO_DATA_ON_API_FAILURE) {
                 return getDemoStockData($ticker);
             }
             
             return [
                 'status' => 'error',
-                'message' => 'Invalid ticker symbol or API limit reached. Please try again later.'
+                'message' => 'Invalid ticker symbol or data not available.'
             ];
         }
         
-        // Check for rate limiting
-        if (isset($quote_data['Note']) && strpos($quote_data['Note'], 'API call frequency') !== false) {
-            error_log("Alpha Vantage API rate limit reached: " . $quote_data['Note']);
-            
-            if (USE_DEMO_DATA_ON_API_FAILURE) {
-                return getDemoStockData($ticker);
-            }
-            
-            return [
-                'status' => 'error',
-                'message' => 'API rate limit reached. Please try again in a minute.'
-            ];
-        }
+        // Extract price data
+        $current_price = floatval($quote_data['c']);
+        $price_change = floatval($quote_data['d']);
+        $price_change_percent = floatval($quote_data['dp']);
         
-        if (!isset($quote_data['Global Quote']) || !isset($quote_data['Global Quote']['05. price'])) {
-            if (USE_DEMO_DATA_ON_API_FAILURE) {
-                return getDemoStockData($ticker);
-            }
-            
-            return [
-                'status' => 'error',
-                'message' => 'Stock data not available. Please try another symbol.'
-            ];
-        }
-        
-        // Extract current price data
-        $current_price = floatval($quote_data['Global Quote']['05. price']);
-        $price_change = floatval($quote_data['Global Quote']['09. change']);
-        $price_change_percent = floatval(str_replace('%', '', $quote_data['Global Quote']['10. change percent']));
-        
-        // Get company overview if we can make another API call
-        $company_name = $ticker;
+        // Step 2: Get company profile for the name
+        $company_name = $ticker; // Default to ticker
         if (canMakeApiCall()) {
-            $overview_url = "https://www.alphavantage.co/query?function=OVERVIEW&symbol=" . urlencode($ticker) . "&apikey=" . ALPHA_VANTAGE_API_KEY;
+            $profile_url = "https://finnhub.io/api/v1/stock/profile2?symbol={$ticker}&token=" . FINNHUB_API_KEY;
             
             $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $overview_url);
+            curl_setopt($ch, CURLOPT_URL, $profile_url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-            $overview_response = curl_exec($ch);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'iGotMoney/1.0');
+            $profile_response = curl_exec($ch);
             curl_close($ch);
             
-            if ($overview_response) {
-                $overview_data = json_decode($overview_response, true);
-                if (isset($overview_data['Name'])) {
-                    $company_name = $overview_data['Name'];
+            if ($profile_response) {
+                $profile_data = json_decode($profile_response, true);
+                if (isset($profile_data['name'])) {
+                    $company_name = $profile_data['name'];
                 }
             }
         }
         
-        // Wait to avoid API rate limiting
-        sleep(1);
-        
-        // Get historical data (daily) if we can make another API call
+        // Step 3: Get historical data for charts and indicators
         $historical_dates = [];
         $historical_prices = [];
         $historical_volumes = [];
         
         if (canMakeApiCall()) {
-            $history_url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=" . urlencode($ticker) . "&outputsize=compact&apikey=" . ALPHA_VANTAGE_API_KEY;
+            // Calculate time range (1 year)
+            $end_time = time();
+            $start_time = $end_time - (365 * 24 * 60 * 60); // 1 year ago
+            
+            $candle_url = "https://finnhub.io/api/v1/stock/candle?symbol={$ticker}&resolution=D&from={$start_time}&to={$end_time}&token=" . FINNHUB_API_KEY;
             
             $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $history_url);
+            curl_setopt($ch, CURLOPT_URL, $candle_url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-            $history_response = curl_exec($ch);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'iGotMoney/1.0');
+            $candle_response = curl_exec($ch);
             curl_close($ch);
             
-            if ($history_response) {
-                $history_data = json_decode($history_response, true);
+            if ($candle_response) {
+                $candle_data = json_decode($candle_response, true);
                 
-                if (isset($history_data['Time Series (Daily)'])) {
-                    $time_series = $history_data['Time Series (Daily)'];
-                    $count = 0;
+                if (isset($candle_data['c']) && is_array($candle_data['c']) && !empty($candle_data['c'])) {
+                    // Finnhub returns candle data in separate arrays
+                    $close_prices = $candle_data['c'];
+                    $timestamps = $candle_data['t'];
                     
-                    // Get the last 30 days of data (or less if not available)
-                    foreach ($time_series as $date => $daily_data) {
-                        if ($count >= 30) break;
-                        
-                        $historical_dates[] = date('M j', strtotime($date));
-                        $historical_prices[] = floatval($daily_data['4. close']);
-                        $historical_volumes[] = intval($daily_data['5. volume']);
-                        $count++;
+                    // Get volumes if available
+                    $volumes = isset($candle_data['v']) ? $candle_data['v'] : [];
+                    
+                    // Format timestamps to readable dates
+                    foreach ($timestamps as $key => $timestamp) {
+                        if (isset($close_prices[$key])) {
+                            $historical_dates[] = date('M j', $timestamp);
+                            $historical_prices[] = $close_prices[$key];
+                            
+                            if (isset($volumes[$key])) {
+                                $historical_volumes[] = $volumes[$key];
+                            } else {
+                                $historical_volumes[] = 0;
+                            }
+                        }
                     }
-                    
-                    // Reverse arrays to show chronological order
-                    $historical_dates = array_reverse($historical_dates);
-                    $historical_prices = array_reverse($historical_prices);
-                    $historical_volumes = array_reverse($historical_volumes);
                 }
             }
         }
@@ -749,6 +734,171 @@ function getStockData($ticker) {
             'message' => 'An error occurred while analyzing the stock. Please try again.'
         ];
     }
+}
+
+/**
+ * Generate demo stock data when API fails
+ * 
+ * @param string $ticker Stock ticker symbol
+ * @return array Stock data for analysis
+ */
+function getDemoStockData($ticker) {
+    $ticker = strtoupper(trim($ticker));
+    
+    // Generate a deterministic price based on ticker symbol
+    $ticker_sum = 0;
+    for ($i = 0; $i < strlen($ticker); $i++) {
+        $ticker_sum += ord($ticker[$i]);
+    }
+    
+    $base_price = 50 + ($ticker_sum % 200); // Price between $50 and $250
+    
+    // Add some daily variation
+    $day_seed = date('Ymd');
+    $daily_factor = (intval($day_seed) % 60) / 1000;
+    if (intval($day_seed) % 2 === 0) {
+        $daily_factor = -$daily_factor;
+    }
+    
+    $current_price = $base_price * (1 + $daily_factor);
+    $current_price = round($current_price, 2);
+    
+    $price_change = round($current_price * $daily_factor, 2);
+    $price_change_percent = round($daily_factor * 100, 2);
+    
+    // Generate historical data
+    $historical_data = getMockStockData($ticker);
+    $historical_dates = [];
+    $historical_prices = [];
+    $historical_volumes = [];
+    
+    foreach ($historical_data as $data) {
+        $historical_dates[] = date('M j', strtotime($data['date']));
+        $historical_prices[] = $data['close'];
+        $historical_volumes[] = $data['volume'];
+    }
+    
+    // Calculate technical indicators
+    $short_ma = calculateMovingAverage($historical_prices, 20);
+    $long_ma = calculateMovingAverage($historical_prices, min(50, count($historical_prices)));
+    $rsi = calculateRSI($historical_prices);
+    $ema = calculateEMA($historical_prices, 12);
+    $macd = calculateMACD($historical_prices);
+    $bollinger = calculateBollingerBands($historical_prices);
+    
+    // Calculate support and resistance
+    $support = calculateSupportLevel($historical_prices, $current_price);
+    $resistance = calculateResistanceLevel($historical_prices, $current_price);
+    
+    // Company name (for demo)
+    $company_name = $ticker . ' Inc.';
+    
+    // Generate recommendation
+    $recommendation_data = generateRecommendation($current_price, $short_ma, $long_ma, $rsi, $macd, $bollinger);
+    
+    return [
+        'status' => 'success',
+        'ticker' => $ticker,
+        'company_name' => $company_name,
+        'current_price' => $current_price,
+        'price_change' => $price_change,
+        'price_change_percent' => $price_change_percent,
+        'short_ma' => round($short_ma, 2),
+        'long_ma' => round($long_ma, 2),
+        'rsi' => round($rsi, 2),
+        'ema' => round($ema, 2),
+        'macd' => round($macd['line'], 2),
+        'macd_signal' => round($macd['signal'], 2),
+        'bollinger_upper' => round($bollinger['upper'], 2),
+        'bollinger_lower' => round($bollinger['lower'], 2),
+        'support' => round($support, 2),
+        'resistance' => round($resistance, 2),
+        'recommendation' => $recommendation_data['recommendation'],
+        'recommendation_reasons' => $recommendation_data['reasons'],
+        'buy_points' => $recommendation_data['buy_points'],
+        'sell_points' => $recommendation_data['sell_points'],
+        'historical_dates' => $historical_dates,
+        'historical_prices' => $historical_prices,
+        'historical_volumes' => $historical_volumes,
+        'is_demo_data' => true
+    ];
+}
+
+/**
+ * Generate mock stock data for demonstration
+ * 
+ * @param string $ticker Stock ticker symbol
+ * @return array Array of daily stock data
+ */
+function getMockStockData($ticker) {
+    $ticker = strtoupper(trim($ticker));
+    $data = [];
+    
+    // Generate a deterministic base price from the ticker
+    $ticker_sum = 0;
+    for ($i = 0; $i < strlen($ticker); $i++) {
+        $ticker_sum += ord($ticker[$i]);
+    }
+    
+    // Base price between $50 and $250
+    $base_price = 50 + ($ticker_sum % 200);
+    
+    // Create a trend pattern (rising, falling, volatile, etc.) based on ticker
+    $trend_type = $ticker_sum % 4;
+    $trend_strength = 0.5 + ($ticker_sum % 10) / 10; // 0.5 to 1.5
+    
+    // Trend types: 0 = rising, 1 = falling, 2 = cyclic, 3 = volatile
+    $trend_direction = ($trend_type == 1) ? -1 : 1;
+    $volatility = ($trend_type == 3) ? 2 : 1;
+    
+    // Generate random stock data for past 60 days
+    for ($i = 60; $i >= 0; $i--) {
+        $date = date('Y-m-d', strtotime("-$i days"));
+        
+        // Create a semi-deterministic daily change based on date and ticker
+        $date_sum = strtotime($date) % 100;
+        $seed = ($ticker_sum + $date_sum) % 1000;
+        mt_srand($seed);
+        
+        // Apply different trend patterns
+        $trend_factor = 0;
+        if ($trend_type == 0 || $trend_type == 1) {
+            // Rising or falling trend
+            $trend_factor = $trend_direction * $trend_strength * (60 - $i) / 600;
+        } elseif ($trend_type == 2) {
+            // Cyclic pattern
+            $trend_factor = sin($i / 10) * $trend_strength / 10;
+        }
+        
+        // Random daily change (more volatile at certain trend types)
+        $random_change = (mt_rand(-300, 300) / 100) * $volatility;
+        $change = $random_change / 100 + $trend_factor;
+        
+        $base_price *= (1 + $change);
+        $base_price = max(10, $base_price); // ensure price doesn't go below 10
+        
+        // Create daily price data with open, high, low, close
+        $open = $base_price - (mt_rand(-100, 100) / 100);
+        $close = $base_price;
+        $high = max($base_price, $open) + (mt_rand(50, 200) / 100);
+        $low = min($base_price, $open) - (mt_rand(50, 200) / 100);
+        
+        // Generate volume based on price change magnitude
+        $volume_base = 1000000 + ($ticker_sum * 10000);
+        $volume_change_factor = 1 + abs($change) * 10; // Higher volume on bigger price changes
+        $volume = intval($volume_base * $volume_change_factor * (mt_rand(80, 120) / 100));
+        
+        $data[] = [
+            'date' => $date,
+            'open' => round($open, 2),
+            'high' => round($high, 2),
+            'low' => round($low, 2),
+            'close' => round($close, 2),
+            'volume' => $volume
+        ];
+    }
+    
+    return $data;
 }
 
 /**
@@ -1122,170 +1272,40 @@ function generateRecommendation($current_price, $short_ma, $long_ma, $rsi, $macd
 }
 
 /**
- * Generate demo stock data when API fails
+ * Make a Finnhub API request with proper error handling
  * 
- * @param string $ticker Stock ticker symbol
- * @return array Stock data for analysis
+ * @param string $endpoint API endpoint 
+ * @param array $params Query parameters
+ * @return mixed Response data or false on failure
  */
-function getDemoStockData($ticker) {
-    $ticker = strtoupper(trim($ticker));
-    
-    // Generate a deterministic price based on ticker symbol
-    $ticker_sum = 0;
-    for ($i = 0; $i < strlen($ticker); $i++) {
-        $ticker_sum += ord($ticker[$i]);
+function makeFinnhubApiRequest($endpoint, $params = []) {
+    if (!canMakeApiCall()) {
+        return false;
     }
     
-    $base_price = 50 + ($ticker_sum % 200); // Price between $50 and $250
+    // Build query string from params
+    $query_string = http_build_query($params);
     
-    // Add some daily variation
-    $day_seed = date('Ymd');
-    $daily_factor = (intval($day_seed) % 60) / 1000;
-    if (intval($day_seed) % 2 === 0) {
-        $daily_factor = -$daily_factor;
+    // Construct URL with API key
+    $url = "https://finnhub.io/api/v1/{$endpoint}?{$query_string}&token=" . FINNHUB_API_KEY;
+    
+    // Make the request
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'iGotMoney/1.0');
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($response === false || $http_code != 200) {
+        error_log("Finnhub API Error for {$endpoint}: HTTP Code: {$http_code}");
+        return false;
     }
     
-    $current_price = $base_price * (1 + $daily_factor);
-    $current_price = round($current_price, 2);
-    
-    $price_change = round($current_price * $daily_factor, 2);
-    $price_change_percent = round($daily_factor * 100, 2);
-    
-    // Generate historical data
-    $historical_data = getMockStockData($ticker);
-    $historical_dates = [];
-    $historical_prices = [];
-    $historical_volumes = [];
-    
-    foreach ($historical_data as $data) {
-        $historical_dates[] = date('M j', strtotime($data['date']));
-        $historical_prices[] = $data['close'];
-        $historical_volumes[] = $data['volume'];
-    }
-    
-    // Calculate technical indicators
-    $short_ma = calculateMovingAverage($historical_prices, 20);
-    $long_ma = calculateMovingAverage($historical_prices, min(50, count($historical_prices)));
-    $rsi = calculateRSI($historical_prices);
-    $ema = calculateEMA($historical_prices, 12);
-    $macd = calculateMACD($historical_prices);
-    $bollinger = calculateBollingerBands($historical_prices);
-    
-    // Calculate support and resistance
-    $support = calculateSupportLevel($historical_prices, $current_price);
-    $resistance = calculateResistanceLevel($historical_prices, $current_price);
-    
-    // Company name (for demo)
-    $company_name = $ticker . ' Inc.';
-    
-    // Generate recommendation
-    $recommendation_data = generateRecommendation($current_price, $short_ma, $long_ma, $rsi, $macd, $bollinger);
-    
-    return [
-        'status' => 'success',
-        'ticker' => $ticker,
-        'company_name' => $company_name,
-        'current_price' => $current_price,
-        'price_change' => $price_change,
-        'price_change_percent' => $price_change_percent,
-        'short_ma' => round($short_ma, 2),
-        'long_ma' => round($long_ma, 2),
-        'rsi' => round($rsi, 2),
-        'ema' => round($ema, 2),
-        'macd' => round($macd['line'], 2),
-        'macd_signal' => round($macd['signal'], 2),
-        'bollinger_upper' => round($bollinger['upper'], 2),
-        'bollinger_lower' => round($bollinger['lower'], 2),
-        'support' => round($support, 2),
-        'resistance' => round($resistance, 2),
-        'recommendation' => $recommendation_data['recommendation'],
-        'recommendation_reasons' => $recommendation_data['reasons'],
-        'buy_points' => $recommendation_data['buy_points'],
-        'sell_points' => $recommendation_data['sell_points'],
-        'historical_dates' => $historical_dates,
-        'historical_prices' => $historical_prices,
-        'historical_volumes' => $historical_volumes,
-        'is_demo_data' => true
-    ];
-}
-
-/**
- * Generate mock stock data for demonstration
- * 
- * @param string $ticker Stock ticker symbol
- * @return array Array of daily stock data
- */
-function getMockStockData($ticker) {
-    $ticker = strtoupper(trim($ticker));
-    $data = [];
-    
-    // Generate a deterministic base price from the ticker
-    $ticker_sum = 0;
-    for ($i = 0; $i < strlen($ticker); $i++) {
-        $ticker_sum += ord($ticker[$i]);
-    }
-    
-    // Base price between $50 and $250
-    $base_price = 50 + ($ticker_sum % 200);
-    
-    // Create a trend pattern (rising, falling, volatile, etc.) based on ticker
-    $trend_type = $ticker_sum % 4;
-    $trend_strength = 0.5 + ($ticker_sum % 10) / 10; // 0.5 to 1.5
-    
-    // Trend types: 0 = rising, 1 = falling, 2 = cyclic, 3 = volatile
-    $trend_direction = ($trend_type == 1) ? -1 : 1;
-    $volatility = ($trend_type == 3) ? 2 : 1;
-    
-    // Generate random stock data for past 60 days
-    for ($i = 60; $i >= 0; $i--) {
-        $date = date('Y-m-d', strtotime("-$i days"));
-        
-        // Create a semi-deterministic daily change based on date and ticker
-        $date_sum = strtotime($date) % 100;
-        $seed = ($ticker_sum + $date_sum) % 1000;
-        mt_srand($seed);
-        
-        // Apply different trend patterns
-        $trend_factor = 0;
-        if ($trend_type == 0 || $trend_type == 1) {
-            // Rising or falling trend
-            $trend_factor = $trend_direction * $trend_strength * (60 - $i) / 600;
-        } elseif ($trend_type == 2) {
-            // Cyclic pattern
-            $trend_factor = sin($i / 10) * $trend_strength / 10;
-        }
-        
-        // Random daily change (more volatile at certain trend types)
-        $random_change = (mt_rand(-300, 300) / 100) * $volatility;
-        $change = $random_change / 100 + $trend_factor;
-        
-        $base_price *= (1 + $change);
-        $base_price = max(10, $base_price); // ensure price doesn't go below 10
-        
-        // Create daily price data with open, high, low, close
-        $open = $base_price - (mt_rand(-100, 100) / 100);
-        $close = $base_price;
-        $high = max($base_price, $open) + (mt_rand(50, 200) / 100);
-        $low = min($base_price, $open) - (mt_rand(50, 200) / 100);
-        
-        // Generate volume based on price change magnitude
-        $volume_base = 1000000 + ($ticker_sum * 10000);
-        $volume_change_factor = 1 + abs($change) * 10; // Higher volume on bigger price changes
-        $volume = intval($volume_base * $volume_change_factor * (mt_rand(80, 120) / 100));
-        
-        $data[] = [
-            'date' => $date,
-            'open' => round($open, 2),
-            'high' => round($high, 2),
-            'low' => round($low, 2),
-            'close' => round($close, 2),
-            'volume' => $volume
-        ];
-    }
-    
-    return $data;
+    return json_decode($response, true);
 }
 
 // Include view
 require_once 'views/stocks.php';
-?>
