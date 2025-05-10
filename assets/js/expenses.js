@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
  * Initialize the main expense chart
  */
 function initializeChart() {
+    // Check if Chart.js is loaded
     if (typeof Chart === 'undefined') {
         console.error('Chart.js is not loaded!');
         return;
@@ -35,6 +36,29 @@ function initializeChart() {
     if (!chartCanvas) {
         console.error('Chart canvas element not found!');
         return;
+    }
+    
+    // Properly check and destroy existing chart
+    try {
+        const existingChart = Chart.getChart(chartCanvas);
+        if (existingChart) {
+            existingChart.destroy();
+            console.log('Existing chart destroyed');
+        }
+    } catch (e) {
+        console.log('No existing chart found or error destroying it:', e);
+    }
+    
+    // Clear any existing reference
+    if (window.expenseCategoryChart) {
+        try {
+            if (typeof window.expenseCategoryChart.destroy === 'function') {
+                window.expenseCategoryChart.destroy();
+            }
+        } catch (e) {
+            console.log('Error destroying window.expenseCategoryChart:', e);
+        }
+        window.expenseCategoryChart = null;
     }
     
     // Set global Chart.js defaults
@@ -50,13 +74,18 @@ function initializeChart() {
         
         if (!chartLabelsEl || !chartDataEl || !chartColorsEl) {
             console.error('Chart data meta tags not found!');
-            document.getElementById('chartNoData').style.display = 'block';
+            const chartNoData = document.getElementById('chartNoData');
+            if (chartNoData) {
+                chartNoData.style.display = 'block';
+            }
             return;
         }
         
         const chartLabels = JSON.parse(chartLabelsEl.getAttribute('content') || '[]');
         const chartData = JSON.parse(chartDataEl.getAttribute('content') || '[]');
         const chartColors = JSON.parse(chartColorsEl.getAttribute('content') || '[]');
+        
+        console.log('Chart data loaded:', { chartLabels, chartData, chartColors });
         
         if (chartLabels.length > 0 && chartData.length > 0) {
             const ctx = chartCanvas.getContext('2d');
@@ -115,13 +144,26 @@ function initializeChart() {
                 }
             });
             
-            document.getElementById('chartNoData').style.display = 'none';
+            console.log('Chart initialized successfully');
+            
+            // Hide no data message
+            const chartNoData = document.getElementById('chartNoData');
+            if (chartNoData) {
+                chartNoData.style.display = 'none';
+            }
         } else {
-            document.getElementById('chartNoData').style.display = 'block';
+            console.log('No chart data available');
+            const chartNoData = document.getElementById('chartNoData');
+            if (chartNoData) {
+                chartNoData.style.display = 'block';
+            }
         }
     } catch (error) {
         console.error('Error initializing chart:', error);
-        document.getElementById('chartNoData').style.display = 'block';
+        const chartNoData = document.getElementById('chartNoData');
+        if (chartNoData) {
+            chartNoData.style.display = 'block';
+        }
     }
 }
 
@@ -151,7 +193,10 @@ function initializeExpenseForms() {
         isRecurringCheckbox.addEventListener('change', function() {
             recurringOptions.style.display = this.checked ? 'block' : 'none';
             if (!this.checked) {
-                document.getElementById('frequency').value = 'monthly';
+                const frequencySelect = document.getElementById('frequency');
+                if (frequencySelect) {
+                    frequencySelect.value = 'monthly';
+                }
             }
         });
     }
@@ -164,7 +209,10 @@ function initializeExpenseForms() {
         editIsRecurringCheckbox.addEventListener('change', function() {
             editRecurringOptions.style.display = this.checked ? 'block' : 'none';
             if (!this.checked) {
-                document.getElementById('edit_frequency').value = 'monthly';
+                const editFrequencySelect = document.getElementById('edit_frequency');
+                if (editFrequencySelect) {
+                    editFrequencySelect.value = 'monthly';
+                }
             }
         });
     }
@@ -490,25 +538,31 @@ function updateChartForPeriod(period) {
                     const values = sortedCategories.map(item => item[1]);
                     
                     // Update chart
-                    if (window.expenseCategoryChart) {
+                    if (window.expenseCategoryChart && typeof window.expenseCategoryChart.update === 'function') {
                         window.expenseCategoryChart.data.labels = labels;
                         window.expenseCategoryChart.data.datasets[0].data = values;
                         window.expenseCategoryChart.update();
                         
                         chartContainer.style.display = 'block';
-                        chartNoData.style.display = 'none';
+                        if (chartNoData) {
+                            chartNoData.style.display = 'none';
+                        }
                     }
                     
                     // Update top expenses list
                     updateTopExpensesList(sortedCategories, data.total);
                 } else {
                     chartContainer.style.display = 'none';
-                    chartNoData.style.display = 'block';
+                    if (chartNoData) {
+                        chartNoData.style.display = 'block';
+                    }
                 }
             } else {
                 console.error('Error fetching data for chart:', data.message);
                 chartContainer.style.display = 'none';
-                chartNoData.style.display = 'block';
+                if (chartNoData) {
+                    chartNoData.style.display = 'block';
+                }
             }
         })
         .catch(error => {
@@ -517,7 +571,9 @@ function updateChartForPeriod(period) {
             
             console.error('Error:', error);
             chartContainer.style.display = 'none';
-            chartNoData.style.display = 'block';
+            if (chartNoData) {
+                chartNoData.style.display = 'block';
+            }
         });
 }
 
@@ -589,7 +645,11 @@ function initializeAnalytics() {
         calculateAnalyticsBtn.addEventListener('click', function() {
             this.disabled = true;
             this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Calculating...';
-            document.getElementById('analyticsPlaceholder').style.display = 'none';
+            
+            const analyticsPlaceholder = document.getElementById('analyticsPlaceholder');
+            if (analyticsPlaceholder) {
+                analyticsPlaceholder.style.display = 'none';
+            }
             
             fetchAnalyticsData();
         });
@@ -631,7 +691,10 @@ function fetchAnalyticsData() {
                 calculateAnalyticsBtn.disabled = false;
                 calculateAnalyticsBtn.innerHTML = '<i class="fas fa-calculator me-1"></i> Calculate';
                 
-                document.getElementById('analyticsPlaceholder').style.display = 'block';
+                const analyticsPlaceholder = document.getElementById('analyticsPlaceholder');
+                if (analyticsPlaceholder) {
+                    analyticsPlaceholder.style.display = 'block';
+                }
             }
         })
         .catch(error => {
@@ -641,7 +704,10 @@ function fetchAnalyticsData() {
             calculateAnalyticsBtn.disabled = false;
             calculateAnalyticsBtn.innerHTML = '<i class="fas fa-calculator me-1"></i> Calculate';
             
-            document.getElementById('analyticsPlaceholder').style.display = 'block';
+            const analyticsPlaceholder = document.getElementById('analyticsPlaceholder');
+            if (analyticsPlaceholder) {
+                analyticsPlaceholder.style.display = 'block';
+            }
         });
 }
 
