@@ -143,9 +143,6 @@ require_once 'includes/header.php';
                     
                     // Reset the pointer
                     $income_sources->data_seek(0);
-                    
-                    // Sort by amount
-                    arsort($frequency_totals);
                 }
                 
                 if (array_sum($frequency_totals) > 0) {
@@ -246,8 +243,13 @@ require_once 'includes/header.php';
                                 </td>
                                 <td>
                                     <?php 
-                                    if (!empty($income_source['end_date'])) {
-                                        echo date('M j, Y', strtotime($income_source['end_date']));
+                                    if (!empty($income_source['end_date']) && $income_source['end_date'] !== null && $income_source['end_date'] !== '0000-00-00') {
+                                        $timestamp = strtotime($income_source['end_date']);
+                                        if ($timestamp > 0) {
+                                            echo date('M j, Y', $timestamp);
+                                        } else {
+                                            echo '<span class="text-muted">Ongoing</span>';
+                                        }
                                     } else {
                                         echo '<span class="text-muted">Ongoing</span>';
                                     }
@@ -507,7 +509,7 @@ require_once 'includes/header.php';
             </div>
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="<?php echo BASE_PATH; ?>/income" method="post">
+                <form action="<?php echo BASE_PATH; ?>/income" method="post" style="display: inline;">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="income_id" id="delete_income_id">
                     <button type="submit" class="btn btn-danger">

@@ -249,7 +249,7 @@ class Income {
         
         while ($row = $result->fetch_assoc()) {
             // Check if income has expired
-            if (!empty($row['end_date'])) {
+            if (!empty($row['end_date']) && $row['end_date'] !== '0000-00-00' && $row['end_date'] !== null) {
                 $end_date = new DateTime($row['end_date']);
                 $now = new DateTime();
                 if ($end_date < $now) {
@@ -313,7 +313,7 @@ class Income {
         
         while ($row = $result->fetch_assoc()) {
             // Check if income has expired
-            if (!empty($row['end_date'])) {
+            if (!empty($row['end_date']) && $row['end_date'] !== '0000-00-00' && $row['end_date'] !== null) {
                 $end_date = new DateTime($row['end_date']);
                 $now = new DateTime();
                 if ($end_date < $now) {

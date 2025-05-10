@@ -66,6 +66,38 @@ function initializeEventHandlers() {
             document.getElementById('name').focus();
         });
     }
+    
+    // Handle end date input changes with debugging
+    const endDateInputs = document.querySelectorAll('#end_date, #edit_end_date');
+    endDateInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            console.log('End date changed:', this.value);
+            
+            // Allow empty values for optional end date
+            if (!this.value) {
+                console.log('End date cleared');
+                return;
+            }
+            
+            // Validate the date
+            const selectedDate = new Date(this.value);
+            if (isNaN(selectedDate.getTime())) {
+                console.log('Invalid date format');
+                this.value = '';
+                return;
+            }
+            
+            // Check if date is reasonable (not before 1900)
+            if (selectedDate < new Date('1900-01-01')) {
+                console.log('Date too far in the past');
+                alert('Please select a valid date after January 1, 1900');
+                this.value = '';
+                return;
+            }
+            
+            console.log('Valid end date:', this.value);
+        });
+    });
 }
 
 /**
@@ -165,7 +197,21 @@ function handleEditIncome(incomeId) {
                 document.getElementById('edit_amount').value = data.income.amount;
                 document.getElementById('edit_frequency').value = data.income.frequency;
                 document.getElementById('edit_start_date').value = data.income.start_date;
-                document.getElementById('edit_end_date').value = data.income.end_date || '';
+                
+                // Handle end date properly
+                const endDateInput = document.getElementById('edit_end_date');
+                if (data.income.end_date && data.income.end_date !== '0000-00-00' && data.income.end_date !== null) {
+                    // Validate the date
+                    const parsedDate = new Date(data.income.end_date);
+                    if (!isNaN(parsedDate.getTime()) && parsedDate > new Date('1900-01-01')) {
+                        endDateInput.value = data.income.end_date;
+                    } else {
+                        endDateInput.value = '';
+                    }
+                } else {
+                    endDateInput.value = '';
+                }
+                
                 document.getElementById('edit_is_active').checked = data.income.is_active == 1;
             } else {
                 // Show error message in modal
@@ -244,5 +290,47 @@ function animateElements() {
             card.style.opacity = '1';
             card.style.transform = 'translateY(0)';
         }, 100);
+    });
+}
+
+/**
+ * Format number as currency
+ * @param {number} value - The value to format
+ * @returns {string} Formatted currency string
+ */
+function formatCurrency(value) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+    }).format(value);
+}
+
+/**
+ * Validate date input
+ * @param {string} dateString - The date string to validate
+ * @returns {boolean} Whether the date is valid
+ */
+function isValidDate(dateString) {
+    if (!dateString) return true; // Empty is valid for optional fields
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return false;
+    
+    // Check if date is reasonable (not before 1900 or too far in future)
+    const year = date.getFullYear();
+    if (year < 1900 || year > 2100) return false;
+    
+    return true;
+}
+
+/**
+ * Clear form validation
+ * @param {HTMLFormElement} form - The form to clear validation for
+ */
+function clearFormValidation(form) {
+    form.classList.remove('was-validated');
+    const inputs = form.querySelectorAll('.is-invalid');
+    inputs.forEach(input => {
+        input.classList.remove('is-invalid');
     });
 }

@@ -35,8 +35,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $income->amount = $_POST['amount'] ?? 0;
             $income->frequency = $_POST['frequency'] ?? 'monthly';
             $income->start_date = $_POST['start_date'] ?? date('Y-m-d');
-            $income->end_date = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
+            
+            // Handle end date - check if date is valid before assigning
+            if (!empty($_POST['end_date'])) {
+                $endDateValue = $_POST['end_date'];
+                // Validate the date
+                if (strtotime($endDateValue) !== false) {
+                    $income->end_date = $endDateValue;
+                } else {
+                    $income->end_date = null;
+                }
+            } else {
+                $income->end_date = null;
+            }
+            
             $income->is_active = isset($_POST['is_active']) ? 1 : 0;
+            
+            // Debug log to check values
+            error_log("Adding income with end_date: " . ($income->end_date ?? 'null'));
             
             // Create new income
             if ($income->create()) {
@@ -66,7 +82,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $income->amount = $_POST['amount'] ?? $income->amount;
                 $income->frequency = $_POST['frequency'] ?? $income->frequency;
                 $income->start_date = $_POST['start_date'] ?? $income->start_date;
-                $income->end_date = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
+                
+                // Handle end date - check if date is valid before assigning
+                if (!empty($_POST['end_date'])) {
+                    $endDateValue = $_POST['end_date'];
+                    // Validate the date
+                    if (strtotime($endDateValue) !== false) {
+                        $income->end_date = $endDateValue;
+                    } else {
+                        $income->end_date = null;
+                    }
+                } else {
+                    $income->end_date = null;
+                }
+                
                 $income->is_active = isset($_POST['is_active']) ? 1 : 0;
                 
                 // Debug log of properties before update
@@ -125,6 +154,15 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_income') {
     }
     
     if ($income->getById($income_id, $user_id)) {
+        // Ensure end_date is properly formatted or null
+        $end_date = null;
+        if (!empty($income->end_date) && $income->end_date !== '0000-00-00') {
+            $timestamp = strtotime($income->end_date);
+            if ($timestamp !== false && $timestamp > 0) {
+                $end_date = $income->end_date;
+            }
+        }
+        
         echo json_encode([
             'success' => true,
             'income' => [
@@ -133,7 +171,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_income') {
                 'amount' => $income->amount,
                 'frequency' => $income->frequency,
                 'start_date' => $income->start_date,
-                'end_date' => $income->end_date,
+                'end_date' => $end_date,
                 'is_active' => $income->is_active
             ]
         ]);
