@@ -59,7 +59,7 @@ class Income {
         // Format end date or set to null
         $end_date_param = !empty($this->end_date) ? $this->end_date : null;
         
-        // Bind parameters
+        // Bind parameters - note that end_date is 's' (string), not 'i' (integer)
         if (!$stmt->bind_param("isdssis", 
                           $this->user_id, 
                           $this->name, 
@@ -173,8 +173,8 @@ class Income {
         // Format end date or set to null
         $end_date_param = !empty($this->end_date) ? $this->end_date : null;
         
-        // Bind parameters
-        if (!$stmt->bind_param("sdssiiii", 
+        // Bind parameters - note that end_date is 's' (string), not 'i' (integer)
+        if (!$stmt->bind_param("sdsssiii", 
                            $this->name, 
                            $this->amount, 
                            $this->frequency, 
