@@ -11,414 +11,422 @@ $additional_js = ['/assets/js/goals-modern.js'];
 require_once 'includes/header.php';
 ?>
 
-<div class="page-header d-flex justify-content-between align-items-center">
-    <h1>Financial Goals</h1>
-    <div class="btn-toolbar">
-        <div class="btn-group me-2">
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#recommendGoalsModal">
-                <i class="fas fa-magic"></i> Goal Recommendations
-            </button>
+<!-- Main Content Wrapper -->
+<div class="goals-page">
+    <!-- Page Header Section -->
+    <div class="page-header-section">
+        <div class="page-header-content">
+            <div class="page-title-group">
+                <h1 class="page-title">Financial Goals</h1>
+                <p class="page-subtitle">Track and achieve your financial objectives</p>
+            </div>
+            <div class="page-actions">
+                <button type="button" class="btn-success" data-bs-toggle="modal" data-bs-target="#recommendGoalsModal">
+                    <i class="fas fa-magic"></i>
+                    <span>Goal Recommendations</span>
+                </button>
+                <button type="button" class="btn-primary" data-bs-toggle="modal" data-bs-target="#addGoalModal">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Add Goal</span>
+                </button>
+            </div>
         </div>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGoalModal">
-            <i class="fas fa-plus"></i> Add Goal
-        </button>
     </div>
-</div>
 
-<!-- Financial Goals Summary -->
-<div class="row mb-4">
-    <?php
-    // Initialize counters
-    $total_goals = 0;
-    $completed_goals = 0;
-    $on_track_goals = 0;
-    $behind_goals = 0;
-    
-    if (isset($goals_list) && $goals_list->num_rows > 0) {
-        $total_goals = $goals_list->num_rows;
-        
-        // First pass to count goal stats
-        while ($goal = $goals_list->fetch_assoc()) {
-            if ($goal['status'] === 'completed') {
-                $completed_goals++;
-            } else {
-                // Calculate progress
-                $progress = ($goal['current_amount'] / $goal['target_amount']) * 100;
+    <!-- Quick Stats Section -->
+    <div class="stats-section">
+        <div class="stats-grid">
+            <?php
+            // Initialize counters
+            $total_goals = 0;
+            $completed_goals = 0;
+            $on_track_goals = 0;
+            $behind_goals = 0;
+            
+            if (isset($goals_list) && $goals_list->num_rows > 0) {
+                $total_goals = $goals_list->num_rows;
                 
-                // Calculate time progress
-                $start_date = new DateTime($goal['start_date']);
-                $target_date = new DateTime($goal['target_date']);
-                $now = new DateTime();
-                
-                $total_interval = $start_date->diff($target_date);
-                $elapsed_interval = $start_date->diff($now);
-                
-                $total_days = max(1, $total_interval->days);
-                $elapsed_days = $elapsed_interval->days;
-                
-                $time_progress = $total_days > 0 ? ($elapsed_days / $total_days) * 100 : 100;
-                
-                if ($progress >= $time_progress) {
-                    $on_track_goals++;
-                } else {
-                    $behind_goals++;
+                // First pass to count goal stats
+                while ($goal = $goals_list->fetch_assoc()) {
+                    if ($goal['status'] === 'completed') {
+                        $completed_goals++;
+                    } else {
+                        // Calculate progress
+                        $progress = ($goal['current_amount'] / $goal['target_amount']) * 100;
+                        
+                        // Calculate time progress
+                        $start_date = new DateTime($goal['start_date']);
+                        $target_date = new DateTime($goal['target_date']);
+                        $now = new DateTime();
+                        
+                        $total_interval = $start_date->diff($target_date);
+                        $elapsed_interval = $start_date->diff($now);
+                        
+                        $total_days = max(1, $total_interval->days);
+                        $elapsed_days = $elapsed_interval->days;
+                        
+                        $time_progress = $total_days > 0 ? ($elapsed_days / $total_days) * 100 : 100;
+                        
+                        if ($progress >= $time_progress) {
+                            $on_track_goals++;
+                        } else {
+                            $behind_goals++;
+                        }
+                    }
                 }
+                
+                // Reset pointer for later use
+                $goals_list->data_seek(0);
             }
-        }
-        
-        // Reset pointer for later use
-        $goals_list->data_seek(0);
-    }
-    ?>
+            ?>
 
-    <div class="col-lg-3 col-md-6 mb-4">
-        <div class="summary-card border-left-primary shadow h-100">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs text-primary mb-1">Total Goals</div>
-                        <div class="h5 mb-0 text-gray-800"><?php echo $total_goals; ?></div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-flag text-gray-300"></i>
-                    </div>
+            <div class="stat-card total">
+                <div class="stat-icon">
+                    <i class="fas fa-flag"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-label">Total Goals</h3>
+                    <p class="stat-value"><?php echo $total_goals; ?></p>
+                </div>
+            </div>
+
+            <div class="stat-card completed">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-label">Completed</h3>
+                    <p class="stat-value"><?php echo $completed_goals; ?></p>
+                </div>
+            </div>
+
+            <div class="stat-card on-track">
+                <div class="stat-icon">
+                    <i class="fas fa-thumbs-up"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-label">On Track</h3>
+                    <p class="stat-value"><?php echo $on_track_goals; ?></p>
+                </div>
+            </div>
+
+            <div class="stat-card behind">
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-label">Needs Attention</h3>
+                    <p class="stat-value"><?php echo $behind_goals; ?></p>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-lg-3 col-md-6 mb-4">
-        <div class="summary-card border-left-success shadow h-100">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs text-success mb-1">Completed</div>
-                        <div class="h5 mb-0 text-gray-800"><?php echo $completed_goals; ?></div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-check-circle text-gray-300"></i>
-                    </div>
+    <!-- Goals List Section -->
+    <div class="goals-section">
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-bullseye"></i>
+                    <h2>Your Financial Goals</h2>
+                </div>
+                <div class="goals-filter">
+                    <button type="button" class="filter-btn active" data-filter="all">All</button>
+                    <button type="button" class="filter-btn" data-filter="in-progress">In Progress</button>
+                    <button type="button" class="filter-btn" data-filter="completed">Completed</button>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="col-lg-3 col-md-6 mb-4">
-        <div class="summary-card border-left-info shadow h-100">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs text-info mb-1">On Track</div>
-                        <div class="h5 mb-0 text-gray-800"><?php echo $on_track_goals; ?></div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-thumbs-up text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-3 col-md-6 mb-4">
-        <div class="summary-card border-left-warning shadow h-100">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs text-warning mb-1">Needs Attention</div>
-                        <div class="h5 mb-0 text-gray-800"><?php echo $behind_goals; ?></div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-exclamation-circle text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Financial Goals List -->
-<div class="goals-container">
-    <div class="goals-header">
-        <h2>Your Financial Goals</h2>
-        <div class="goals-filter">
-            <button type="button" class="filter-button" id="filterAll" data-filter="all">All</button>
-            <button type="button" class="filter-button" id="filterInProgress" data-filter="in-progress">In Progress</button>
-            <button type="button" class="filter-button" id="filterCompleted" data-filter="completed">Completed</button>
-        </div>
-    </div>
-    
-    <?php if (isset($goals_list) && $goals_list->num_rows > 0): ?>
-        <div class="goals-list">
-            <?php while ($goal = $goals_list->fetch_assoc()): ?>
-                <?php
-                // Calculate progress
-                $progress = ($goal['current_amount'] / $goal['target_amount']) * 100;
-                
-                // Calculate time progress
-                $start_date = new DateTime($goal['start_date']);
-                $target_date = new DateTime($goal['target_date']);
-                $now = new DateTime();
-                
-                $days_remaining = $now->diff($target_date)->format("%r%a");
-                $total_days = max(1, $start_date->diff($target_date)->days);
-                $elapsed_days = $start_date->diff($now)->days;
-                
-                $time_progress = $total_days > 0 ? min(100, ($elapsed_days / $total_days) * 100) : 100;
-                
-                // Determine progress status
-                $progress_class = '';
-                $progress_icon = '';
-                
-                if ($goal['status'] === 'completed') {
-                    $progress_class = 'bg-success';
-                    $progress_icon = 'check-circle';
-                } elseif ($progress >= $time_progress) {
-                    $progress_class = 'bg-info';
-                    $progress_icon = 'thumbs-up';
-                } elseif ($progress >= $time_progress * 0.7) {
-                    $progress_class = 'bg-primary';
-                    $progress_icon = 'clipboard-check';
-                } else {
-                    $progress_class = 'bg-warning';
-                    $progress_icon = 'exclamation-triangle';
-                }
-                
-                // Determine due date status
-                $due_class = '';
-                if ($days_remaining < 0) {
-                    $due_class = 'text-danger';
-                } elseif ($days_remaining < 30) {
-                    $due_class = 'text-warning';
-                } else {
-                    $due_class = 'text-info';
-                }
-                
-                // Calculate monthly contribution needed
-                $monthly_contribution = 0;
-                if ($days_remaining > 0 && $goal['status'] !== 'completed') {
-                    $remaining_amount = max(0, $goal['target_amount'] - $goal['current_amount']);
-                    $months_remaining = $days_remaining / 30.44; // Average days per month
-                    $monthly_contribution = $months_remaining > 0 ? $remaining_amount / $months_remaining : $remaining_amount;
-                }
-                ?>
-                
-                <div class="goal-item <?php echo $goal['status']; ?>-goal">
-                    <div class="goal-card">
-                        <div class="card-header">
-                            <h6>
-                                <?php echo htmlspecialchars($goal['name']); ?>
-                                
-                                <?php if ($goal['status'] === 'completed'): ?>
-                                    <span class="badge bg-success">Completed</span>
-                                <?php elseif ($goal['priority'] === 'high'): ?>
-                                    <span class="badge bg-danger">High Priority</span>
-                                <?php elseif ($goal['priority'] === 'medium'): ?>
-                                    <span class="badge bg-warning">Medium Priority</span>
-                                <?php endif; ?>
-                            </h6>
-                            <div class="btn-group">
-                                <?php if ($goal['status'] !== 'completed'): ?>
-                                    <button class="btn btn-success update-progress" data-goal-id="<?php echo $goal['goal_id']; ?>" data-bs-toggle="tooltip" title="Update Progress">
-                                        <i class="fas fa-plus"></i> Update Progress
-                                    </button>
-                                <?php endif; ?>
-                                <button class="btn btn-info edit-goal" data-goal-id="<?php echo $goal['goal_id']; ?>" data-bs-toggle="tooltip" title="Edit Goal">
-                                    <i class="fas fa-edit"></i> Edit
-                                </button>
-                                <button class="btn btn-danger delete-goal" data-goal-id="<?php echo $goal['goal_id']; ?>" data-bs-toggle="tooltip" title="Delete Goal">
-                                    <i class="fas fa-trash"></i> Delete
-                                </button>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <?php if (!empty($goal['description'])): ?>
-                                        <p><?php echo htmlspecialchars($goal['description']); ?></p>
-                                    <?php endif; ?>
-                                    
-                                    <div class="progress">
-                                        <div class="progress-bar <?php echo $progress_class; ?>" role="progressbar" 
-                                            style="width: 0%" 
-                                            aria-valuenow="<?php echo min(100, $progress); ?>" 
-                                            aria-valuemin="0" aria-valuemax="100">
-                                            <?php echo number_format($progress, 0); ?>%
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="goal-progress-info">
-                                        <span>
-                                            <span class="goal-amount">$<?php echo number_format($goal['current_amount'], 2); ?></span> of 
-                                            <span class="goal-amount">$<?php echo number_format($goal['target_amount'], 2); ?></span>
-                                        </span>
-                                        <span class="goal-status">
-                                            <i class="fas fa-<?php echo $progress_icon; ?> <?php echo $progress_class === 'bg-success' ? 'text-success' : ($progress_class === 'bg-warning' ? 'text-warning' : 'text-info'); ?>"></i>
-                                            <?php if ($goal['status'] === 'completed'): ?>
-                                                Completed
-                                            <?php elseif ($progress >= $time_progress): ?>
-                                                On Track
-                                            <?php else: ?>
-                                                Behind Schedule
-                                            <?php endif; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="goal-meta">
-                                        <div class="goal-meta-item">
-                                            <strong>Started</strong>
-                                            <span><?php echo date('M j, Y', strtotime($goal['start_date'])); ?></span>
-                                        </div>
-                                        <div class="goal-meta-item">
-                                            <strong>Target Date</strong>
-                                            <span class="<?php echo $due_class; ?>"><?php echo date('M j, Y', strtotime($goal['target_date'])); ?></span>
-                                        </div>
-                                        <?php if ($goal['status'] !== 'completed' && $days_remaining > 0): ?>
-                                            <div class="goal-meta-item">
-                                                <strong>Days Remaining</strong>
-                                                <span class="<?php echo $due_class; ?>"><?php echo $days_remaining; ?></span>
-                                            </div>
-                                            <div class="goal-meta-item">
-                                                <strong>Monthly Needed</strong>
-                                                <span class="text-primary">$<?php echo number_format($monthly_contribution, 2); ?></span>
-                                            </div>
+            <div class="section-body">
+                <?php if (isset($goals_list) && $goals_list->num_rows > 0): ?>
+                    <div class="goals-list">
+                        <?php while ($goal = $goals_list->fetch_assoc()): ?>
+                            <?php
+                            // Calculate progress
+                            $progress = ($goal['current_amount'] / $goal['target_amount']) * 100;
+                            
+                            // Calculate time progress
+                            $start_date = new DateTime($goal['start_date']);
+                            $target_date = new DateTime($goal['target_date']);
+                            $now = new DateTime();
+                            
+                            $days_remaining = $now->diff($target_date)->format("%r%a");
+                            $total_days = max(1, $start_date->diff($target_date)->days);
+                            $elapsed_days = $start_date->diff($now)->days;
+                            
+                            $time_progress = $total_days > 0 ? min(100, ($elapsed_days / $total_days) * 100) : 100;
+                            
+                            // Determine progress status
+                            $progress_class = '';
+                            $progress_icon = '';
+                            $status_class = '';
+                            
+                            if ($goal['status'] === 'completed') {
+                                $progress_class = 'bg-success';
+                                $progress_icon = 'check-circle';
+                                $status_class = 'status-success';
+                            } elseif ($progress >= $time_progress) {
+                                $progress_class = 'bg-info';
+                                $progress_icon = 'thumbs-up';
+                                $status_class = 'status-success';
+                            } elseif ($progress >= $time_progress * 0.7) {
+                                $progress_class = 'bg-primary';
+                                $progress_icon = 'clipboard-check';
+                                $status_class = 'status-info';
+                            } else {
+                                $progress_class = 'bg-warning';
+                                $progress_icon = 'exclamation-triangle';
+                                $status_class = 'status-warning';
+                            }
+                            
+                            // Determine due date status
+                            $due_class = '';
+                            if ($days_remaining < 0) {
+                                $due_class = 'text-danger';
+                            } elseif ($days_remaining < 30) {
+                                $due_class = 'text-warning';
+                            } else {
+                                $due_class = 'text-info';
+                            }
+                            
+                            // Calculate monthly contribution needed
+                            $monthly_contribution = 0;
+                            if ($days_remaining > 0 && $goal['status'] !== 'completed') {
+                                $remaining_amount = max(0, $goal['target_amount'] - $goal['current_amount']);
+                                $months_remaining = $days_remaining / 30.44; // Average days per month
+                                $monthly_contribution = $months_remaining > 0 ? $remaining_amount / $months_remaining : $remaining_amount;
+                            }
+                            ?>
+                            
+                            <div class="goal-card" data-status="<?php echo $goal['status']; ?>">
+                                <div class="goal-header">
+                                    <div class="goal-title-wrapper">
+                                        <h3 class="goal-title"><?php echo htmlspecialchars($goal['name']); ?></h3>
+                                        <?php if ($goal['status'] === 'completed'): ?>
+                                            <span class="goal-badge badge-completed">Completed</span>
+                                        <?php elseif ($goal['priority'] === 'high'): ?>
+                                            <span class="goal-badge badge-high">High Priority</span>
+                                        <?php elseif ($goal['priority'] === 'medium'): ?>
+                                            <span class="goal-badge badge-medium">Medium Priority</span>
                                         <?php endif; ?>
                                     </div>
+                                    <div class="goal-actions">
+                                        <?php if ($goal['status'] !== 'completed'): ?>
+                                            <button class="btn-action success update-progress" data-goal-id="<?php echo $goal['goal_id']; ?>">
+                                                <i class="fas fa-plus"></i>
+                                                <span>Update Progress</span>
+                                            </button>
+                                        <?php endif; ?>
+                                        <button class="btn-action info edit-goal" data-goal-id="<?php echo $goal['goal_id']; ?>">
+                                            <i class="fas fa-edit"></i>
+                                            <span>Edit</span>
+                                        </button>
+                                        <button class="btn-action danger delete-goal" data-goal-id="<?php echo $goal['goal_id']; ?>">
+                                            <i class="fas fa-trash"></i>
+                                            <span>Delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="goal-body">
+                                    <div class="goal-content">
+                                        <div class="goal-progress-section">
+                                            <?php if (!empty($goal['description'])): ?>
+                                                <p class="goal-description"><?php echo htmlspecialchars($goal['description']); ?></p>
+                                            <?php endif; ?>
+                                            
+                                            <div class="progress-wrapper">
+                                                <div class="progress">
+                                                    <div class="progress-bar <?php echo $progress_class; ?>" 
+                                                         role="progressbar" 
+                                                         style="width: <?php echo min(100, $progress); ?>%"
+                                                         aria-valuenow="<?php echo min(100, $progress); ?>" 
+                                                         aria-valuemin="0" 
+                                                         aria-valuemax="100">
+                                                    </div>
+                                                </div>
+                                                <div class="goal-progress-info">
+                                                    <div class="progress-text">
+                                                        <span class="amount">$<?php echo number_format($goal['current_amount'], 2); ?></span> of 
+                                                        <span class="amount">$<?php echo number_format($goal['target_amount'], 2); ?></span>
+                                                    </div>
+                                                    <div class="progress-status <?php echo $status_class; ?>">
+                                                        <i class="fas fa-<?php echo $progress_icon; ?>"></i>
+                                                        <?php if ($goal['status'] === 'completed'): ?>
+                                                            Completed
+                                                        <?php elseif ($progress >= $time_progress): ?>
+                                                            On Track
+                                                        <?php else: ?>
+                                                            Behind Schedule
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="goal-meta-section">
+                                            <div class="goal-meta-grid">
+                                                <div class="meta-item" style="grid-column: 1 / -1;">
+                                                    <span class="meta-label">Progress</span>
+                                                    <span class="meta-value"><?php echo number_format($progress, 0); ?>%</span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <span class="meta-label">Started</span>
+                                                    <span class="meta-value"><?php echo date('M j, Y', strtotime($goal['start_date'])); ?></span>
+                                                </div>
+                                                <div class="meta-item">
+                                                    <span class="meta-label">Target Date</span>
+                                                    <span class="meta-value <?php echo $due_class; ?>"><?php echo date('M j, Y', strtotime($goal['target_date'])); ?></span>
+                                                </div>
+                                                <?php if ($goal['status'] !== 'completed' && $days_remaining > 0): ?>
+                                                    <div class="meta-item">
+                                                        <span class="meta-label">Days Remaining</span>
+                                                        <span class="meta-value <?php echo $due_class; ?>"><?php echo $days_remaining; ?></span>
+                                                    </div>
+                                                    <div class="meta-item">
+                                                        <span class="meta-label">Monthly Needed</span>
+                                                        <span class="meta-value text-primary">$<?php echo number_format($monthly_contribution, 2); ?></span>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                        <?php endwhile; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-flag"></i>
+                        </div>
+                        <h3>You haven't set any financial goals yet</h3>
+                        <p>Set clear financial goals to help track your progress and stay motivated on your financial journey.</p>
+                        <div class="empty-actions">
+                            <button type="button" class="btn-primary" data-bs-toggle="modal" data-bs-target="#addGoalModal">
+                                <i class="fas fa-plus"></i> Set Your First Goal
+                            </button>
+                            <button type="button" class="btn-success" data-bs-toggle="modal" data-bs-target="#recommendGoalsModal">
+                                <i class="fas fa-magic"></i> Get Recommendations
+                            </button>
                         </div>
                     </div>
-                </div>
-            <?php endwhile; ?>
-        </div>
-    <?php else: ?>
-        <div class="empty-state">
-            <div class="empty-state-icon">
-                <i class="fas fa-flag"></i>
+                <?php endif; ?>
             </div>
-            <h4>You haven't set any financial goals yet</h4>
-            <p>Set clear financial goals to help track your progress and stay motivated on your financial journey.</p>
-            <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addGoalModal">
-                <i class="fas fa-plus"></i> Set Your First Goal
-            </button>
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#recommendGoalsModal">
-                <i class="fas fa-magic"></i> Get Recommendations
-            </button>
         </div>
-    <?php endif; ?>
-</div>
+    </div>
 
-<!-- Goal Planning Tips -->
-<div class="tips-section">
-    <h2 class="tips-heading">Goal Planning Tips</h2>
-    <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="tip-card card-border-info">
-                <div class="card-body">
-                    <h5>SMART Goals</h5>
-                    <p>Set goals that are Specific, Measurable, Achievable, Relevant, and Time-bound to increase your chances of success.</p>
-                </div>
-            </div>
+    <!-- Goal Planning Tips -->
+    <div class="tips-section">
+        <div class="tips-header">
+            <i class="fas fa-lightbulb"></i>
+            <h2>Goal Planning Tips</h2>
         </div>
-        <div class="col-md-4 mb-4">
-            <div class="tip-card card-border-warning">
-                <div class="card-body">
-                    <h5>Prioritize Your Goals</h5>
-                    <p>Focus on high-priority goals first. It's better to fully achieve a few important goals than partially complete many.</p>
-                </div>
+        <div class="tips-grid">
+            <div class="tip-card info">
+                <h5>SMART Goals</h5>
+                <p>Set goals that are Specific, Measurable, Achievable, Relevant, and Time-bound to increase your chances of success.</p>
             </div>
-        </div>
-        <div class="col-md-4 mb-4">
-            <div class="tip-card card-border-success">
-                <div class="card-body">
-                    <h5>Regular Contributions</h5>
-                    <p>Make regular contributions toward your goals. Even small, consistent amounts add up significantly over time.</p>
-                </div>
+            <div class="tip-card warning">
+                <h5>Prioritize Your Goals</h5>
+                <p>Focus on high-priority goals first. It's better to fully achieve a few important goals than partially complete many.</p>
+            </div>
+            <div class="tip-card success">
+                <h5>Regular Contributions</h5>
+                <p>Make regular contributions toward your goals. Even small, consistent amounts add up significantly over time.</p>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Add Goal Modal -->
-<div class="modal fade" id="addGoalModal" tabindex="-1" aria-labelledby="addGoalModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="addGoalModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addGoalModalLabel">Add Financial Goal</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <h5 class="modal-title">Add Financial Goal</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <form action="<?php echo BASE_PATH; ?>/goals" method="post" class="needs-validation" novalidate>
                 <input type="hidden" name="action" value="add">
                 
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Goal Name</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
-                        <div class="invalid-feedback">Please provide a goal name.</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description (Optional)</label>
-                        <textarea class="form-control" id="description" name="description" rows="2"></textarea>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="target_amount" class="form-label">Target Amount</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="target_amount" name="target_amount" step="0.01" min="0.01" required>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="name">Goal Name</label>
+                            <input type="text" id="name" name="name" required>
+                            <div class="invalid-feedback">Please provide a goal name.</div>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="description">Description (Optional)</label>
+                            <textarea id="description" name="description" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="target_amount">Target Amount</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">$</span>
+                                    <input type="number" id="target_amount" name="target_amount" step="0.01" min="0.01" required>
+                                </div>
                                 <div class="invalid-feedback">Please provide a valid target amount.</div>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="current_amount" class="form-label">Current Amount</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="current_amount" name="current_amount" step="0.01" min="0" value="0">
+                            <div class="form-field">
+                                <label for="current_amount">Current Amount</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">$</span>
+                                    <input type="number" id="current_amount" name="current_amount" step="0.01" min="0" value="0">
+                                </div>
                                 <div class="invalid-feedback">Current amount must be a non-negative number.</div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="start_date" class="form-label">Start Date</label>
-                            <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
-                            <div class="invalid-feedback">Please provide a start date.</div>
+                        
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="start_date">Start Date</label>
+                                <input type="date" id="start_date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
+                                <div class="invalid-feedback">Please provide a start date.</div>
+                            </div>
+                            <div class="form-field">
+                                <label for="target_date">Target Date</label>
+                                <input type="date" id="target_date" name="target_date" value="<?php echo date('Y-m-d', strtotime('+1 year')); ?>" required>
+                                <div class="invalid-feedback">Please provide a target date after the start date.</div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label for="target_date" class="form-label">Target Date</label>
-                            <input type="date" class="form-control" id="target_date" name="target_date" value="<?php echo date('Y-m-d', strtotime('+1 year')); ?>" required>
-                            <div class="invalid-feedback">Please provide a target date after the start date.</div>
+                        
+                        <div class="form-field">
+                            <label for="priority">Priority</label>
+                            <select id="priority" name="priority">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
                         </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="priority" class="form-label">Priority</label>
-                        <select class="form-select" id="priority" name="priority">
-                            <option value="low">Low</option>
-                            <option value="medium" selected>Medium</option>
-                            <option value="high">High</option>
-                        </select>
-                    </div>
-                    
-                    <div id="goalCalculator" class="alert alert-info d-none">
-                        <h6 class="alert-heading mb-2">Goal Calculator</h6>
-                        <div class="mb-2">
-                            <span>Monthly contribution needed: </span>
-                            <strong id="monthlyContribution">$0.00</strong>
-                        </div>
-                        <div>
-                            <span>Total time to achieve goal: </span>
-                            <strong id="timeToGoal">0 months</strong>
+                        
+                        <div id="goalCalculator" class="calculator-info d-none">
+                            <h6>Goal Calculator</h6>
+                            <div class="info-row">
+                                <span class="info-label">Monthly contribution needed:</span>
+                                <span class="info-value" id="monthlyContribution">$0.00</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Total time to achieve goal:</span>
+                                <span class="info-value" id="timeToGoal">0 months</span>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Goal</button>
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-plus"></i>
+                        Add Goal
+                    </button>
                 </div>
             </form>
         </div>
@@ -426,96 +434,106 @@ require_once 'includes/header.php';
 </div>
 
 <!-- Edit Goal Modal -->
-<div class="modal fade" id="editGoalModal" tabindex="-1" aria-labelledby="editGoalModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="editGoalModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editGoalModalLabel">Edit Financial Goal</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-icon edit">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <h5 class="modal-title">Edit Financial Goal</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <form action="<?php echo BASE_PATH; ?>/goals" method="post" class="needs-validation" novalidate>
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="goal_id" id="edit_goal_id">
                 
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="edit_name" class="form-label">Goal Name</label>
-                        <input type="text" class="form-control" id="edit_name" name="name" required>
-                        <div class="invalid-feedback">Please provide a goal name.</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="edit_description" class="form-label">Description (Optional)</label>
-                        <textarea class="form-control" id="edit_description" name="description" rows="2"></textarea>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="edit_target_amount" class="form-label">Target Amount</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="edit_target_amount" name="target_amount" step="0.01" min="0.01" required>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="edit_name">Goal Name</label>
+                            <input type="text" id="edit_name" name="name" required>
+                            <div class="invalid-feedback">Please provide a goal name.</div>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="edit_description">Description (Optional)</label>
+                            <textarea id="edit_description" name="description" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="edit_target_amount">Target Amount</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">$</span>
+                                    <input type="number" id="edit_target_amount" name="target_amount" step="0.01" min="0.01" required>
+                                </div>
                                 <div class="invalid-feedback">Please provide a valid target amount.</div>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_current_amount" class="form-label">Current Amount</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="edit_current_amount" name="current_amount" step="0.01" min="0">
+                            <div class="form-field">
+                                <label for="edit_current_amount">Current Amount</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">$</span>
+                                    <input type="number" id="edit_current_amount" name="current_amount" step="0.01" min="0">
+                                </div>
                                 <div class="invalid-feedback">Current amount must be a non-negative number.</div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="edit_start_date" class="form-label">Start Date</label>
-                            <input type="date" class="form-control" id="edit_start_date" name="start_date" required>
-                            <div class="invalid-feedback">Please provide a start date.</div>
+                        
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="edit_start_date">Start Date</label>
+                                <input type="date" id="edit_start_date" name="start_date" required>
+                                <div class="invalid-feedback">Please provide a start date.</div>
+                            </div>
+                            <div class="form-field">
+                                <label for="edit_target_date">Target Date</label>
+                                <input type="date" id="edit_target_date" name="target_date" required>
+                                <div class="invalid-feedback">Please provide a target date after the start date.</div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label for="edit_target_date" class="form-label">Target Date</label>
-                            <input type="date" class="form-control" id="edit_target_date" name="target_date" required>
-                            <div class="invalid-feedback">Please provide a target date after the start date.</div>
+                        
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="edit_priority">Priority</label>
+                                <select id="edit_priority" name="priority">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label for="edit_status">Status</label>
+                                <select id="edit_status" name="status">
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="edit_priority" class="form-label">Priority</label>
-                            <select class="form-select" id="edit_priority" name="priority">
-                                <option value="low">Low</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_status" class="form-label">Status</label>
-                            <select class="form-select" id="edit_status" name="status">
-                                <option value="in-progress">In Progress</option>
-                                <option value="completed">Completed</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div id="editGoalCalculator" class="alert alert-info d-none">
-                        <h6 class="alert-heading mb-2">Goal Calculator</h6>
-                        <div class="mb-2">
-                            <span>Monthly contribution needed: </span>
-                            <strong id="editMonthlyContribution">$0.00</strong>
-                        </div>
-                        <div>
-                            <span>Total time to achieve goal: </span>
-                            <strong id="editTimeToGoal">0 months</strong>
+                        
+                        <div id="editGoalCalculator" class="calculator-info d-none">
+                            <h6>Goal Calculator</h6>
+                            <div class="info-row">
+                                <span class="info-label">Monthly contribution needed:</span>
+                                <span class="info-value" id="editMonthlyContribution">$0.00</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Total time to achieve goal:</span>
+                                <span class="info-value" id="editTimeToGoal">0 months</span>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-save"></i>
+                        Save Changes
+                    </button>
                 </div>
             </form>
         </div>
@@ -523,52 +541,56 @@ require_once 'includes/header.php';
 </div>
 
 <!-- Update Progress Modal -->
-<div class="modal fade" id="updateProgressModal" tabindex="-1" aria-labelledby="updateProgressModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="updateProgressModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="updateProgressModalLabel">Update Goal Progress</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-icon success">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h5 class="modal-title">Update Goal Progress</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <form action="<?php echo BASE_PATH; ?>/goals" method="post" class="needs-validation" novalidate>
                 <input type="hidden" name="action" value="update_progress">
                 <input type="hidden" name="goal_id" id="progress_goal_id">
                 
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <h6 id="progress_goal_name" class="fw-bold mb-3"></h6>
-                        <div class="progress mb-2">
-                            <div class="progress-bar" id="progress_bar" role="progressbar" style="width: 0%"></div>
+                    <div class="progress-modal-info">
+                        <h6 id="progress_goal_name"></h6>
+                        <div class="progress-visualization">
+                            <div class="progress-bar" id="progress_bar" role="progressbar"></div>
                         </div>
-                        <div class="d-flex justify-content-between">
-                            <span>
-                                Current: <strong id="progress_current_amount">$0.00</strong>
-                            </span>
-                            <span>
-                                Target: <strong id="progress_target_amount">$0.00</strong>
-                            </span>
+                        <div class="progress-details">
+                            <span>Current: <strong id="progress_current_amount">$0.00</strong></span>
+                            <span>Target: <strong id="progress_target_amount">$0.00</strong></span>
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="progress_amount" class="form-label">Add to Current Amount</label>
+                    <div class="form-field">
+                        <label for="progress_amount">Add to Current Amount</label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" id="progress_amount" name="amount" step="0.01" min="0.01" required>
-                            <div class="invalid-feedback">Please enter a valid positive amount.</div>
+                            <span class="currency-symbol">$</span>
+                            <input type="number" id="progress_amount" name="amount" step="0.01" min="0.01" required>
                         </div>
+                        <div class="invalid-feedback">Please enter a valid positive amount.</div>
                         <div class="form-text">Enter the amount you want to add to your current progress.</div>
                     </div>
                     
-                    <div class="alert alert-success d-none" id="progress_completion_alert">
-                        <i class="fas fa-check-circle me-2"></i>
+                    <div class="completion-alert d-none" id="progress_completion_alert">
+                        <i class="fas fa-check-circle"></i>
                         <span>This contribution will complete your goal!</span>
                     </div>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">Update Progress</button>
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-arrow-up"></i>
+                        Update Progress
+                    </button>
                 </div>
             </form>
         </div>
@@ -576,26 +598,32 @@ require_once 'includes/header.php';
 </div>
 
 <!-- Delete Goal Modal -->
-<div class="modal fade" id="deleteGoalModal" tabindex="-1" aria-labelledby="deleteGoalModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
+<div class="modal fade" id="deleteGoalModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="deleteGoalModalLabel">Delete Goal</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-icon delete">
+                    <i class="fas fa-trash-alt"></i>
+                </div>
+                <h5 class="modal-title">Delete Goal</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="modal-body text-center">
-                <div class="mb-3">
-                    <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
-                    <p>Are you sure you want to delete this goal? This action cannot be undone.</p>
-                    <p class="fw-bold text-danger" id="delete_goal_name"></p>
-                </div>
+                <p>Are you sure you want to delete this goal?</p>
+                <p><strong id="delete_goal_name"></strong></p>
+                <p class="text-muted">This action cannot be undone.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="<?php echo BASE_PATH; ?>/goals" method="post">
+                <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                <form action="<?php echo BASE_PATH; ?>/goals" method="post" style="display: inline;">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="goal_id" id="delete_goal_id">
-                    <button type="submit" class="btn btn-danger">Delete</button>
+                    <button type="submit" class="btn-submit danger">
+                        <i class="fas fa-trash-alt"></i>
+                        Delete
+                    </button>
                 </form>
             </div>
         </div>
@@ -603,28 +631,33 @@ require_once 'includes/header.php';
 </div>
 
 <!-- Recommend Goals Modal -->
-<div class="modal fade" id="recommendGoalsModal" tabindex="-1" aria-labelledby="recommendGoalsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade" id="recommendGoalsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="recommendGoalsModalLabel">Goal Recommendations</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-icon recommendation">
+                    <i class="fas fa-magic"></i>
+                </div>
+                <h5 class="modal-title">Goal Recommendations</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="modal-body">
                 <?php if (isset($show_recommendations) && isset($recommended_goals)): ?>
-                    <div class="alert alert-info mb-4">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Based on your monthly income of $<?php echo number_format($monthly_income, 2); ?>, here are some recommended financial goals.
+                    <div class="recommendation-info">
+                        <i class="fas fa-info-circle"></i>
+                        <p>Based on your monthly income of $<?php echo number_format($monthly_income, 2); ?>, here are some recommended financial goals.</p>
                     </div>
                     
                     <div class="table-responsive">
-                        <table class="table table-bordered">
+                        <table class="recommendations-table">
                             <thead>
                                 <tr>
                                     <th>Goal</th>
                                     <th>Description</th>
                                     <th>Target Amount</th>
-                                    <th>Monthly Contribution</th>
+                                    <th>Monthly</th>
                                     <th>Priority</th>
                                     <th>Action</th>
                                 </tr>
@@ -637,12 +670,12 @@ require_once 'includes/header.php';
                                         <td>$<?php echo number_format($rec_goal['target_amount'], 2); ?></td>
                                         <td>$<?php echo number_format($rec_goal['monthly_contribution'], 2); ?></td>
                                         <td>
-                                            <span class="badge bg-<?php echo $rec_goal['priority'] === 'high' ? 'danger' : ($rec_goal['priority'] === 'medium' ? 'warning' : 'info'); ?>">
+                                            <span class="priority-badge priority-<?php echo $rec_goal['priority']; ?>">
                                                 <?php echo ucfirst($rec_goal['priority']); ?>
                                             </span>
                                         </td>
                                         <td>
-                                            <button type="button" class="btn btn-sm btn-success adopt-goal" 
+                                            <button type="button" class="btn-adopt adopt-goal" 
                                                 data-name="<?php echo htmlspecialchars($rec_goal['name']); ?>"
                                                 data-description="<?php echo htmlspecialchars($rec_goal['description']); ?>"
                                                 data-target="<?php echo $rec_goal['target_amount']; ?>"
@@ -660,9 +693,9 @@ require_once 'includes/header.php';
                     <form action="<?php echo BASE_PATH; ?>/goals" method="post">
                         <input type="hidden" name="action" value="recommend_goals">
                         
-                        <div class="alert alert-info mb-4">
-                            <i class="fas fa-info-circle me-2"></i>
-                            The system will suggest financial goals based on your income level and common financial planning principles.
+                        <div class="recommendation-info">
+                            <i class="fas fa-info-circle"></i>
+                            <p>The system will suggest financial goals based on your income level and common financial planning principles.</p>
                         </div>
                         
                         <div class="mb-4">
@@ -679,7 +712,7 @@ require_once 'includes/header.php';
                         </div>
                         
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-success">
+                            <button type="submit" class="btn-submit">
                                 <i class="fas fa-magic"></i> Generate Recommendations
                             </button>
                         </div>
@@ -687,7 +720,7 @@ require_once 'includes/header.php';
                 <?php endif; ?>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn-cancel" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
