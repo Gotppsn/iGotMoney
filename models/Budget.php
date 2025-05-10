@@ -81,7 +81,7 @@ class Budget {
                     FROM " . $this->table . " b
                     JOIN " . $this->categories_table . " c ON b.category_id = c.category_id
                     WHERE b.user_id = ? 
-                    ORDER BY b.start_date DESC";
+                    ORDER BY CASE WHEN c.name = 'Investments' THEN 0 ELSE 1 END, c.name";
             
             // Prepare statement
             $stmt = $this->conn->prepare($query);
@@ -269,7 +269,8 @@ class Budget {
                     FROM " . $this->table . " b
                     JOIN " . $this->categories_table . " c ON b.category_id = c.category_id
                     WHERE b.user_id = ? 
-                    AND ? BETWEEN b.start_date AND b.end_date";
+                    AND ? BETWEEN b.start_date AND b.end_date
+                    ORDER BY CASE WHEN c.name = 'Investments' THEN 0 ELSE 1 END, c.name";
             
             // Prepare statement
             $stmt = $this->conn->prepare($query);
@@ -331,7 +332,8 @@ class Budget {
                     'available' => $available,
                     'percentage' => $percentage,
                     'start_date' => $budget['start_date'],
-                    'end_date' => $budget['end_date']
+                    'end_date' => $budget['end_date'],
+                    'is_investment' => ($budget['category_name'] === 'Investments')
                 );
             }
             
@@ -351,7 +353,7 @@ class Budget {
             }
             
             // Get expense categories
-            $categories_query = "SELECT * FROM " . $this->categories_table;
+            $categories_query = "SELECT * FROM " . $this->categories_table . " ORDER BY CASE WHEN name = 'Investments' THEN 0 ELSE 1 END, name";
             $categories_stmt = $this->conn->prepare($categories_query);
             if (!$categories_stmt) {
                 error_log("Failed to prepare categories statement: " . $this->conn->error);
@@ -404,14 +406,14 @@ class Budget {
                 'Food' => 15,
                 'Transportation' => 10,
                 'Utilities' => 10,
-                'Insurance' => 10,
+                'Insurance' => 5,
                 'Healthcare' => 5,
                 'Entertainment' => 5,
                 'Personal Care' => 5,
-                'Education' => 5,
+                'Education' => 3,
                 'Debt Payments' => 0, // Will be calculated based on actual debts
-                'Investments' => 0, // Will be added if income permits
-                'Miscellaneous' => 5
+                'Investments' => 10, // Prioritize investments at 10%
+                'Miscellaneous' => 2
             );
             
             $budget_plan = array();
@@ -428,20 +430,28 @@ class Budget {
                 // Calculate recommended budget
                 $allocated_amount = ($monthly_income * $percentage) / 100;
                 
+                // Special handling for investments - ensure minimum allocation
+                if ($category_name === 'Investments') {
+                    // Ensure at least 10% goes to investments
+                    $allocated_amount = max($allocated_amount, $monthly_income * 0.1);
+                }
+                
                 // Check past spending
                 if (isset($expense_map[$category_id])) {
                     $past_average = $expense_map[$category_id]['average'];
                     
-                    // Adjust allocation based on past spending
-                    if ($past_average > $allocated_amount * 1.5) {
-                        // Past spending is significantly higher - adjust upward but not fully
-                        $allocated_amount = ($allocated_amount * 0.6) + ($past_average * 0.4);
-                    } else if ($past_average < $allocated_amount * 0.5) {
-                        // Past spending is significantly lower - adjust downward but not fully
-                        $allocated_amount = ($allocated_amount * 0.7) + ($past_average * 0.3);
-                    } else {
-                        // Past spending is in a reasonable range - slight adjustment
-                        $allocated_amount = ($allocated_amount * 0.8) + ($past_average * 0.2);
+                    // Adjust allocation based on past spending, except for investments
+                    if ($category_name !== 'Investments') {
+                        if ($past_average > $allocated_amount * 1.5) {
+                            // Past spending is significantly higher - adjust upward but not fully
+                            $allocated_amount = ($allocated_amount * 0.6) + ($past_average * 0.4);
+                        } else if ($past_average < $allocated_amount * 0.5) {
+                            // Past spending is significantly lower - adjust downward but not fully
+                            $allocated_amount = ($allocated_amount * 0.7) + ($past_average * 0.3);
+                        } else {
+                            // Past spending is in a reasonable range - slight adjustment
+                            $allocated_amount = ($allocated_amount * 0.8) + ($past_average * 0.2);
+                        }
                     }
                 }
                 
@@ -450,7 +460,8 @@ class Budget {
                     'category_id' => $category_id,
                     'category_name' => $category_name,
                     'allocated_amount' => round($allocated_amount, 2),
-                    'percentage' => $percentage
+                    'percentage' => round(($allocated_amount / $monthly_income) * 100, 2),
+                    'is_investment' => ($category_name === 'Investments')
                 );
                 
                 $total_allocated += $allocated_amount;
@@ -461,14 +472,66 @@ class Budget {
                 $adjustment_factor = $monthly_income / $total_allocated;
                 
                 foreach ($budget_plan as &$item) {
-                    $item['allocated_amount'] = round($item['allocated_amount'] * $adjustment_factor, 2);
+                    // Protect investment allocation during adjustment
+                    if ($item['category_name'] === 'Investments') {
+                        // Keep investment at least 10% of income
+                        $min_investment = $monthly_income * 0.1;
+                        $item['allocated_amount'] = max($min_investment, round($item['allocated_amount'] * $adjustment_factor, 2));
+                    } else {
+                        $item['allocated_amount'] = round($item['allocated_amount'] * $adjustment_factor, 2);
+                    }
                     $item['percentage'] = round(($item['allocated_amount'] / $monthly_income) * 100, 2);
                 }
             }
             
+            // Sort to put investments first
+            usort($budget_plan, function($a, $b) {
+                if ($a['is_investment'] && !$b['is_investment']) return -1;
+                if (!$a['is_investment'] && $b['is_investment']) return 1;
+                return strcasecmp($a['category_name'], $b['category_name']);
+            });
+            
             return $budget_plan;
         } catch (Exception $e) {
             error_log("Exception in Budget::generateBudgetPlan: " . $e->getMessage());
+            return array();
+        }
+    }
+    
+    // Get investment history for budget tracking
+    public function getInvestmentHistory($user_id) {
+        try {
+            $query = "SELECT 
+                        DATE_FORMAT(expense_date, '%Y-%m') as month,
+                        SUM(amount) as total_investment
+                      FROM " . $this->expenses_table . " e
+                      JOIN " . $this->categories_table . " c ON e.category_id = c.category_id
+                      WHERE e.user_id = ? AND c.name = 'Investments'
+                      GROUP BY DATE_FORMAT(expense_date, '%Y-%m')
+                      ORDER BY month DESC
+                      LIMIT 12";
+            
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                error_log("Failed to prepare statement: " . $this->conn->error);
+                return array();
+            }
+            
+            $stmt->bind_param("i", $user_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $history = array();
+            while ($row = $result->fetch_assoc()) {
+                $history[] = array(
+                    'month' => $row['month'],
+                    'amount' => $row['total_investment']
+                );
+            }
+            
+            return $history;
+        } catch (Exception $e) {
+            error_log("Exception in Budget::getInvestmentHistory: " . $e->getMessage());
             return array();
         }
     }
