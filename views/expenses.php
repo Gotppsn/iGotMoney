@@ -99,7 +99,9 @@ require_once 'includes/header.php';
                     </div>
                 </div>
                 <div class="chart-body">
-                    <div id="categoryChart" class="chart-container"></div>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
                     <div id="chartNoData" class="no-data-message" style="display: <?php echo (isset($top_expenses) && $top_expenses->num_rows > 0) ? 'none' : 'block'; ?>">
                         <i class="fas fa-chart-bar"></i>
                         <p>No expense data available for the selected period</p>

@@ -271,7 +271,7 @@ function updateChartData(period) {
         chartContainer.style.opacity = '0.5';
     }
     
-    fetch(`${basePath}/expenses?action=get_expenses_by_date&period=${period}`, {
+    fetch(`${basePath}/expenses?action=get_expense_analytics&period=${period}`, {
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
         }
