@@ -1,11 +1,13 @@
-/**
- * iGotMoney - Expenses Page JavaScript
- * 
- * Handles all interactive functionality for the expenses page
- */
-
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Expenses.js: DOM fully loaded');
+    
+    // Prevent multiple initializations
+    if (window.expensesInitialized) {
+        console.log('Expenses.js: Already initialized, skipping...');
+        return;
+    }
+    
+    window.expensesInitialized = true;
     
     try {
         initializeExpenseForms();
@@ -22,11 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-/**
- * Initialize the main expense chart
- */
 function initializeChart() {
-    // Check if Chart.js is loaded
     if (typeof Chart === 'undefined') {
         console.error('Chart.js is not loaded!');
         return;
@@ -38,25 +36,17 @@ function initializeChart() {
         return;
     }
     
-    // Properly check and destroy existing chart
-    try {
-        const existingChart = Chart.getChart(chartCanvas);
-        if (existingChart) {
-            existingChart.destroy();
-            console.log('Existing chart destroyed');
-        }
-    } catch (e) {
-        console.log('No existing chart found or error destroying it:', e);
+    // Check if chart already exists and destroy it
+    const existingChart = Chart.getChart(chartCanvas);
+    if (existingChart) {
+        console.log('Destroying existing chart instance');
+        existingChart.destroy();
     }
     
-    // Clear any existing reference
+    // Clean up any global reference
     if (window.expenseCategoryChart) {
-        try {
-            if (typeof window.expenseCategoryChart.destroy === 'function') {
-                window.expenseCategoryChart.destroy();
-            }
-        } catch (e) {
-            console.log('Error destroying window.expenseCategoryChart:', e);
+        if (typeof window.expenseCategoryChart.destroy === 'function') {
+            window.expenseCategoryChart.destroy();
         }
         window.expenseCategoryChart = null;
     }
@@ -66,7 +56,6 @@ function initializeChart() {
     Chart.defaults.color = '#718096';
     Chart.defaults.responsive = true;
     
-    // Get chart data from meta tags
     try {
         const chartLabelsEl = document.querySelector('meta[name="chart-labels"]');
         const chartDataEl = document.querySelector('meta[name="chart-data"]');
@@ -89,6 +78,8 @@ function initializeChart() {
         
         if (chartLabels.length > 0 && chartData.length > 0) {
             const ctx = chartCanvas.getContext('2d');
+            
+            // Create new chart instance
             window.expenseCategoryChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
@@ -146,7 +137,6 @@ function initializeChart() {
             
             console.log('Chart initialized successfully');
             
-            // Hide no data message
             const chartNoData = document.getElementById('chartNoData');
             if (chartNoData) {
                 chartNoData.style.display = 'none';
@@ -167,11 +157,7 @@ function initializeChart() {
     }
 }
 
-/**
- * Initialize expense forms
- */
 function initializeExpenseForms() {
-    // Form validation
     const forms = document.querySelectorAll('.needs-validation');
     
     Array.from(forms).forEach(form => {
@@ -185,7 +171,6 @@ function initializeExpenseForms() {
         }, false);
     });
     
-    // Toggle recurring options in add form
     const isRecurringCheckbox = document.getElementById('is_recurring');
     const recurringOptions = document.getElementById('recurring_options');
     
@@ -201,7 +186,6 @@ function initializeExpenseForms() {
         });
     }
     
-    // Toggle recurring options in edit form
     const editIsRecurringCheckbox = document.getElementById('edit_is_recurring');
     const editRecurringOptions = document.getElementById('edit_recurring_options');
     
@@ -218,11 +202,7 @@ function initializeExpenseForms() {
     }
 }
 
-/**
- * Initialize table filters and search
- */
 function initializeTableFilters() {
-    // Expense search functionality
     const expenseSearch = document.getElementById('expenseSearch');
     if (expenseSearch) {
         expenseSearch.addEventListener('keyup', function() {
@@ -244,7 +224,6 @@ function initializeTableFilters() {
                     }
                 });
                 
-                // Show/hide no data message
                 const tableContainer = table.closest('.table-responsive');
                 const tableNoData = document.getElementById('tableNoData');
                 
@@ -256,7 +235,6 @@ function initializeTableFilters() {
                         tableContainer.style.display = 'block';
                         tableNoData.style.display = 'none';
                         
-                        // Add temporary no results message
                         let noResultsRow = table.querySelector('.no-results');
                         if (!noResultsRow) {
                             const tbody = table.querySelector('tbody');
@@ -269,7 +247,6 @@ function initializeTableFilters() {
                         tableContainer.style.display = 'block';
                         tableNoData.style.display = 'none';
                         
-                        // Remove no results message if it exists
                         const noResultsRow = table.querySelector('.no-results');
                         if (noResultsRow) {
                             noResultsRow.remove();
@@ -280,7 +257,6 @@ function initializeTableFilters() {
         });
     }
     
-    // Date range filter
     const dateRangeSelect = document.getElementById('dateRangeSelect');
     const customDateRange = document.getElementById('customDateRange');
     const applyDateFilter = document.getElementById('applyDateFilter');
@@ -352,12 +328,8 @@ function initializeTableFilters() {
     }
 }
 
-/**
- * Initialize expense actions (edit, delete)
- */
 function initializeExpenseActions() {
     document.addEventListener('click', function(e) {
-        // Edit expense action
         if (e.target.closest('.edit-expense')) {
             e.preventDefault();
             const button = e.target.closest('.edit-expense');
@@ -367,7 +339,6 @@ function initializeExpenseActions() {
             }
         }
         
-        // Delete expense action
         if (e.target.closest('.delete-expense')) {
             e.preventDefault();
             const button = e.target.closest('.delete-expense');
@@ -381,9 +352,6 @@ function initializeExpenseActions() {
     });
 }
 
-/**
- * Fetch expense details for editing
- */
 function fetchExpenseDetails(expenseId) {
     const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
     
@@ -395,7 +363,6 @@ function fetchExpenseDetails(expenseId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Populate form fields
                 document.getElementById('edit_expense_id').value = data.expense.expense_id;
                 document.getElementById('edit_category_id').value = data.expense.category_id;
                 document.getElementById('edit_description').value = data.expense.description;
@@ -410,7 +377,6 @@ function fetchExpenseDetails(expenseId) {
                     document.getElementById('edit_frequency').value = data.expense.frequency;
                 }
                 
-                // Show modal
                 const editModal = new bootstrap.Modal(document.getElementById('editExpenseModal'));
                 editModal.show();
             } else {
@@ -423,43 +389,32 @@ function fetchExpenseDetails(expenseId) {
         });
 }
 
-/**
- * Initialize chart interactions
- */
 function initializeChartInteractions() {
     document.addEventListener('click', function(e) {
         if (e.target.closest('.chart-period')) {
             e.preventDefault();
             const option = e.target.closest('.chart-period');
             
-            // Update dropdown button text
             const dropdownButton = document.getElementById('chartPeriodDropdown');
             if (dropdownButton) {
                 dropdownButton.innerHTML = '<i class="fas fa-calendar-alt me-1"></i> ' + option.textContent.trim();
             }
             
-            // Remove active class from all options
             document.querySelectorAll('.chart-period').forEach(opt => opt.classList.remove('active'));
             
-            // Add active class to selected option
             option.classList.add('active');
             
-            // Update chart with new data for selected period
             updateChartForPeriod(option.getAttribute('data-period'));
         }
     });
 }
 
-/**
- * Update chart for different time periods
- */
 function updateChartForPeriod(period) {
     const chartContainer = document.querySelector('.chart-container');
     const chartNoData = document.getElementById('chartNoData');
     
     if (!chartContainer) return;
     
-    // Show loading indicator
     chartContainer.style.opacity = 0.5;
     const spinner = document.createElement('div');
     spinner.className = 'position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center';
@@ -468,7 +423,6 @@ function updateChartForPeriod(period) {
     
     const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
     
-    // Calculate date range based on period
     let startDate, endDate;
     const now = new Date();
     
@@ -494,7 +448,7 @@ function updateChartForPeriod(period) {
             startDate = new Date(2000, 0, 1);
             endDate = new Date(now.getFullYear() + 10, 11, 31);
             break;
-        default: // current-month
+        default:
             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
             endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     }
@@ -518,7 +472,6 @@ function updateChartForPeriod(period) {
             
             if (data.success) {
                 if (data.expenses.length > 0) {
-                    // Process data for chart
                     const categoryTotals = {};
                     
                     data.expenses.forEach(expense => {
@@ -529,7 +482,6 @@ function updateChartForPeriod(period) {
                         categoryTotals[category] += parseFloat(expense.amount);
                     });
                     
-                    // Sort categories by amount
                     const sortedCategories = Object.entries(categoryTotals)
                         .sort((a, b) => b[1] - a[1])
                         .slice(0, 10);
@@ -537,7 +489,6 @@ function updateChartForPeriod(period) {
                     const labels = sortedCategories.map(item => item[0]);
                     const values = sortedCategories.map(item => item[1]);
                     
-                    // Update chart
                     if (window.expenseCategoryChart && typeof window.expenseCategoryChart.update === 'function') {
                         window.expenseCategoryChart.data.labels = labels;
                         window.expenseCategoryChart.data.datasets[0].data = values;
@@ -549,7 +500,6 @@ function updateChartForPeriod(period) {
                         }
                     }
                     
-                    // Update top expenses list
                     updateTopExpensesList(sortedCategories, data.total);
                 } else {
                     chartContainer.style.display = 'none';
@@ -577,9 +527,6 @@ function updateChartForPeriod(period) {
         });
 }
 
-/**
- * Update top expenses list with new data
- */
 function updateTopExpensesList(categories, totalAmount) {
     const topExpensesContainer = document.querySelector('.chart-card:nth-child(2) .card-body');
     
@@ -635,9 +582,6 @@ function updateTopExpensesList(categories, totalAmount) {
     }
 }
 
-/**
- * Initialize analytics functionality
- */
 function initializeAnalytics() {
     const calculateAnalyticsBtn = document.getElementById('calculateAnalytics');
     
@@ -656,9 +600,6 @@ function initializeAnalytics() {
     }
 }
 
-/**
- * Fetch analytics data
- */
 function fetchAnalyticsData() {
     const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
     const analyticsContent = document.getElementById('analyticsContent');
@@ -711,9 +652,6 @@ function fetchAnalyticsData() {
         });
 }
 
-/**
- * Display analytics data
- */
 function displayAnalytics(analytics) {
     const analyticsContent = document.getElementById('analyticsContent');
     
@@ -818,11 +756,7 @@ function displayAnalytics(analytics) {
     }, 100);
 }
 
-/**
- * Add animations to page elements
- */
 function animateElements() {
-    // Animate progress bars
     const progressBars = document.querySelectorAll('.progress-bar');
     progressBars.forEach((bar, index) => {
         setTimeout(() => {
@@ -831,7 +765,6 @@ function animateElements() {
         }, 100 + (index * 50));
     });
     
-    // Animate card entrance
     const cards = document.querySelectorAll('.card');
     cards.forEach((card, index) => {
         card.style.opacity = 0;
@@ -845,17 +778,12 @@ function animateElements() {
     });
 }
 
-/**
- * Show notification
- */
 function showNotification(message, type = 'info') {
-    // Remove existing notifications
     const existingNotifications = document.querySelectorAll('.expense-notification');
     existingNotifications.forEach(notification => {
         notification.remove();
     });
     
-    // Create notification element
     const notification = document.createElement('div');
     notification.className = `expense-notification alert alert-${type} alert-dismissible fade show`;
     notification.style.position = 'fixed';
@@ -875,13 +803,11 @@ function showNotification(message, type = 'info') {
     
     document.body.appendChild(notification);
     
-    // Trigger animation
     setTimeout(() => {
         notification.style.opacity = '1';
         notification.style.transform = 'translateX(0)';
     }, 10);
     
-    // Remove after timeout
     setTimeout(() => {
         notification.style.opacity = '0';
         notification.style.transform = 'translateX(50px)';

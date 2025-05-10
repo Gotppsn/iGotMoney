@@ -112,8 +112,10 @@ require_once 'includes/header.php';
                 </div>
             </div>
             <div class="card-body">
-                <div class="chart-container position-relative">
-                    <canvas id="expenseCategoryChart"></canvas>
+                <div class="chart-wrapper">
+                    <div class="chart-container position-relative">
+                        <canvas id="expenseCategoryChart"></canvas>
+                    </div>
                 </div>
                 <div id="chartNoData" class="text-center py-4 empty-state" style="display: <?php echo (isset($top_expenses) && $top_expenses->num_rows > 0) ? 'none' : 'block'; ?>">
                     <div class="empty-state-icon">
@@ -545,152 +547,8 @@ echo '<meta name="chart-labels" content="' . htmlspecialchars(json_encode($chart
 echo '<meta name="chart-data" content="' . htmlspecialchars(json_encode($chart_data)) . '">';
 echo '<meta name="chart-colors" content="' . htmlspecialchars(json_encode(array_slice($chart_colors, 0, count($chart_data)))) . '">';
 
-// Add page-specific script for chart initialization
-$page_scripts = "
-// Initialize Chart.js
-document.addEventListener('DOMContentLoaded', function() {
-    // First check if Chart.js is available
-    if (typeof Chart === 'undefined') {
-        console.error('Chart.js is not loaded!');
-        return;
-    }
-    
-    // Get chart canvas element
-    const chartCanvas = document.getElementById('expenseCategoryChart');
-    if (!chartCanvas) {
-        console.error('Chart canvas element not found!');
-        return;
-    }
-    
-    // Set global Chart.js defaults
-    Chart.defaults.font.family = '\"Inter\", \"Roboto\", \"Helvetica Neue\", Arial, sans-serif';
-    Chart.defaults.color = '#718096';
-    Chart.defaults.responsive = true;
-    
-    // Get chart data from meta tags
-    try {
-        const chartLabelsEl = document.querySelector('meta[name=\"chart-labels\"]');
-        const chartDataEl = document.querySelector('meta[name=\"chart-data\"]');
-        const chartColorsEl = document.querySelector('meta[name=\"chart-colors\"]');
-        
-        if (!chartLabelsEl || !chartDataEl || !chartColorsEl) {
-            console.error('Chart data meta tags not found!');
-            document.getElementById('chartNoData').style.display = 'block';
-            return;
-        }
-        
-        const chartLabels = JSON.parse(chartLabelsEl.getAttribute('content') || '[]');
-        const chartData = JSON.parse(chartDataEl.getAttribute('content') || '[]');
-        const chartColors = JSON.parse(chartColorsEl.getAttribute('content') || '[]');
-        
-        console.log('Chart data loaded:', { chartLabels, chartData, chartColors });
-        
-        // Create chart if we have data
-        if (chartLabels.length > 0 && chartData.length > 0) {
-            const ctx = chartCanvas.getContext('2d');
-            window.expenseCategoryChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: chartLabels,
-                    datasets: [{
-                        data: chartData,
-                        backgroundColor: chartColors,
-                        borderWidth: 0,
-                        hoverOffset: 10,
-                        borderRadius: 3
-                    }]
-                },
-                options: {
-                    cutout: '70%',
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true,
-                                boxWidth: 8,
-                                font: {
-                                    size: 11
-                                }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                            padding: 12,
-                            titleFont: {
-                                size: 14,
-                                weight: 'bold'
-                            },
-                            bodyFont: {
-                                size: 13
-                            },
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.raw || 0;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = Math.round((value / total) * 100);
-                                    return ` \${label}: \$\${value.toFixed(2)} (\${percentage}%)`;
-                                }
-                            }
-                        }
-                    },
-                    animation: {
-                        animateScale: true,
-                        animateRotate: true,
-                        duration: 1000
-                    }
-                }
-            });
-            
-            console.log('Chart initialized successfully');
-            
-            // Hide no data message
-            document.getElementById('chartNoData').style.display = 'none';
-        } else {
-            console.log('No chart data available');
-            document.getElementById('chartNoData').style.display = 'block';
-        }
-    } catch (error) {
-        console.error('Error initializing chart:', error);
-        document.getElementById('chartNoData').style.display = 'block';
-    }
-    
-    // Animate progress bars
-    const progressBars = document.querySelectorAll('.progress-bar');
-    if (progressBars.length > 0) {
-        progressBars.forEach((bar, index) => {
-            setTimeout(() => {
-                const width = bar.getAttribute('aria-valuenow') + '%';
-                bar.style.width = width;
-            }, 100 + (index * 50));
-        });
-    }
-    
-    // Initialize form toggles
-    const isRecurringCheckbox = document.getElementById('is_recurring');
-    const recurringOptions = document.getElementById('recurring_options');
-    
-    if (isRecurringCheckbox && recurringOptions) {
-        isRecurringCheckbox.addEventListener('change', function() {
-            recurringOptions.style.display = this.checked ? 'block' : 'none';
-        });
-    }
-    
-    const editIsRecurringCheckbox = document.getElementById('edit_is_recurring');
-    const editRecurringOptions = document.getElementById('edit_recurring_options');
-    
-    if (editIsRecurringCheckbox && editRecurringOptions) {
-        editIsRecurringCheckbox.addEventListener('change', function() {
-            editRecurringOptions.style.display = this.checked ? 'block' : 'none';
-        });
-    }
-});
-
-// Log debug information
-console.log('Base Path:', '" . BASE_PATH . "');
-console.log('Expenses script loaded');
-";
+// Add page-specific script
+$page_scripts = "";
 
 // Include footer
 require_once 'includes/footer.php';
