@@ -293,7 +293,7 @@ require_once 'includes/header.php';
                     <strong>Period:</strong> <?php echo date('M j, Y', strtotime($start_date)); ?> to <?php echo date('M j, Y', strtotime($end_date)); ?>
                 </div>
                 
-                <?php if (isset($report_data['monthly_cash_flow']) && $report_data['monthly_cash_flow']->num_rows > 0): ?>
+                <?php if (isset($report_data['monthly_cash_flow']) && !empty($report_data['monthly_cash_flow'])): ?>
                     <div class="table-responsive mb-4">
                         <table class="table report-table">
                             <thead>
@@ -310,7 +310,7 @@ require_once 'includes/header.php';
                                 $total_expenses = 0;
                                 $total_net = 0;
                                 
-                                while ($row = $report_data['monthly_cash_flow']->fetch_assoc()):
+                                foreach ($report_data['monthly_cash_flow'] as $row):
                                     $month_label = date('M Y', strtotime($row['month'] . '-01'));
                                     $total_income += $row['income'];
                                     $total_expenses += $row['expenses'];
@@ -329,7 +329,7 @@ require_once 'includes/header.php';
                                         <td>$<?php echo number_format($row['expenses'], 2); ?></td>
                                         <td>$<?php echo number_format($row['net'], 2); ?></td>
                                     </tr>
-                                <?php endwhile; ?>
+                                <?php endforeach; ?>
                                 <tr class="table-primary">
                                     <td><strong>Total</strong></td>
                                     <td><strong>$<?php echo number_format($total_income, 2); ?></strong></td>
@@ -498,7 +498,7 @@ require_once 'includes/header.php';
                         </div>
                     <?php endif; ?>
                     
-                    <?php if (isset($report_data['cash_flow_data']['monthly_cash_flow']) && $report_data['cash_flow_data']['monthly_cash_flow']->num_rows > 0): ?>
+                    <?php if (isset($report_data['cash_flow_data']['monthly_cash_flow']) && !empty($report_data['cash_flow_data']['monthly_cash_flow'])): ?>
                         <h6 class="mt-4 mb-3 font-weight-bold">Monthly Cash Flow</h6>
                         <div class="table-responsive">
                             <table class="table report-table">
@@ -512,8 +512,7 @@ require_once 'includes/header.php';
                                 </thead>
                                 <tbody>
                                     <?php 
-                                    $report_data['cash_flow_data']['monthly_cash_flow']->data_seek(0);
-                                    while ($row = $report_data['cash_flow_data']['monthly_cash_flow']->fetch_assoc()):
+                                    foreach ($report_data['cash_flow_data']['monthly_cash_flow'] as $row):
                                         $month_label = date('M Y', strtotime($row['month'] . '-01'));
                                         $class = '';
                                         if ($row['net'] < 0) {
@@ -528,7 +527,7 @@ require_once 'includes/header.php';
                                             <td>$<?php echo number_format($row['expenses'], 2); ?></td>
                                             <td>$<?php echo number_format($row['net'], 2); ?></td>
                                         </tr>
-                                    <?php endwhile; ?>
+                                    <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -566,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
 ";
 
 // Income Trend Chart
-if (isset($chart_data['income_trend'])) {
+if (isset($chart_data['income_trend']) && !empty($chart_data['income_trend']['labels'])) {
     $page_scripts .= "
     var incomeTrendCtx = document.getElementById('incomeTrendChart');
     if (incomeTrendCtx) {
@@ -655,7 +654,7 @@ if (isset($chart_data['income_trend'])) {
 }
 
 // Expense Category Chart
-if (isset($chart_data['expense_by_category'])) {
+if (isset($chart_data['expense_by_category']) && !empty($chart_data['expense_by_category']['labels'])) {
     $page_scripts .= "
     var expenseCategoryCtx = document.getElementById('expenseCategoryChart');
     if (expenseCategoryCtx) {
@@ -742,7 +741,7 @@ if (isset($chart_data['expense_by_category'])) {
 }
 
 // Expense Trend Chart
-if (isset($chart_data['expense_trend'])) {
+if (isset($chart_data['expense_trend']) && !empty($chart_data['expense_trend']['labels'])) {
     $page_scripts .= "
     var expenseTrendCtx = document.getElementById('expenseTrendChart');
     if (expenseTrendCtx) {
@@ -831,7 +830,7 @@ if (isset($chart_data['expense_trend'])) {
 }
 
 // Budget vs Actual Chart
-if (isset($chart_data['budget_vs_actual'])) {
+if (isset($chart_data['budget_vs_actual']) && !empty($chart_data['budget_vs_actual']['labels'])) {
     $page_scripts .= "
     var budgetVsActualCtx = document.getElementById('budgetVsActualChart');
     if (budgetVsActualCtx) {
@@ -925,7 +924,7 @@ if (isset($chart_data['budget_vs_actual'])) {
 }
 
 // Cash Flow Chart
-if (isset($chart_data['monthly_cash_flow'])) {
+if (isset($chart_data['monthly_cash_flow']) && !empty($chart_data['monthly_cash_flow']['labels'])) {
     $page_scripts .= "
     var cashFlowCtx = document.getElementById('cashFlowChart');
     if (cashFlowCtx) {
@@ -1035,7 +1034,7 @@ if (isset($chart_data['monthly_cash_flow'])) {
 }
 
 // Investment By Type Chart
-if (isset($chart_data['investment_by_type'])) {
+if (isset($chart_data['investment_by_type']) && !empty($chart_data['investment_by_type']['labels'])) {
     $page_scripts .= "
     var investmentByTypeCtx = document.getElementById('investmentByTypeChart');
     if (investmentByTypeCtx) {
@@ -1121,7 +1120,7 @@ if (isset($chart_data['investment_by_type'])) {
 }
 
 // Income vs Expense Chart
-if (isset($chart_data['income_vs_expense'])) {
+if (isset($chart_data['income_vs_expense']) && !empty($chart_data['income_vs_expense']['labels'])) {
     $page_scripts .= "
     var incomeVsExpenseCtx = document.getElementById('incomeVsExpenseChart');
     if (incomeVsExpenseCtx) {
@@ -1191,7 +1190,7 @@ if (isset($chart_data['income_vs_expense'])) {
 }
 
 // Monthly Trends Chart
-if (isset($chart_data['monthly_trends'])) {
+if (isset($chart_data['monthly_trends']) && !empty($chart_data['monthly_trends']['labels'])) {
     $page_scripts .= "
     var monthlyTrendsCtx = document.getElementById('monthlyTrendsChart');
     if (monthlyTrendsCtx) {

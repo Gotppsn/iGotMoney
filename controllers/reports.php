@@ -158,8 +158,8 @@ switch ($selected_report_type) {
             $net_data = [];
             
             $monthly_cash_flow = $report_data['monthly_cash_flow'];
-            if ($monthly_cash_flow->num_rows > 0) {
-                while ($row = $monthly_cash_flow->fetch_assoc()) {
+            if (!empty($monthly_cash_flow)) {
+                foreach ($monthly_cash_flow as $row) {
                     $month_label = date('M Y', strtotime($row['month'] . '-01'));
                     $labels[] = $month_label;
                     $income_data[] = $row['income'];
@@ -220,9 +220,8 @@ switch ($selected_report_type) {
             $net_data = [];
             
             $monthly_cash_flow = $report_data['cash_flow_data']['monthly_cash_flow'];
-            if ($monthly_cash_flow->num_rows > 0) {
-                $monthly_cash_flow->data_seek(0);
-                while ($row = $monthly_cash_flow->fetch_assoc()) {
+            if (!empty($monthly_cash_flow)) {
+                foreach ($monthly_cash_flow as $row) {
                     $month_label = date('M Y', strtotime($row['month'] . '-01'));
                     $labels[] = $month_label;
                     $income_data[] = $row['income'];
@@ -313,9 +312,8 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
             fputcsv($output, ['Month', 'Income', 'Expenses', 'Net Cash Flow']);
             
             // Write data
-            if (isset($report_data['monthly_cash_flow']) && $report_data['monthly_cash_flow']->num_rows > 0) {
-                $report_data['monthly_cash_flow']->data_seek(0);
-                while ($row = $report_data['monthly_cash_flow']->fetch_assoc()) {
+            if (isset($report_data['monthly_cash_flow']) && !empty($report_data['monthly_cash_flow'])) {
+                foreach ($report_data['monthly_cash_flow'] as $row) {
                     $month_label = date('M Y', strtotime($row['month'] . '-01'));
                     
                     fputcsv($output, [
@@ -343,9 +341,8 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
             fputcsv($output, ['Monthly Cash Flow']);
             fputcsv($output, ['Month', 'Income', 'Expenses', 'Net']);
             
-            if (isset($report_data['cash_flow_data']['monthly_cash_flow']) && $report_data['cash_flow_data']['monthly_cash_flow']->num_rows > 0) {
-                $report_data['cash_flow_data']['monthly_cash_flow']->data_seek(0);
-                while ($row = $report_data['cash_flow_data']['monthly_cash_flow']->fetch_assoc()) {
+            if (isset($report_data['cash_flow_data']['monthly_cash_flow']) && !empty($report_data['cash_flow_data']['monthly_cash_flow'])) {
+                foreach ($report_data['cash_flow_data']['monthly_cash_flow'] as $row) {
                     $month_label = date('M Y', strtotime($row['month'] . '-01'));
                     
                     fputcsv($output, [
