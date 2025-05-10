@@ -4,19 +4,16 @@
  * Handles all interactive functionality for the expenses page
  */
 
-// Wait for DOM content to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Expenses.js: DOM fully loaded');
     
     try {
-        // Initialize components with try/catch blocks for better error handling
         initializeExpenseForms();
         initializeTableFilters();
         initializeExpenseActions();
         initializeChartInteractions();
         initializeAnalytics();
-        
-        // Add animations
+        initializeChart();
         animateElements();
         
         console.log('Expenses.js: All components initialized successfully');
@@ -24,6 +21,109 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Expenses.js: Error during initialization:', error);
     }
 });
+
+/**
+ * Initialize the main expense chart
+ */
+function initializeChart() {
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not loaded!');
+        return;
+    }
+    
+    const chartCanvas = document.getElementById('expenseCategoryChart');
+    if (!chartCanvas) {
+        console.error('Chart canvas element not found!');
+        return;
+    }
+    
+    // Set global Chart.js defaults
+    Chart.defaults.font.family = '"Inter", "Roboto", "Helvetica Neue", Arial, sans-serif';
+    Chart.defaults.color = '#718096';
+    Chart.defaults.responsive = true;
+    
+    // Get chart data from meta tags
+    try {
+        const chartLabelsEl = document.querySelector('meta[name="chart-labels"]');
+        const chartDataEl = document.querySelector('meta[name="chart-data"]');
+        const chartColorsEl = document.querySelector('meta[name="chart-colors"]');
+        
+        if (!chartLabelsEl || !chartDataEl || !chartColorsEl) {
+            console.error('Chart data meta tags not found!');
+            document.getElementById('chartNoData').style.display = 'block';
+            return;
+        }
+        
+        const chartLabels = JSON.parse(chartLabelsEl.getAttribute('content') || '[]');
+        const chartData = JSON.parse(chartDataEl.getAttribute('content') || '[]');
+        const chartColors = JSON.parse(chartColorsEl.getAttribute('content') || '[]');
+        
+        if (chartLabels.length > 0 && chartData.length > 0) {
+            const ctx = chartCanvas.getContext('2d');
+            window.expenseCategoryChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: chartColors,
+                        borderWidth: 0,
+                        hoverOffset: 10,
+                        borderRadius: 3
+                    }]
+                },
+                options: {
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                boxWidth: 8,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                            padding: 12,
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return ` ${label}: $${value.toFixed(2)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true,
+                        duration: 1000
+                    }
+                }
+            });
+            
+            document.getElementById('chartNoData').style.display = 'none';
+        } else {
+            document.getElementById('chartNoData').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error initializing chart:', error);
+        document.getElementById('chartNoData').style.display = 'block';
+    }
+}
 
 /**
  * Initialize expense forms
@@ -50,6 +150,9 @@ function initializeExpenseForms() {
     if (isRecurringCheckbox && recurringOptions) {
         isRecurringCheckbox.addEventListener('change', function() {
             recurringOptions.style.display = this.checked ? 'block' : 'none';
+            if (!this.checked) {
+                document.getElementById('frequency').value = 'monthly';
+            }
         });
     }
     
@@ -60,6 +163,9 @@ function initializeExpenseForms() {
     if (editIsRecurringCheckbox && editRecurringOptions) {
         editIsRecurringCheckbox.addEventListener('change', function() {
             editRecurringOptions.style.display = this.checked ? 'block' : 'none';
+            if (!this.checked) {
+                document.getElementById('edit_frequency').value = 'monthly';
+            }
         });
     }
 }
@@ -78,17 +184,49 @@ function initializeTableFilters() {
             if (table) {
                 const searchText = this.value.toLowerCase();
                 const rows = table.querySelectorAll('tbody tr');
+                let visibleRows = 0;
                 
                 rows.forEach(row => {
                     const text = row.textContent.toLowerCase();
-                    row.style.display = text.includes(searchText) ? '' : 'none';
+                    if (text.includes(searchText)) {
+                        row.style.display = '';
+                        visibleRows++;
+                    } else {
+                        row.style.display = 'none';
+                    }
                 });
                 
                 // Show/hide no data message
+                const tableContainer = table.closest('.table-responsive');
                 const tableNoData = document.getElementById('tableNoData');
-                if (tableNoData) {
-                    const visibleRows = table.querySelectorAll('tbody tr[style=""]').length;
-                    tableNoData.style.display = visibleRows === 0 ? 'block' : 'none';
+                
+                if (tableContainer && tableNoData) {
+                    if (rows.length === 0) {
+                        tableContainer.style.display = 'none';
+                        tableNoData.style.display = 'block';
+                    } else if (visibleRows === 0) {
+                        tableContainer.style.display = 'block';
+                        tableNoData.style.display = 'none';
+                        
+                        // Add temporary no results message
+                        let noResultsRow = table.querySelector('.no-results');
+                        if (!noResultsRow) {
+                            const tbody = table.querySelector('tbody');
+                            noResultsRow = document.createElement('tr');
+                            noResultsRow.className = 'no-results';
+                            noResultsRow.innerHTML = '<td colspan="7" class="text-center py-4">No matching expenses found</td>';
+                            tbody.appendChild(noResultsRow);
+                        }
+                    } else {
+                        tableContainer.style.display = 'block';
+                        tableNoData.style.display = 'none';
+                        
+                        // Remove no results message if it exists
+                        const noResultsRow = table.querySelector('.no-results');
+                        if (noResultsRow) {
+                            noResultsRow.remove();
+                        }
+                    }
                 }
             }
         });
@@ -113,10 +251,8 @@ function initializeTableFilters() {
             let startDate, endDate;
             const now = new Date();
             
-            // Calculate date range based on selected option
             switch(selectedRange) {
                 case 'all':
-                    // Redirect to view all expenses
                     window.location.href = `${basePath}/expenses`;
                     return;
                 case 'current-month':
@@ -140,7 +276,6 @@ function initializeTableFilters() {
                     endDate = new Date(now.getFullYear(), 11, 31);
                     break;
                 case 'custom':
-                    // Get dates from custom inputs
                     const startInput = document.getElementById('startDate');
                     const endInput = document.getElementById('endDate');
                     
@@ -148,8 +283,7 @@ function initializeTableFilters() {
                         startDate = new Date(startInput.value);
                         endDate = new Date(endInput.value);
                     } else {
-                        // Show error message if dates not selected
-                        alert('Please select both start and end dates for custom range.');
+                        showNotification('Please select both start and end dates for custom range.', 'warning');
                         return;
                     }
                     break;
@@ -158,7 +292,6 @@ function initializeTableFilters() {
                     endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
             }
             
-            // Format dates for URL
             const formatDate = date => {
                 const year = date.getFullYear();
                 const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -166,7 +299,6 @@ function initializeTableFilters() {
                 return `${year}-${month}-${day}`;
             };
             
-            // Redirect with date filter
             window.location.href = `${basePath}/expenses?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
         });
     }
@@ -176,30 +308,28 @@ function initializeTableFilters() {
  * Initialize expense actions (edit, delete)
  */
 function initializeExpenseActions() {
-    // Edit expense action
-    const editButtons = document.querySelectorAll('.edit-expense');
-    
-    editButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const expenseId = this.getAttribute('data-expense-id');
+    document.addEventListener('click', function(e) {
+        // Edit expense action
+        if (e.target.closest('.edit-expense')) {
+            e.preventDefault();
+            const button = e.target.closest('.edit-expense');
+            const expenseId = button.getAttribute('data-expense-id');
             if (expenseId) {
                 fetchExpenseDetails(expenseId);
             }
-        });
-    });
-    
-    // Delete expense action
-    const deleteButtons = document.querySelectorAll('.delete-expense');
-    
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const expenseId = this.getAttribute('data-expense-id');
+        }
+        
+        // Delete expense action
+        if (e.target.closest('.delete-expense')) {
+            e.preventDefault();
+            const button = e.target.closest('.delete-expense');
+            const expenseId = button.getAttribute('data-expense-id');
             if (expenseId) {
                 document.getElementById('delete_expense_id').value = expenseId;
                 const deleteModal = new bootstrap.Modal(document.getElementById('deleteExpenseModal'));
                 deleteModal.show();
             }
-        });
+        }
     });
 }
 
@@ -214,48 +344,28 @@ function fetchExpenseDetails(expenseId) {
             'X-Requested-With': 'XMLHttpRequest'
         }
     })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             if (data.success) {
                 // Populate form fields
                 document.getElementById('edit_expense_id').value = data.expense.expense_id;
-                
-                // Safely set values with error handling
-                const categoryField = document.getElementById('edit_category_id');
-                if (categoryField) categoryField.value = data.expense.category_id;
-                
-                const descriptionField = document.getElementById('edit_description');
-                if (descriptionField) descriptionField.value = data.expense.description;
-                
-                const amountField = document.getElementById('edit_amount');
-                if (amountField) amountField.value = data.expense.amount;
-                
-                const dateField = document.getElementById('edit_expense_date');
-                if (dateField) dateField.value = data.expense.expense_date;
+                document.getElementById('edit_category_id').value = data.expense.category_id;
+                document.getElementById('edit_description').value = data.expense.description;
+                document.getElementById('edit_amount').value = data.expense.amount;
+                document.getElementById('edit_expense_date').value = data.expense.expense_date;
                 
                 const isRecurring = data.expense.is_recurring === '1' || data.expense.is_recurring === 1;
-                
-                const recurringField = document.getElementById('edit_is_recurring');
-                if (recurringField) recurringField.checked = isRecurring;
-                
-                const recurringOptions = document.getElementById('edit_recurring_options');
-                if (recurringOptions) recurringOptions.style.display = isRecurring ? 'block' : 'none';
+                document.getElementById('edit_is_recurring').checked = isRecurring;
+                document.getElementById('edit_recurring_options').style.display = isRecurring ? 'block' : 'none';
                 
                 if (isRecurring) {
-                    const frequencyField = document.getElementById('edit_frequency');
-                    if (frequencyField) frequencyField.value = data.expense.frequency;
+                    document.getElementById('edit_frequency').value = data.expense.frequency;
                 }
                 
                 // Show modal
                 const editModal = new bootstrap.Modal(document.getElementById('editExpenseModal'));
                 editModal.show();
             } else {
-                console.error('Error fetching expense details:', data.message);
                 showNotification('Failed to fetch expense details', 'danger');
             }
         })
@@ -269,28 +379,26 @@ function fetchExpenseDetails(expenseId) {
  * Initialize chart interactions
  */
 function initializeChartInteractions() {
-    // Chart period dropdown handler
-    const chartPeriodOptions = document.querySelectorAll('.chart-period');
-    
-    chartPeriodOptions.forEach(option => {
-        option.addEventListener('click', function(e) {
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.chart-period')) {
             e.preventDefault();
+            const option = e.target.closest('.chart-period');
             
             // Update dropdown button text
             const dropdownButton = document.getElementById('chartPeriodDropdown');
             if (dropdownButton) {
-                dropdownButton.textContent = this.textContent.trim();
+                dropdownButton.innerHTML = '<i class="fas fa-calendar-alt me-1"></i> ' + option.textContent.trim();
             }
             
             // Remove active class from all options
-            chartPeriodOptions.forEach(opt => opt.classList.remove('active'));
+            document.querySelectorAll('.chart-period').forEach(opt => opt.classList.remove('active'));
             
             // Add active class to selected option
-            this.classList.add('active');
+            option.classList.add('active');
             
             // Update chart with new data for selected period
-            updateChartForPeriod(this.getAttribute('data-period'));
-        });
+            updateChartForPeriod(option.getAttribute('data-period'));
+        }
     });
 }
 
@@ -301,129 +409,116 @@ function updateChartForPeriod(period) {
     const chartContainer = document.querySelector('.chart-container');
     const chartNoData = document.getElementById('chartNoData');
     
-    if (chartContainer) {
-        // Show loading indicator
-        chartContainer.style.opacity = 0.5;
-        const spinner = document.createElement('div');
-        spinner.className = 'position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center';
-        spinner.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
-        chartContainer.appendChild(spinner);
-        
-        // Get base path
-        const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
-        
-        // Calculate date range based on period
-        let startDate, endDate;
-        const now = new Date();
-        
-        switch(period) {
-            case 'last-month':
-                startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                endDate = new Date(now.getFullYear(), now.getMonth(), 0);
-                break;
-            case 'quarter':
-                const quarter = Math.floor(now.getMonth() / 3);
-                startDate = new Date(now.getFullYear(), quarter * 3, 1);
-                endDate = new Date(now.getFullYear(), (quarter + 1) * 3, 0);
-                break;
-            case 'last-3-months':
-                startDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
-                endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                break;
-            case 'current-year':
-                startDate = new Date(now.getFullYear(), 0, 1);
-                endDate = new Date(now.getFullYear(), 11, 31);
-                break;
-            case 'all':
-                startDate = new Date(2000, 0, 1); // Far back enough to include all data
-                endDate = new Date(now.getFullYear() + 10, 11, 31); // Far ahead enough to include all data
-                break;
-            default: // current-month
-                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    if (!chartContainer) return;
+    
+    // Show loading indicator
+    chartContainer.style.opacity = 0.5;
+    const spinner = document.createElement('div');
+    spinner.className = 'position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center';
+    spinner.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
+    chartContainer.appendChild(spinner);
+    
+    const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
+    
+    // Calculate date range based on period
+    let startDate, endDate;
+    const now = new Date();
+    
+    switch(period) {
+        case 'last-month':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+            break;
+        case 'quarter':
+            const quarter = Math.floor(now.getMonth() / 3);
+            startDate = new Date(now.getFullYear(), quarter * 3, 1);
+            endDate = new Date(now.getFullYear(), (quarter + 1) * 3, 0);
+            break;
+        case 'last-3-months':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+            endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            break;
+        case 'current-year':
+            startDate = new Date(now.getFullYear(), 0, 1);
+            endDate = new Date(now.getFullYear(), 11, 31);
+            break;
+        case 'all':
+            startDate = new Date(2000, 0, 1);
+            endDate = new Date(now.getFullYear() + 10, 11, 31);
+            break;
+        default: // current-month
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    }
+    
+    const formatDate = date => {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    
+    fetch(`${basePath}/expenses?action=get_expenses_by_date&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
         }
-        
-        // Format dates for API
-        const formatDate = date => {
-            const year = date.getFullYear();
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const day = date.getDate().toString().padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        };
-        
-        // Fetch data for the specified period
-        fetch(`${basePath}/expenses?action=get_expenses_by_date&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-            .then(response => response.json())
-            .then(data => {
-                // Remove spinner
-                spinner.remove();
-                chartContainer.style.opacity = 1;
-                
-                if (data.success) {
-                    if (data.expenses.length > 0) {
-                        // Process data for chart
-                        const categoryTotals = {};
-                        
-                        // Calculate totals by category
-                        data.expenses.forEach(expense => {
-                            const category = expense.category_name;
-                            if (!categoryTotals[category]) {
-                                categoryTotals[category] = 0;
-                            }
-                            categoryTotals[category] += parseFloat(expense.amount);
-                        });
-                        
-                        // Sort categories by amount
-                        const sortedCategories = Object.entries(categoryTotals)
-                            .sort((a, b) => b[1] - a[1])
-                            .slice(0, 10); // Limit to top 10 categories
-                        
-                        // Prepare chart data
-                        const labels = sortedCategories.map(item => item[0]);
-                        const values = sortedCategories.map(item => item[1]);
-                        
-                        // Update chart
-                        if (window.expenseCategoryChart) {
-                            window.expenseCategoryChart.data.labels = labels;
-                            window.expenseCategoryChart.data.datasets[0].data = values;
-                            window.expenseCategoryChart.update();
-                            
-                            // Show chart and hide no data message
-                            chartContainer.style.display = 'block';
-                            chartNoData.style.display = 'none';
+    })
+        .then(response => response.json())
+        .then(data => {
+            spinner.remove();
+            chartContainer.style.opacity = 1;
+            
+            if (data.success) {
+                if (data.expenses.length > 0) {
+                    // Process data for chart
+                    const categoryTotals = {};
+                    
+                    data.expenses.forEach(expense => {
+                        const category = expense.category_name;
+                        if (!categoryTotals[category]) {
+                            categoryTotals[category] = 0;
                         }
+                        categoryTotals[category] += parseFloat(expense.amount);
+                    });
+                    
+                    // Sort categories by amount
+                    const sortedCategories = Object.entries(categoryTotals)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 10);
+                    
+                    const labels = sortedCategories.map(item => item[0]);
+                    const values = sortedCategories.map(item => item[1]);
+                    
+                    // Update chart
+                    if (window.expenseCategoryChart) {
+                        window.expenseCategoryChart.data.labels = labels;
+                        window.expenseCategoryChart.data.datasets[0].data = values;
+                        window.expenseCategoryChart.update();
                         
-                        // Also update the top expenses list
-                        updateTopExpensesList(sortedCategories, data.total);
-                        
-                        showNotification(`Chart updated to ${period.replace('-', ' ')} view`, 'info');
-                    } else {
-                        // Show no data message
-                        chartContainer.style.display = 'none';
-                        chartNoData.style.display = 'block';
+                        chartContainer.style.display = 'block';
+                        chartNoData.style.display = 'none';
                     }
+                    
+                    // Update top expenses list
+                    updateTopExpensesList(sortedCategories, data.total);
                 } else {
-                    console.error('Error fetching data for chart:', data.message);
-                    // Show no data message
                     chartContainer.style.display = 'none';
                     chartNoData.style.display = 'block';
                 }
-            })
-            .catch(error => {
-                // Remove spinner
-                spinner.remove();
-                chartContainer.style.opacity = 1;
-                
-                console.error('Error:', error);
-                // Show no data message
+            } else {
+                console.error('Error fetching data for chart:', data.message);
                 chartContainer.style.display = 'none';
                 chartNoData.style.display = 'block';
-            });
-    }
+            }
+        })
+        .catch(error => {
+            spinner.remove();
+            chartContainer.style.opacity = 1;
+            
+            console.error('Error:', error);
+            chartContainer.style.display = 'none';
+            chartNoData.style.display = 'block';
+        });
 }
 
 /**
@@ -433,10 +528,8 @@ function updateTopExpensesList(categories, totalAmount) {
     const topExpensesContainer = document.querySelector('.chart-card:nth-child(2) .card-body');
     
     if (topExpensesContainer && categories.length > 0) {
-        // Create HTML content
         let html = '';
         
-        // Add top 5 categories or fewer if less available
         const displayCategories = categories.slice(0, 5);
         
         displayCategories.forEach(([category, amount]) => {
@@ -467,7 +560,6 @@ function updateTopExpensesList(categories, totalAmount) {
             </div>`;
         });
         
-        // If no categories, show empty state
         if (categories.length === 0) {
             html = `
             <div class="text-center py-4 empty-state">
@@ -479,7 +571,6 @@ function updateTopExpensesList(categories, totalAmount) {
             </div>`;
         }
         
-        // Update the content with animation
         topExpensesContainer.style.opacity = 0;
         setTimeout(() => {
             topExpensesContainer.innerHTML = html;
@@ -493,17 +584,13 @@ function updateTopExpensesList(categories, totalAmount) {
  */
 function initializeAnalytics() {
     const calculateAnalyticsBtn = document.getElementById('calculateAnalytics');
-    const analyticsContent = document.getElementById('analyticsContent');
-    const analyticsPlaceholder = document.getElementById('analyticsPlaceholder');
     
-    if (calculateAnalyticsBtn && analyticsContent && analyticsPlaceholder) {
+    if (calculateAnalyticsBtn) {
         calculateAnalyticsBtn.addEventListener('click', function() {
-            // Show loading state
             this.disabled = true;
             this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Calculating...';
-            analyticsPlaceholder.style.display = 'none';
+            document.getElementById('analyticsPlaceholder').style.display = 'none';
             
-            // Fetch analytics data
             fetchAnalyticsData();
         });
     }
@@ -525,14 +612,11 @@ function fetchAnalyticsData() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Reset button state
                 calculateAnalyticsBtn.disabled = false;
                 calculateAnalyticsBtn.innerHTML = '<i class="fas fa-calculator me-1"></i> Recalculate';
                 
-                // Populate analytics content
                 displayAnalytics(data.analytics);
                 
-                // Show analytics content with animation
                 analyticsContent.style.opacity = 0;
                 analyticsContent.style.display = 'flex';
                 setTimeout(() => {
@@ -544,11 +628,9 @@ function fetchAnalyticsData() {
                 console.error('Error fetching analytics:', data.message);
                 showNotification('Failed to fetch analytics', 'danger');
                 
-                // Reset button state
                 calculateAnalyticsBtn.disabled = false;
                 calculateAnalyticsBtn.innerHTML = '<i class="fas fa-calculator me-1"></i> Calculate';
                 
-                // Show placeholder
                 document.getElementById('analyticsPlaceholder').style.display = 'block';
             }
         })
@@ -556,11 +638,9 @@ function fetchAnalyticsData() {
             console.error('Error:', error);
             showNotification('An error occurred', 'danger');
             
-            // Reset button state
             calculateAnalyticsBtn.disabled = false;
             calculateAnalyticsBtn.innerHTML = '<i class="fas fa-calculator me-1"></i> Calculate';
             
-            // Show placeholder
             document.getElementById('analyticsPlaceholder').style.display = 'block';
         });
 }
@@ -571,19 +651,17 @@ function fetchAnalyticsData() {
 function displayAnalytics(analytics) {
     const analyticsContent = document.getElementById('analyticsContent');
     
-    // Format date range
     const startDate = new Date(analytics.start_date);
     const endDate = new Date(analytics.end_date);
     const dateOptions = { year: 'numeric', month: 'short', day: 'numeric' };
     const formattedStartDate = startDate.toLocaleDateString('en-US', dateOptions);
     const formattedEndDate = endDate.toLocaleDateString('en-US', dateOptions);
     
-    // Create HTML content
     let html = `
     <div class="col-12 mb-3">
         <div class="alert alert-info mb-0">
             <i class="fas fa-info-circle me-2"></i>
-            Showing analytics for period: <strong>${formattedStartDate}</strong> to <strong>${formattedEndDate}</strong>
+            Showing analytics for: <strong>${formattedStartDate}</strong> to <strong>${formattedEndDate}</strong>
             (${analytics.days_in_period} days)
         </div>
     </div>
@@ -620,18 +698,15 @@ function displayAnalytics(analytics) {
         </div>
     </div>`;
     
-    // Add category breakdown if available
     if (Object.keys(analytics.category_totals).length > 0) {
         html += `
         <div class="col-12 mt-2">
             <h6 class="mb-3">Category Breakdown</h6>
             <div class="row">`;
         
-        // Get sorted categories
         const categories = Object.entries(analytics.category_totals);
         categories.sort((a, b) => b[1] - a[1]);
         
-        // Add each category
         categories.forEach(([category, amount]) => {
             const percentage = ((amount / analytics.total_amount) * 100).toFixed(1);
             html += `
@@ -660,10 +735,8 @@ function displayAnalytics(analytics) {
         </div>`;
     }
     
-    // Update the content
     analyticsContent.innerHTML = html;
     
-    // Add animation to items
     setTimeout(() => {
         const items = analyticsContent.querySelectorAll('.analytics-item, .expense-item');
         items.forEach((item, index) => {
@@ -710,7 +783,7 @@ function animateElements() {
  * Show notification
  */
 function showNotification(message, type = 'info') {
-    // First, remove any existing notifications
+    // Remove existing notifications
     const existingNotifications = document.querySelectorAll('.expense-notification');
     existingNotifications.forEach(notification => {
         notification.remove();
@@ -729,13 +802,11 @@ function showNotification(message, type = 'info') {
     notification.style.transform = 'translateX(50px)';
     notification.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
     
-    // Set notification content
     notification.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
     
-    // Add to document
     document.body.appendChild(notification);
     
     // Trigger animation

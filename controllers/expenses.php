@@ -22,232 +22,221 @@ $expense = new Expense();
 
 // Handle AJAX requests
 if (isset($_GET['action'])) {
+    header('Content-Type: application/json');
+    
     $action = $_GET['action'];
     
-    if ($action === 'get_expense') {
-        // Set content type to JSON
-        header('Content-Type: application/json');
-        
-        $expense_id = isset($_GET['expense_id']) ? intval($_GET['expense_id']) : 0;
-        
-        if (!$expense_id) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Invalid expense ID.'
-            ]);
-            exit();
-        }
-        
-        if ($expense->getById($expense_id, $user_id)) {
-            echo json_encode([
-                'success' => true,
-                'expense' => [
-                    'expense_id' => $expense->expense_id,
-                    'category_id' => $expense->category_id,
-                    'amount' => $expense->amount,
-                    'description' => $expense->description,
-                    'expense_date' => $expense->expense_date,
-                    'frequency' => $expense->frequency,
-                    'is_recurring' => $expense->is_recurring
-                ]
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Expense not found.'
-            ]);
-        }
-        
-        exit();
-    } elseif ($action === 'get_expenses_by_date') {
-        // Set content type to JSON
-        header('Content-Type: application/json');
-        
-        $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : null;
-        $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : null;
-        
-        if (!$start_date || !$end_date) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Start and end dates are required.'
-            ]);
-            exit();
-        }
-        
-        $result = $expense->getByDateRange($user_id, $start_date, $end_date);
-        
-        if ($result && $result->num_rows > 0) {
-            $expenses_data = [];
-            while ($row = $result->fetch_assoc()) {
-                $expenses_data[] = [
-                    'expense_id' => $row['expense_id'],
-                    'category_id' => $row['category_id'],
-                    'category_name' => $row['category_name'],
-                    'amount' => $row['amount'],
-                    'description' => $row['description'],
-                    'expense_date' => $row['expense_date'],
-                    'frequency' => $row['frequency'],
-                    'is_recurring' => $row['is_recurring']
-                ];
+    switch ($action) {
+        case 'get_expense':
+            $expense_id = isset($_GET['expense_id']) ? intval($_GET['expense_id']) : 0;
+            
+            if (!$expense_id) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Invalid expense ID.'
+                ]);
+                exit();
             }
             
-            // Calculate total for the period
-            $total = 0;
-            foreach ($expenses_data as $exp) {
-                $total += floatval($exp['amount']);
+            if ($expense->getById($expense_id, $user_id)) {
+                echo json_encode([
+                    'success' => true,
+                    'expense' => [
+                        'expense_id' => $expense->expense_id,
+                        'category_id' => $expense->category_id,
+                        'amount' => $expense->amount,
+                        'description' => $expense->description,
+                        'expense_date' => $expense->expense_date,
+                        'frequency' => $expense->frequency,
+                        'is_recurring' => $expense->is_recurring
+                    ]
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Expense not found.'
+                ]);
+            }
+            exit();
+            
+        case 'get_expenses_by_date':
+            $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : null;
+            $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : null;
+            
+            if (!$start_date || !$end_date) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Start and end dates are required.'
+                ]);
+                exit();
             }
             
-            echo json_encode([
-                'success' => true,
-                'expenses' => $expenses_data,
-                'total' => $total
-            ]);
-        } else {
-            echo json_encode([
-                'success' => true,
-                'expenses' => [],
-                'total' => 0
-            ]);
-        }
-        
-        exit();
-    } elseif ($action === 'get_expense_analytics') {
-        // Set content type to JSON
-        header('Content-Type: application/json');
-        
-        // Get period - default to current month
-        $period = isset($_GET['period']) ? $_GET['period'] : 'current-month';
-        
-        // Calculate date range based on period
-        $start_date = null;
-        $end_date = null;
-        
-        $now = new DateTime();
-        
-        switch ($period) {
-            case 'current-month':
-                $start_date = date('Y-m-01'); // First day of current month
-                $end_date = date('Y-m-t'); // Last day of current month
-                break;
-            case 'last-month':
-                $start_date = date('Y-m-01', strtotime('first day of last month'));
-                $end_date = date('Y-m-t', strtotime('last day of last month'));
-                break;
-            case 'last-3-months':
-                $start_date = date('Y-m-d', strtotime('-3 months'));
-                $end_date = date('Y-m-d');
-                break;
-            case 'current-year':
-                $start_date = date('Y-01-01'); // First day of current year
-                $end_date = date('Y-12-31'); // Last day of current year
-                break;
-            case 'custom':
-                $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
-                $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
-                break;
-        }
-        
-        // Get expenses for the period
-        $result = $expense->getByDateRange($user_id, $start_date, $end_date);
-        
-        if ($result && $result->num_rows > 0) {
-            $expenses_data = [];
-            $total_amount = 0;
-            $highest_amount = 0;
-            $highest_category = '';
-            $category_totals = [];
+            $result = $expense->getByDateRange($user_id, $start_date, $end_date);
             
-            while ($row = $result->fetch_assoc()) {
-                $expenses_data[] = [
-                    'expense_id' => $row['expense_id'],
-                    'category_id' => $row['category_id'],
-                    'category_name' => $row['category_name'],
-                    'amount' => $row['amount'],
-                    'description' => $row['description'],
-                    'expense_date' => $row['expense_date'],
-                    'frequency' => $row['frequency'],
-                    'is_recurring' => $row['is_recurring']
-                ];
-                
-                // Calculate total
-                $amount = floatval($row['amount']);
-                $total_amount += $amount;
-                
-                // Track highest expense
-                if ($amount > $highest_amount) {
-                    $highest_amount = $amount;
-                    $highest_category = $row['category_name'];
+            if ($result && $result->num_rows > 0) {
+                $expenses_data = [];
+                while ($row = $result->fetch_assoc()) {
+                    $expenses_data[] = [
+                        'expense_id' => $row['expense_id'],
+                        'category_id' => $row['category_id'],
+                        'category_name' => $row['category_name'],
+                        'amount' => $row['amount'],
+                        'description' => $row['description'],
+                        'expense_date' => $row['expense_date'],
+                        'frequency' => $row['frequency'],
+                        'is_recurring' => $row['is_recurring']
+                    ];
                 }
                 
-                // Track category totals
-                if (!isset($category_totals[$row['category_name']])) {
-                    $category_totals[$row['category_name']] = 0;
+                // Calculate total for the period
+                $total = 0;
+                foreach ($expenses_data as $exp) {
+                    $total += floatval($exp['amount']);
                 }
-                $category_totals[$row['category_name']] += $amount;
+                
+                echo json_encode([
+                    'success' => true,
+                    'expenses' => $expenses_data,
+                    'total' => $total
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => true,
+                    'expenses' => [],
+                    'total' => 0
+                ]);
+            }
+            exit();
+            
+        case 'get_expense_analytics':
+            $period = isset($_GET['period']) ? $_GET['period'] : 'current-month';
+            
+            // Calculate date range based on period
+            $start_date = null;
+            $end_date = null;
+            
+            $now = new DateTime();
+            
+            switch ($period) {
+                case 'current-month':
+                    $start_date = $now->format('Y-m-01');
+                    $end_date = $now->format('Y-m-t');
+                    break;
+                case 'last-month':
+                    $now->modify('first day of last month');
+                    $start_date = $now->format('Y-m-01');
+                    $now->modify('last day of this month');
+                    $end_date = $now->format('Y-m-d');
+                    break;
+                case 'last-3-months':
+                    $now->modify('-3 months');
+                    $start_date = $now->format('Y-m-d');
+                    $end_date = date('Y-m-d');
+                    break;
+                case 'current-year':
+                    $start_date = $now->format('Y-01-01');
+                    $end_date = $now->format('Y-12-31');
+                    break;
+                case 'custom':
+                    $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : $now->format('Y-m-01');
+                    $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : $now->format('Y-m-d');
+                    break;
             }
             
-            // Sort categories by total
-            arsort($category_totals);
+            // Get expenses for the period
+            $result = $expense->getByDateRange($user_id, $start_date, $end_date);
             
-            // Calculate days in period
-            $date1 = new DateTime($start_date);
-            $date2 = new DateTime($end_date);
-            $interval = $date1->diff($date2);
-            $days_in_period = $interval->days + 1; // Include both start and end dates
-            
-            // Calculate daily average
-            $daily_average = $days_in_period > 0 ? $total_amount / $days_in_period : 0;
-            
-            // Calculate projected monthly (based on daily average)
-            $projected_monthly = $daily_average * 30;
-            
-            echo json_encode([
-                'success' => true,
-                'analytics' => [
-                    'total_amount' => $total_amount,
-                    'highest_amount' => $highest_amount,
-                    'highest_category' => $highest_category,
-                    'daily_average' => $daily_average,
-                    'projected_monthly' => $projected_monthly,
-                    'category_totals' => $category_totals,
-                    'days_in_period' => $days_in_period,
-                    'start_date' => $start_date,
-                    'end_date' => $end_date,
-                    'expense_count' => count($expenses_data)
-                ]
-            ]);
-        } else {
-            echo json_encode([
-                'success' => true,
-                'analytics' => [
-                    'total_amount' => 0,
-                    'highest_amount' => 0,
-                    'highest_category' => 'N/A',
-                    'daily_average' => 0,
-                    'projected_monthly' => 0,
-                    'category_totals' => [],
-                    'days_in_period' => 0,
-                    'start_date' => $start_date,
-                    'end_date' => $end_date,
-                    'expense_count' => 0
-                ]
-            ]);
-        }
-        
-        exit();
+            if ($result && $result->num_rows > 0) {
+                $expenses_data = [];
+                $total_amount = 0;
+                $highest_amount = 0;
+                $highest_category = '';
+                $category_totals = [];
+                
+                while ($row = $result->fetch_assoc()) {
+                    $expenses_data[] = $row;
+                    
+                    // Calculate total
+                    $amount = floatval($row['amount']);
+                    $total_amount += $amount;
+                    
+                    // Track highest expense
+                    if ($amount > $highest_amount) {
+                        $highest_amount = $amount;
+                        $highest_category = $row['category_name'];
+                    }
+                    
+                    // Track category totals
+                    if (!isset($category_totals[$row['category_name']])) {
+                        $category_totals[$row['category_name']] = 0;
+                    }
+                    $category_totals[$row['category_name']] += $amount;
+                }
+                
+                // Sort categories by total
+                arsort($category_totals);
+                
+                // Calculate days in period
+                $date1 = new DateTime($start_date);
+                $date2 = new DateTime($end_date);
+                $interval = $date1->diff($date2);
+                $days_in_period = $interval->days + 1;
+                
+                // Calculate daily average
+                $daily_average = $days_in_period > 0 ? $total_amount / $days_in_period : 0;
+                
+                // Calculate projected monthly
+                $projected_monthly = $daily_average * 30;
+                
+                echo json_encode([
+                    'success' => true,
+                    'analytics' => [
+                        'total_amount' => $total_amount,
+                        'highest_amount' => $highest_amount,
+                        'highest_category' => $highest_category,
+                        'daily_average' => $daily_average,
+                        'projected_monthly' => $projected_monthly,
+                        'category_totals' => $category_totals,
+                        'days_in_period' => $days_in_period,
+                        'start_date' => $start_date,
+                        'end_date' => $end_date,
+                        'expense_count' => count($expenses_data)
+                    ]
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => true,
+                    'analytics' => [
+                        'total_amount' => 0,
+                        'highest_amount' => 0,
+                        'highest_category' => 'N/A',
+                        'daily_average' => 0,
+                        'projected_monthly' => 0,
+                        'category_totals' => [],
+                        'days_in_period' => 0,
+                        'start_date' => $start_date,
+                        'end_date' => $end_date,
+                        'expense_count' => 0
+                    ]
+                ]);
+            }
+            exit();
     }
 }
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = isset($_POST['action']) ? $_POST['action'] : '';
+    // Check if this is an AJAX request
+    $is_ajax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
     
-    // Log the POST data for debugging
-    error_log('POST data received: ' . print_r($_POST, true));
+    if ($is_ajax) {
+        header('Content-Type: application/json');
+    }
+    
+    $action = isset($_POST['action']) ? $_POST['action'] : '';
     
     switch ($action) {
         case 'add':
-            // Validate input
             $errors = [];
             
             if (empty($_POST['description'])) {
@@ -266,13 +255,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'Please select a date.';
             }
             
-            // If there are validation errors
             if (!empty($errors)) {
                 $error = implode(' ', $errors);
                 
-                // Handle AJAX requests
-                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    header('Content-Type: application/json');
+                if ($is_ajax) {
                     echo json_encode([
                         'success' => false,
                         'message' => $error
@@ -280,7 +266,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit();
                 }
             } else {
-                // Set expense properties
                 $expense->user_id = $user_id;
                 $expense->category_id = $_POST['category_id'];
                 $expense->amount = floatval($_POST['amount']); 
@@ -289,13 +274,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $expense->frequency = isset($_POST['frequency']) ? $_POST['frequency'] : 'one-time';
                 $expense->is_recurring = isset($_POST['is_recurring']) ? 1 : 0;
                 
-                // Create new expense
                 if ($expense->create()) {
                     $success = 'Expense added successfully!';
                     
-                    // Handle AJAX requests
-                    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                        header('Content-Type: application/json');
+                    if ($is_ajax) {
                         echo json_encode([
                             'success' => true,
                             'message' => $success
@@ -305,9 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $error = 'Failed to add expense. Please try again.';
                     
-                    // Handle AJAX requests
-                    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                        header('Content-Type: application/json');
+                    if ($is_ajax) {
                         echo json_encode([
                             'success' => false,
                             'message' => $error
@@ -319,10 +299,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
             
         case 'edit':
-            // Get expense ID
             $expense_id = isset($_POST['expense_id']) ? intval($_POST['expense_id']) : 0;
             
-            // Validate input
             $errors = [];
             
             if (empty($_POST['description'])) {
@@ -345,13 +323,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'Invalid expense.';
             }
             
-            // If there are validation errors
             if (!empty($errors)) {
                 $error = implode(' ', $errors);
                 
-                // Handle AJAX requests
-                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    header('Content-Type: application/json');
+                if ($is_ajax) {
                     echo json_encode([
                         'success' => false,
                         'message' => $error
@@ -359,9 +334,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit();
                 }
             } else {
-                // Get expense data
                 if ($expense->getById($expense_id, $user_id)) {
-                    // Update expense properties
                     $expense->category_id = $_POST['category_id'];
                     $expense->amount = floatval($_POST['amount']);
                     $expense->description = $_POST['description'];
@@ -369,13 +342,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $expense->frequency = isset($_POST['frequency']) ? $_POST['frequency'] : 'one-time';
                     $expense->is_recurring = isset($_POST['is_recurring']) ? 1 : 0;
                     
-                    // Update expense
                     if ($expense->update()) {
                         $success = 'Expense updated successfully!';
                         
-                        // Handle AJAX requests
-                        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                            header('Content-Type: application/json');
+                        if ($is_ajax) {
                             echo json_encode([
                                 'success' => true,
                                 'message' => $success
@@ -385,9 +355,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } else {
                         $error = 'Failed to update expense. Please try again.';
                         
-                        // Handle AJAX requests
-                        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                            header('Content-Type: application/json');
+                        if ($is_ajax) {
                             echo json_encode([
                                 'success' => false,
                                 'message' => $error
@@ -398,9 +366,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $error = 'Expense not found.';
                     
-                    // Handle AJAX requests
-                    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                        header('Content-Type: application/json');
+                    if ($is_ajax) {
                         echo json_encode([
                             'success' => false,
                             'message' => $error
@@ -412,16 +378,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
             
         case 'delete':
-            // Get expense ID
             $expense_id = isset($_POST['expense_id']) ? intval($_POST['expense_id']) : 0;
             
-            // Validate input
             if (!$expense_id) {
                 $error = 'Invalid expense.';
                 
-                // Handle AJAX requests
-                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    header('Content-Type: application/json');
+                if ($is_ajax) {
                     echo json_encode([
                         'success' => false,
                         'message' => $error
@@ -429,13 +391,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit();
                 }
             } else {
-                // Delete expense
                 if ($expense->delete($expense_id, $user_id)) {
                     $success = 'Expense deleted successfully!';
                     
-                    // Handle AJAX requests
-                    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                        header('Content-Type: application/json');
+                    if ($is_ajax) {
                         echo json_encode([
                             'success' => true,
                             'message' => $success
@@ -445,9 +404,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $error = 'Failed to delete expense. Please try again.';
                     
-                    // Handle AJAX requests
-                    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                        header('Content-Type: application/json');
+                    if ($is_ajax) {
                         echo json_encode([
                             'success' => false,
                             'message' => $error
@@ -459,17 +416,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
     }
     
-    // Only handle non-AJAX responses here
-    if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest') {
-        // If AJAX handling hasn't exited by now, we need to redirect
+    // Non-AJAX redirect
+    if (!$is_ajax) {
         header('Location: ' . BASE_PATH . '/expenses');
         exit();
     }
 }
 
 // Get filter parameters
-$filter_start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01'); // Default to first day of current month
-$filter_end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-t'); // Default to last day of current month
+$filter_start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
+$filter_end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-t');
 
 // Get all expense categories
 $categories = $expense->getAllCategories();
