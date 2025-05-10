@@ -4,343 +4,324 @@ $page_title = 'Income Management - iGotMoney';
 $current_page = 'income';
 
 // Additional CSS and JS
-$additional_css = ['/assets/css/income.css'];
-$additional_js = ['/assets/js/income.js'];
+$additional_css = ['/assets/css/income-modern.css'];
+$additional_js = ['/assets/js/income-modern.js'];
 
 // Include header
 require_once 'includes/header.php';
 ?>
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-4 pb-3 mb-4 border-bottom">
-    <div>
-        <h1 class="h2 fw-bold text-primary">Income Management</h1>
-        <p class="text-muted mb-0">Track and manage all your income sources</p>
+<!-- Main Content Wrapper -->
+<div class="income-page">
+    <!-- Page Header Section -->
+    <div class="page-header-section">
+        <div class="page-header-content">
+            <div class="page-title-group">
+                <h1 class="page-title">Income Management</h1>
+                <p class="page-subtitle">Track and manage all your income sources effectively</p>
+            </div>
+            <button type="button" class="btn-add-income" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
+                <i class="fas fa-plus-circle"></i>
+                <span>Add Income</span>
+            </button>
+        </div>
     </div>
-    <button type="button" class="btn btn-primary d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
-        <i class="fa fa-plus me-2"></i> Add Income Source
-    </button>
-</div>
 
-<!-- Income Overview Section -->
-<div class="row mb-4 g-3">
-    <!-- Monthly Income Card -->
-    <div class="col-md-6 col-xl-4">
-        <div class="card income-summary-card h-100 border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="income-icon-wrapper me-3">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                    <h5 class="card-title text-dark mb-0">Monthly Income</h5>
+    <!-- Quick Stats Section -->
+    <div class="quick-stats-section">
+        <div class="stats-grid">
+            <div class="stat-card monthly">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-alt"></i>
                 </div>
-                <h2 class="income-amount mb-2">$<?php echo number_format($monthly_income, 2); ?></h2>
-                <div class="income-trend">
+                <div class="stat-content">
+                    <h3 class="stat-label">Monthly Income</h3>
+                    <p class="stat-value">$<?php echo number_format($monthly_income, 2); ?></p>
                     <?php
-                    // Determine if income is up/down (placeholder calculation)
-                    // In a real implementation, you would compare with previous month
                     $previous_month = isset($prev_monthly_income) ? $prev_monthly_income : $monthly_income * 0.95;
                     $is_increased = $monthly_income >= $previous_month;
                     $percent_change = abs(($monthly_income - $previous_month) / max(1, $previous_month) * 100);
                     ?>
-                    
-                    <span class="badge bg-<?php echo $is_increased ? 'success' : 'danger'; ?> p-2">
-                        <i class="fas fa-<?php echo $is_increased ? 'arrow-up' : 'arrow-down'; ?> me-1"></i>
-                        <?php echo number_format($percent_change, 1); ?>%
-                    </span>
-                    <span class="text-muted ms-2">vs. previous month</span>
+                    <div class="stat-trend <?php echo $is_increased ? 'positive' : 'negative'; ?>">
+                        <i class="fas fa-<?php echo $is_increased ? 'arrow-up' : 'arrow-down'; ?>"></i>
+                        <span><?php echo number_format($percent_change, 1); ?>% from last month</span>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-    
-    <!-- Annual Income Card -->
-    <div class="col-md-6 col-xl-4">
-        <div class="card income-summary-card h-100 border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="income-icon-wrapper me-3">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h5 class="card-title text-dark mb-0">Annual Income</h5>
+            
+            <div class="stat-card annual">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
                 </div>
-                <h2 class="income-amount mb-2">$<?php echo number_format($yearly_income, 2); ?></h2>
-                <div class="income-trend">
+                <div class="stat-content">
+                    <h3 class="stat-label">Annual Income</h3>
+                    <p class="stat-value">$<?php echo number_format($yearly_income, 2); ?></p>
+                    <div class="stat-info">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Projected for <?php echo date('Y'); ?></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card sources">
+                <div class="stat-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-label">Active Sources</h3>
                     <?php
-                    // Get the number of active income sources
                     $active_count = 0;
                     if (isset($income_sources) && $income_sources->num_rows > 0) {
-                        // Save the position of the result set
                         $income_sources->data_seek(0);
-                        
-                        // Count active sources
                         while ($row = $income_sources->fetch_assoc()) {
                             if ($row['is_active'] == 1) {
                                 $active_count++;
                             }
                         }
-                        
-                        // Reset the result pointer
                         $income_sources->data_seek(0);
                     }
                     ?>
-                    <span class="badge bg-info p-2">
-                        <i class="fas fa-stream me-1"></i> <?php echo $active_count; ?>
-                    </span>
-                    <span class="text-muted ms-2">active income sources</span>
+                    <p class="stat-value"><?php echo $active_count; ?></p>
+                    <div class="stat-info">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Currently active</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Income Breakdown Card -->
-    <div class="col-md-12 col-xl-4">
-        <div class="card income-summary-card h-100 border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="income-icon-wrapper me-3">
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+        <div class="charts-grid">
+            <!-- Income Frequency Distribution Chart -->
+            <div class="chart-card frequency-chart">
+                <div class="chart-header">
+                    <div class="chart-title">
                         <i class="fas fa-chart-pie"></i>
+                        <h3>Income by Frequency</h3>
                     </div>
-                    <h5 class="card-title text-dark mb-0">Income Breakdown</h5>
                 </div>
-                
-                <?php
-                // Get income sources by frequency
-                $frequency_data = [];
-                $frequency_totals = [];
-                
-                // Initialize with zero for each frequency
-                $all_frequencies = ['monthly', 'annually', 'bi-weekly', 'weekly', 'one-time', 'daily', 'quarterly'];
-                foreach ($all_frequencies as $freq) {
-                    $frequency_totals[$freq] = 0;
-                }
-                
-                // Calculate totals by frequency
-                if (isset($income_sources) && $income_sources->num_rows > 0) {
-                    // Save the position
-                    $income_sources->data_seek(0);
-                    
-                    while ($row = $income_sources->fetch_assoc()) {
-                        if ($row['is_active'] == 1) {
-                            $freq = $row['frequency'];
-                            
-                            // Convert to monthly equivalent
-                            $monthly_amount = $row['amount'];
-                            if ($freq == 'annually') {
-                                $monthly_amount = $row['amount'] / 12;
-                            } elseif ($freq == 'quarterly') {
-                                $monthly_amount = $row['amount'] / 3;
-                            } elseif ($freq == 'bi-weekly') {
-                                $monthly_amount = $row['amount'] * 2.17;
-                            } elseif ($freq == 'weekly') {
-                                $monthly_amount = $row['amount'] * 4.33;
-                            } elseif ($freq == 'daily') {
-                                $monthly_amount = $row['amount'] * 30;
+                <div class="chart-body">
+                    <div class="chart-container">
+                        <canvas id="frequencyChart"></canvas>
+                    </div>
+                    <div id="chartNoData" class="no-data-message" style="display: <?php echo ($active_count > 0) ? 'none' : 'block'; ?>">
+                        <i class="fas fa-chart-bar"></i>
+                        <p>No active income sources to display</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Top Income Sources List -->
+            <div class="chart-card sources-list">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <i class="fas fa-list-ol"></i>
+                        <h3>Top Income Sources</h3>
+                    </div>
+                </div>
+                <div class="chart-body">
+                    <div class="sources-list-content">
+                        <?php if (isset($income_sources) && $income_sources->num_rows > 0): ?>
+                            <?php 
+                            $income_sources->data_seek(0);
+                            $sources_array = [];
+                            while ($source = $income_sources->fetch_assoc()) {
+                                if ($source['is_active'] == 1) {
+                                    // Calculate monthly equivalent
+                                    $monthly_amount = $source['amount'];
+                                    switch ($source['frequency']) {
+                                        case 'annually':
+                                            $monthly_amount = $source['amount'] / 12;
+                                            break;
+                                        case 'quarterly':
+                                            $monthly_amount = $source['amount'] / 3;
+                                            break;
+                                        case 'bi-weekly':
+                                            $monthly_amount = $source['amount'] * 2.17;
+                                            break;
+                                        case 'weekly':
+                                            $monthly_amount = $source['amount'] * 4.33;
+                                            break;
+                                        case 'daily':
+                                            $monthly_amount = $source['amount'] * 30;
+                                            break;
+                                    }
+                                    $source['monthly_amount'] = $monthly_amount;
+                                    $sources_array[] = $source;
+                                }
                             }
+                            $income_sources->data_seek(0);
                             
-                            $frequency_totals[$freq] += $monthly_amount;
-                        }
-                    }
-                    
-                    // Reset the pointer
-                    $income_sources->data_seek(0);
-                }
-                
-                if (array_sum($frequency_totals) > 0) {
-                    $colors = [
-                        'monthly' => 'primary',
-                        'annually' => 'success', 
-                        'bi-weekly' => 'info',
-                        'weekly' => 'warning',
-                        'one-time' => 'danger',
-                        'daily' => 'secondary',
-                        'quarterly' => 'dark'
-                    ];
-                    
-                    $total = array_sum($frequency_totals);
-                    
-                    foreach ($frequency_totals as $freq => $amount) {
-                        if ($amount > 0) {
-                            $freq_name = ucfirst(str_replace('-', ' ', $freq));
-                            $percentage = min(100, round(($amount / $total) * 100));
-                            $color = isset($colors[$freq]) ? $colors[$freq] : 'primary';
+                            // Sort by monthly amount
+                            usort($sources_array, function($a, $b) {
+                                return $b['monthly_amount'] - $a['monthly_amount'];
+                            });
+                            
+                            $total_monthly = array_sum(array_column($sources_array, 'monthly_amount'));
+                            $rank = 1;
+                            foreach (array_slice($sources_array, 0, 5) as $source):
+                                $percentage = $total_monthly > 0 ? ($source['monthly_amount'] / $total_monthly) * 100 : 0;
                             ?>
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="fw-medium"><?php echo $freq_name; ?></span>
-                                    <span class="text-muted small">$<?php echo number_format($amount, 2); ?></span>
+                                <div class="source-item">
+                                    <div class="source-rank"><?php echo $rank++; ?></div>
+                                    <div class="source-info">
+                                        <h4 class="source-name"><?php echo htmlspecialchars($source['name']); ?></h4>
+                                        <span class="source-frequency"><?php echo ucfirst(str_replace('-', ' ', $source['frequency'])); ?></span>
+                                        <div class="source-bar">
+                                            <div class="source-bar-fill" 
+                                                 style="width: <?php echo $percentage; ?>%"
+                                                 data-percentage="<?php echo $percentage; ?>">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="source-amount">
+                                        <span class="amount">$<?php echo number_format($source['monthly_amount'], 2); ?>/mo</span>
+                                        <span class="percentage"><?php echo number_format($percentage, 1); ?>%</span>
+                                    </div>
                                 </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-<?php echo $color; ?>" role="progressbar" 
-                                         style="width: <?php echo $percentage; ?>%" 
-                                         aria-valuenow="<?php echo $percentage; ?>" 
-                                         aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="empty-sources">
+                                <i class="fas fa-folder-open"></i>
+                                <p>No income sources recorded yet</p>
                             </div>
-                            <?php
-                        }
-                    }
-                } else {
-                    echo '<div class="text-center text-muted my-4">No active income sources</div>';
-                }
-                ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Income Table Section -->
+    <div class="income-table-section">
+        <div class="table-card">
+            <div class="table-header">
+                <div class="table-title">
+                    <i class="fas fa-list"></i>
+                    <h3>Income Sources</h3>
+                </div>
+                <div class="table-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="incomeSearch" placeholder="Search income sources..." data-table-search="incomeTable">
+                    </div>
+                </div>
+            </div>
+            <div class="table-body">
+                <div class="table-responsive">
+                    <table class="income-table" id="incomeTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Amount</th>
+                                <th>Frequency</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (isset($income_sources) && $income_sources->num_rows > 0): ?>
+                                <?php 
+                                $income_sources->data_seek(0);
+                                while ($income_source = $income_sources->fetch_assoc()): 
+                                ?>
+                                    <tr>
+                                        <td class="source-name-cell"><?php echo htmlspecialchars($income_source['name']); ?></td>
+                                        <td class="amount-cell">$<?php echo number_format($income_source['amount'], 2); ?></td>
+                                        <td>
+                                            <span class="frequency-badge">
+                                                <?php echo ucfirst(str_replace('-', ' ', $income_source['frequency'])); ?>
+                                            </span>
+                                        </td>
+                                        <td><?php echo date('M j, Y', strtotime($income_source['start_date'])); ?></td>
+                                        <td>
+                                            <?php 
+                                            if (!empty($income_source['end_date']) && $income_source['end_date'] !== null && $income_source['end_date'] !== '0000-00-00') {
+                                                $timestamp = strtotime($income_source['end_date']);
+                                                if ($timestamp > 0) {
+                                                    echo date('M j, Y', $timestamp);
+                                                } else {
+                                                    echo '<span class="text-muted">Ongoing</span>';
+                                                }
+                                            } else {
+                                                echo '<span class="text-muted">Ongoing</span>';
+                                            }
+                                            ?>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge <?php echo $income_source['is_active'] ? 'active' : 'inactive'; ?>">
+                                                <?php echo $income_source['is_active'] ? 'Active' : 'Inactive'; ?>
+                                            </span>
+                                        </td>
+                                        <td class="actions-cell">
+                                            <button class="btn-action edit" data-income-id="<?php echo $income_source['income_id']; ?>" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-action delete" data-income-id="<?php echo $income_source['income_id']; ?>" title="Delete">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="tableNoData" class="table-empty" style="display: <?php echo (isset($income_sources) && $income_sources->num_rows > 0) ? 'none' : 'block'; ?>">
+                    <div class="empty-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <h4>No income sources recorded yet</h4>
+                    <p>Start tracking your income by adding your first income source</p>
+                    <button type="button" class="btn-add-first" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
+                        <i class="fas fa-plus"></i>
+                        Add Your First Income
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Income Sources Table Card -->
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white py-3">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 text-primary">
-                <i class="fas fa-list me-2"></i> Income Sources
-            </h5>
-            <div class="income-search-wrapper">
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0">
-                        <i class="fa fa-search text-muted"></i>
-                    </span>
-                    <input type="text" class="form-control border-start-0 ps-0" 
-                           placeholder="Search income sources..." 
-                           id="incomeSearch" 
-                           data-table-search="incomeTable">
+<!-- Add Income Modal (Redesigned) -->
+<div class="modal fade modern-modal" id="addIncomeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <i class="fas fa-plus-circle"></i>
                 </div>
-            </div>
-        </div>
-    </div>
-    <div class="card-body p-0">
-        <?php if (isset($income_sources) && $income_sources->num_rows > 0): ?>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle income-table mb-0" id="incomeTable">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="ps-4">Name</th>
-                            <th>Amount</th>
-                            <th>Frequency</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Status</th>
-                            <th class="text-end pe-4">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while ($income_source = $income_sources->fetch_assoc()): ?>
-                            <tr>
-                                <td class="ps-4 fw-medium">
-                                    <?php echo htmlspecialchars($income_source['name']); ?>
-                                </td>
-                                <td class="income-amount-cell">
-                                    $<?php echo number_format($income_source['amount'], 2); ?>
-                                </td>
-                                <td>
-                                    <?php 
-                                    $frequency = ucfirst(str_replace('-', ' ', $income_source['frequency']));
-                                    echo $frequency; 
-                                    ?>
-                                </td>
-                                <td>
-                                    <?php echo date('M j, Y', strtotime($income_source['start_date'])); ?>
-                                </td>
-                                <td>
-                                    <?php 
-                                    if (!empty($income_source['end_date']) && $income_source['end_date'] !== null && $income_source['end_date'] !== '0000-00-00') {
-                                        $timestamp = strtotime($income_source['end_date']);
-                                        if ($timestamp > 0) {
-                                            echo date('M j, Y', $timestamp);
-                                        } else {
-                                            echo '<span class="text-muted">Ongoing</span>';
-                                        }
-                                    } else {
-                                        echo '<span class="text-muted">Ongoing</span>';
-                                    }
-                                    ?>
-                                </td>
-                                <td>
-                                    <?php if ($income_source['is_active']): ?>
-                                        <span class="badge bg-soft-success text-success">Active</span>
-                                    <?php else: ?>
-                                        <span class="badge bg-soft-secondary text-secondary">Inactive</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="text-end pe-4">
-                                    <div class="btn-group">
-                                        <button type="button" class="btn btn-sm btn-outline-primary edit-income" 
-                                                data-income-id="<?php echo $income_source['income_id']; ?>"
-                                                title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger delete-income" 
-                                                data-income-id="<?php echo $income_source['income_id']; ?>"
-                                                title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
-            </div>
-        <?php else: ?>
-            <div class="text-center py-5 empty-state">
-                <div class="empty-state-icon mb-3">
-                    <i class="fas fa-wallet"></i>
-                </div>
-                <h4 class="empty-state-title mb-2">No income sources found</h4>
-                <p class="empty-state-description text-muted mb-4">
-                    Start tracking your income by adding your first income source.
-                </p>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
-                    <i class="fas fa-plus me-2"></i> Add Your First Income Source
+                <h5 class="modal-title">Add New Income Source</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
-        <?php endif; ?>
-    </div>
-</div>
-
-<!-- Add Income Modal -->
-<div class="modal fade" id="addIncomeModal" tabindex="-1" aria-labelledby="addIncomeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="addIncomeModalLabel">
-                    <i class="fas fa-plus-circle me-2"></i>Add Income Source
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="<?php echo BASE_PATH; ?>/income" method="post" class="needs-validation income-form" novalidate>
+            <form action="<?php echo BASE_PATH; ?>/income" method="post" class="needs-validation" novalidate>
                 <input type="hidden" name="action" value="add">
                 
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Income Name <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light">
-                                <i class="fas fa-tag text-muted"></i>
-                            </span>
-                            <input type="text" class="form-control" id="name" name="name" required>
+                    <div class="form-grid">
+                        <div class="form-field full-width">
+                            <label for="name">Income Name</label>
+                            <input type="text" id="name" name="name" required>
                         </div>
-                        <div class="form-text">For example: Salary, Freelance Work, Rental Income</div>
-                        <div class="invalid-feedback">Please provide an income name.</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="amount" class="form-label">Amount <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light">$</span>
-                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" required>
-                            <div class="invalid-feedback">Please enter a valid amount greater than zero.</div>
+                        
+                        <div class="form-field">
+                            <label for="amount">Amount</label>
+                            <div class="amount-input">
+                                <span class="currency-symbol">$</span>
+                                <input type="number" id="amount" name="amount" step="0.01" min="0.01" required>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="frequency" class="form-label">Frequency <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light">
-                                <i class="fas fa-sync-alt text-muted"></i>
-                            </span>
-                            <select class="form-select" id="frequency" name="frequency" required>
-                                <option value="one-time">One Time</option>
+                        
+                        <div class="form-field">
+                            <label for="frequency">Frequency</label>
+                            <select id="frequency" name="frequency" class="modern-select">
+                                <option value="one-time">One-time</option>
                                 <option value="daily">Daily</option>
                                 <option value="weekly">Weekly</option>
                                 <option value="bi-weekly">Bi-Weekly</option>
@@ -349,43 +330,32 @@ require_once 'includes/header.php';
                                 <option value="annually">Annually</option>
                             </select>
                         </div>
-                    </div>
-                    
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">
-                                    <i class="fas fa-calendar-day text-muted"></i>
-                                </span>
-                                <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
-                            </div>
-                            <div class="invalid-feedback">Please provide a start date.</div>
+                        
+                        <div class="form-field">
+                            <label for="start_date">Start Date</label>
+                            <input type="date" id="start_date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
                         </div>
                         
-                        <div class="col-md-6">
-                            <label for="end_date" class="form-label">End Date <span class="text-muted">(Optional)</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">
-                                    <i class="fas fa-calendar-check text-muted"></i>
-                                </span>
-                                <input type="date" class="form-control" id="end_date" name="end_date">
-                            </div>
-                            <div class="form-text">Leave blank for ongoing income</div>
+                        <div class="form-field">
+                            <label for="end_date">End Date (Optional)</label>
+                            <input type="date" id="end_date" name="end_date">
                         </div>
-                    </div>
-                    
-                    <div class="form-check form-switch mb-3">
-                        <input type="checkbox" class="form-check-input" id="is_active" name="is_active" checked>
-                        <label class="form-check-label" for="is_active">Active</label>
-                        <div class="form-text">Inactive income sources won't be included in calculations</div>
+                        
+                        <div class="form-field full-width">
+                            <label class="toggle-field">
+                                <input type="checkbox" id="is_active" name="is_active" checked>
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Active Income Source</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-plus-circle me-1"></i> Add Income
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-plus"></i>
+                        Add Income
                     </button>
                 </div>
             </form>
@@ -393,49 +363,42 @@ require_once 'includes/header.php';
     </div>
 </div>
 
-<!-- Edit Income Modal -->
-<div class="modal fade" id="editIncomeModal" tabindex="-1" aria-labelledby="editIncomeModalLabel" aria-hidden="true">
+<!-- Edit Income Modal (Similar structure) -->
+<div class="modal fade modern-modal" id="editIncomeModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="editIncomeModalLabel">
-                    <i class="fas fa-edit me-2"></i>Edit Income Source
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-icon edit">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <h5 class="modal-title">Edit Income Source</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <form action="<?php echo BASE_PATH; ?>/income" method="post" class="needs-validation income-form" novalidate>
+            <form action="<?php echo BASE_PATH; ?>/income" method="post" class="needs-validation" novalidate>
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="income_id" id="edit_income_id">
                 
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="edit_name" class="form-label">Income Name <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light">
-                                <i class="fas fa-tag text-muted"></i>
-                            </span>
-                            <input type="text" class="form-control" id="edit_name" name="name" required>
+                    <div class="form-grid">
+                        <div class="form-field full-width">
+                            <label for="edit_name">Income Name</label>
+                            <input type="text" id="edit_name" name="name" required>
                         </div>
-                        <div class="invalid-feedback">Please provide an income name.</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="edit_amount" class="form-label">Amount <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light">$</span>
-                            <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0.01" required>
-                            <div class="invalid-feedback">Please enter a valid amount greater than zero.</div>
+                        
+                        <div class="form-field">
+                            <label for="edit_amount">Amount</label>
+                            <div class="amount-input">
+                                <span class="currency-symbol">$</span>
+                                <input type="number" id="edit_amount" name="amount" step="0.01" min="0.01" required>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="edit_frequency" class="form-label">Frequency <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light">
-                                <i class="fas fa-sync-alt text-muted"></i>
-                            </span>
-                            <select class="form-select" id="edit_frequency" name="frequency" required>
-                                <option value="one-time">One Time</option>
+                        
+                        <div class="form-field">
+                            <label for="edit_frequency">Frequency</label>
+                            <select id="edit_frequency" name="frequency" class="modern-select">
+                                <option value="one-time">One-time</option>
                                 <option value="daily">Daily</option>
                                 <option value="weekly">Weekly</option>
                                 <option value="bi-weekly">Bi-Weekly</option>
@@ -444,43 +407,32 @@ require_once 'includes/header.php';
                                 <option value="annually">Annually</option>
                             </select>
                         </div>
-                    </div>
-                    
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label for="edit_start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">
-                                    <i class="fas fa-calendar-day text-muted"></i>
-                                </span>
-                                <input type="date" class="form-control" id="edit_start_date" name="start_date" required>
-                            </div>
-                            <div class="invalid-feedback">Please provide a start date.</div>
+                        
+                        <div class="form-field">
+                            <label for="edit_start_date">Start Date</label>
+                            <input type="date" id="edit_start_date" name="start_date" required>
                         </div>
                         
-                        <div class="col-md-6">
-                            <label for="edit_end_date" class="form-label">End Date <span class="text-muted">(Optional)</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">
-                                    <i class="fas fa-calendar-check text-muted"></i>
-                                </span>
-                                <input type="date" class="form-control" id="edit_end_date" name="end_date">
-                            </div>
-                            <div class="form-text">Leave blank for ongoing income</div>
+                        <div class="form-field">
+                            <label for="edit_end_date">End Date (Optional)</label>
+                            <input type="date" id="edit_end_date" name="end_date">
                         </div>
-                    </div>
-                    
-                    <div class="form-check form-switch mb-3">
-                        <input type="checkbox" class="form-check-input" id="edit_is_active" name="is_active">
-                        <label class="form-check-label" for="edit_is_active">Active</label>
-                        <div class="form-text">Inactive income sources won't be included in calculations</div>
+                        
+                        <div class="form-field full-width">
+                            <label class="toggle-field">
+                                <input type="checkbox" id="edit_is_active" name="is_active">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Active Income Source</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-1"></i> Save Changes
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-save"></i>
+                        Save Changes
                     </button>
                 </div>
             </form>
@@ -489,31 +441,30 @@ require_once 'includes/header.php';
 </div>
 
 <!-- Delete Income Modal -->
-<div class="modal fade" id="deleteIncomeModal" tabindex="-1" aria-labelledby="deleteIncomeModalLabel" aria-hidden="true">
+<div class="modal fade modern-modal" id="deleteIncomeModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteIncomeModalLabel">
-                    <i class="fas fa-trash-alt me-2"></i>Delete Income
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center mb-3">
-                    <div class="delete-icon-wrapper mb-3">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <h5 class="mb-2">Are you sure?</h5>
-                    <p class="text-muted mb-0">This action cannot be undone. This will permanently delete the income source.</p>
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-icon delete">
+                    <i class="fas fa-trash-alt"></i>
                 </div>
+                <h5 class="modal-title">Delete Income Source</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="<?php echo BASE_PATH; ?>/income" method="post" style="display: inline;">
+            <div class="modal-body text-center">
+                <p>Are you sure you want to delete this income source?</p>
+                <p class="text-muted">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                <form action="<?php echo BASE_PATH; ?>/income" method="post">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="income_id" id="delete_income_id">
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash-alt me-1"></i> Delete
+                    <button type="submit" class="btn-submit danger">
+                        <i class="fas fa-trash-alt"></i>
+                        Delete
                     </button>
                 </form>
             </div>
@@ -522,6 +473,64 @@ require_once 'includes/header.php';
 </div>
 
 <?php
-// Include footer
+// Chart data
+$chart_labels = [];
+$chart_data = [];
+$chart_colors = [
+    '#6366f1', '#8b5cf6', '#ec4899', '#ef4444', '#f59e0b',
+    '#10b981', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1'
+];
+
+if (isset($income_sources) && $income_sources->num_rows > 0) {
+    $income_sources->data_seek(0);
+    
+    $frequency_totals = [];
+    while ($source = $income_sources->fetch_assoc()) {
+        if ($source['is_active'] == 1) {
+            $freq = $source['frequency'];
+            $monthly_amount = $source['amount'];
+            
+            // Convert to monthly equivalent
+            switch ($freq) {
+                case 'annually':
+                    $monthly_amount = $source['amount'] / 12;
+                    break;
+                case 'quarterly':
+                    $monthly_amount = $source['amount'] / 3;
+                    break;
+                case 'bi-weekly':
+                    $monthly_amount = $source['amount'] * 2.17;
+                    break;
+                case 'weekly':
+                    $monthly_amount = $source['amount'] * 4.33;
+                    break;
+                case 'daily':
+                    $monthly_amount = $source['amount'] * 30;
+                    break;
+            }
+            
+            $freq_name = ucfirst(str_replace('-', ' ', $freq));
+            if (!isset($frequency_totals[$freq_name])) {
+                $frequency_totals[$freq_name] = 0;
+            }
+            $frequency_totals[$freq_name] += $monthly_amount;
+        }
+    }
+    
+    // Sort by value
+    arsort($frequency_totals);
+    
+    foreach ($frequency_totals as $label => $value) {
+        $chart_labels[] = $label;
+        $chart_data[] = round($value, 2);
+    }
+}
+
+// Add meta tags for passing data to JS
+echo '<meta name="base-path" content="' . BASE_PATH . '">';
+echo '<meta name="chart-labels" content="' . htmlspecialchars(json_encode($chart_labels)) . '">';
+echo '<meta name="chart-data" content="' . htmlspecialchars(json_encode($chart_data)) . '">';
+echo '<meta name="chart-colors" content="' . htmlspecialchars(json_encode(array_slice($chart_colors, 0, count($chart_data)))) . '">';
+
 require_once 'includes/footer.php';
 ?>
