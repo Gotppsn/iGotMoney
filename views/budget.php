@@ -10,9 +10,6 @@ $additional_css = ['/assets/css/budget-modern.css'];
 require_once 'includes/header.php';
 ?>
 
-<!-- Include Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
     <div>
         <h1 class="h2 fw-bold">Budget Management</h1>
@@ -697,31 +694,45 @@ if (!empty($budget_status)) {
 // Add BASE_PATH as a global JavaScript variable to use in AJAX requests
 echo '<script>const BASE_PATH = "' . BASE_PATH . '";</script>';
 
-// Pass chart data to JS
+// Pass chart data to JS with improved handling
 echo '<script>
-// Wait for Chart.js to be available
-function waitForChartJS(callback) {
+// Budget chart data
+var budgetData = ' . json_encode($budget_amounts) . ';
+var spentData = ' . json_encode($spent_amounts) . ';
+var categoryLabels = ' . json_encode($categories) . ';
+
+// Debug information
+console.log("Budget data loaded:", {
+    budgetData: budgetData,
+    spentData: spentData,
+    categoryLabels: categoryLabels
+});
+
+// Initialize chart when Chart.js is ready
+function initializeChartWhenReady() {
     if (typeof Chart !== "undefined") {
-        callback();
+        if (categoryLabels.length > 0) {
+            initializeBudgetCharts(budgetData, spentData, categoryLabels);
+        } else {
+            console.log("No budget data available for chart");
+            // Show empty state message
+            const chartContainer = document.querySelector(".chart-container");
+            if (chartContainer) {
+                chartContainer.innerHTML = \'<div class="text-center text-muted p-4">No budget data available to display chart.</div>\';
+            }
+        }
     } else {
-        setTimeout(function() {
-            waitForChartJS(callback);
-        }, 100);
+        // Retry after a short delay
+        setTimeout(initializeChartWhenReady, 100);
     }
 }
 
-// Initialize charts when ready
-window.addEventListener("load", function() {
-    const budgetData = ' . json_encode($budget_amounts) . ';
-    const spentData = ' . json_encode($spent_amounts) . ';
-    const categoryLabels = ' . json_encode($categories) . ';
-    
-    waitForChartJS(function() {
-        if (categoryLabels.length > 0) {
-            window.initializeBudgetCharts(budgetData, spentData, categoryLabels);
-        }
-    });
-});
+// Start initialization when DOM is ready
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeChartWhenReady);
+} else {
+    initializeChartWhenReady();
+}
 </script>';
 
 // Additional JS

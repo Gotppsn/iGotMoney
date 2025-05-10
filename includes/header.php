@@ -15,6 +15,9 @@
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Chart.js - Load early for budget page -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    
     <!-- Custom CSS -->
     <link rel="stylesheet" href="<?php echo BASE_PATH; ?>/assets/css/style.css">
     

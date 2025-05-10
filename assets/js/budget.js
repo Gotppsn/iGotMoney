@@ -138,15 +138,24 @@ function initializeBudgetCharts(budgetData, spentData, categoryLabels) {
                                 label: function(context) {
                                     const value = context.raw || 0;
                                     const percentage = ((value / totalBudget) * 100).toFixed(1);
-                                    return `${context.label}: ${value.toLocaleString()} (${percentage}%)`;
+                                    return `${context.label}: $${value.toLocaleString()} (${percentage}%)`;
                                 }
                             }
                         }
                     }
                 }
             });
+            
+            console.log('Chart initialized successfully');
         } catch (e) {
             console.error('Error creating chart:', e);
+        }
+    } else {
+        console.log('No budget data available for chart');
+        // Show empty state message
+        const chartContainer = document.querySelector('.chart-container');
+        if (chartContainer) {
+            chartContainer.innerHTML = '<div class="text-center text-muted p-4">No budget data available to display chart.</div>';
         }
     }
 }
