@@ -10,6 +10,9 @@ $additional_css = ['/assets/css/budget-modern.css'];
 require_once 'includes/header.php';
 ?>
 
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
     <div>
         <h1 class="h2 fw-bold">Budget Management</h1>
@@ -82,7 +85,20 @@ require_once 'includes/header.php';
                 <div class="gauge-wrapper position-relative mb-4">
                     <div class="gauge"></div>
                     <div class="gauge-value">
-                        <h2 class="fw-bold text-<?php echo $health_class; ?>"><?php echo number_format($budget_health, 0); ?>%</h2>
+                        <?php
+                        // Use white text on danger (red) background for better contrast
+                        if ($health_class === 'danger') {
+                            $text_color = '#ffffff';
+                            $text_shadow = 'text-shadow: 0 2px 4px rgba(0,0,0,0.3);';
+                        } elseif ($health_class === 'warning') {
+                            $text_color = '#ffc107';
+                            $text_shadow = 'text-shadow: 0 1px 3px rgba(0,0,0,0.2);';
+                        } else {
+                            $text_color = '#28a745';
+                            $text_shadow = 'text-shadow: 0 1px 3px rgba(0,0,0,0.1);';
+                        }
+                        ?>
+                        <h2 class="fw-bold" style="color: <?php echo $text_color; ?> !important; <?php echo $text_shadow; ?>"><?php echo number_format($budget_health, 0); ?>%</h2>
                         <p class="text-muted">remaining budget</p>
                     </div>
                 </div>
@@ -186,8 +202,8 @@ require_once 'includes/header.php';
                 </h5>
             </div>
             <div class="card-body">
-                <div class="chart-container" style="position: relative; height: 250px;">
-                    <canvas id="budgetDonutChart"></canvas>
+                <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
+                    <canvas id="budgetDonutChart" style="width: 100%; height: 100%;"></canvas>
                 </div>
             </div>
         </div>
@@ -683,19 +699,28 @@ echo '<script>const BASE_PATH = "' . BASE_PATH . '";</script>';
 
 // Pass chart data to JS
 echo '<script>
-// Wait for both DOM and all scripts to load
+// Wait for Chart.js to be available
+function waitForChartJS(callback) {
+    if (typeof Chart !== "undefined") {
+        callback();
+    } else {
+        setTimeout(function() {
+            waitForChartJS(callback);
+        }, 100);
+    }
+}
+
+// Initialize charts when ready
 window.addEventListener("load", function() {
     const budgetData = ' . json_encode($budget_amounts) . ';
     const spentData = ' . json_encode($spent_amounts) . ';
     const categoryLabels = ' . json_encode($categories) . ';
     
-    // Initialize charts after all scripts are loaded
-    if (typeof window.initializeBudgetCharts === "function" && categoryLabels.length > 0) {
-        // Small delay to ensure Chart.js is fully initialized
-        setTimeout(function() {
+    waitForChartJS(function() {
+        if (categoryLabels.length > 0) {
             window.initializeBudgetCharts(budgetData, spentData, categoryLabels);
-        }, 100);
-    }
+        }
+    });
 });
 </script>';
 

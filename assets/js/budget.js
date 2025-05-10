@@ -72,35 +72,41 @@ function initializeBudgetCharts(budgetData, spentData, categoryLabels) {
     // Initialize donut chart
     const donutCtx = document.getElementById('budgetDonutChart');
     if (!donutCtx) {
-        console.error('Budget donut chart canvas element not found.');
+        console.warn('Budget donut chart canvas element not found.');
         return;
     }
     
-    // Get the 2D context
-    const ctx = donutCtx.getContext('2d');
-    if (!ctx) {
-        console.error('Could not get 2D context from canvas element.');
-        return;
+    // Ensure the canvas has proper dimensions
+    const chartContainer = donutCtx.parentElement;
+    if (chartContainer) {
+        donutCtx.width = chartContainer.clientWidth;
+        donutCtx.height = chartContainer.clientHeight || 250;
     }
     
     if (budgetData && budgetData.length > 0) {
         try {
             const totalBudget = budgetData.reduce((a, b) => a + b, 0);
             const totalSpent = spentData.reduce((a, b) => a + b, 0);
-            const totalRemaining = totalBudget - totalSpent;
+            const totalRemaining = Math.max(0, totalBudget - totalSpent);
+            
+            // Destroy existing chart if it exists
+            if (window.budgetChart instanceof Chart) {
+                window.budgetChart.destroy();
+            }
             
             // Create donut chart
-            new Chart(ctx, {
+            window.budgetChart = new Chart(donutCtx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Spent', 'Remaining'],
                     datasets: [{
-                        data: [totalSpent, Math.max(0, totalRemaining)],
+                        data: [totalSpent, totalRemaining],
                         backgroundColor: [
                             totalSpent > totalBudget ? '#e74a3b' : '#4e73df',
                             '#1cc88a'
                         ],
-                        borderWidth: 0
+                        borderWidth: 0,
+                        hoverOffset: 4
                     }]
                 },
                 options: {
@@ -113,7 +119,10 @@ function initializeBudgetCharts(budgetData, spentData, categoryLabels) {
                             labels: {
                                 padding: 20,
                                 usePointStyle: true,
-                                pointStyle: 'circle'
+                                pointStyle: 'circle',
+                                font: {
+                                    size: 14
+                                }
                             }
                         },
                         tooltip: {
@@ -129,77 +138,15 @@ function initializeBudgetCharts(budgetData, spentData, categoryLabels) {
                                 label: function(context) {
                                     const value = context.raw || 0;
                                     const percentage = ((value / totalBudget) * 100).toFixed(1);
-                                    return `${context.label}: $${value.toLocaleString()} (${percentage}%)`;
+                                    return `${context.label}: ${value.toLocaleString()} (${percentage}%)`;
                                 }
                             }
                         }
                     }
                 }
             });
-            
-            // Create category breakdown if more than 2 items
-            if (categoryLabels.length > 2) {
-                const categoryCtx = document.getElementById('categoryBreakdownChart');
-                if (categoryCtx) {
-                    new Chart(categoryCtx, {
-                        type: 'bar',
-                        data: {
-                            labels: categoryLabels,
-                            datasets: [
-                                {
-                                    label: 'Budget',
-                                    data: budgetData,
-                                    backgroundColor: 'rgba(78, 115, 223, 0.8)',
-                                    borderRadius: 4,
-                                    barPercentage: 0.6
-                                },
-                                {
-                                    label: 'Spent',
-                                    data: spentData,
-                                    backgroundColor: 'rgba(231, 74, 59, 0.8)',
-                                    borderRadius: 4,
-                                    barPercentage: 0.6
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: {
-                                x: {
-                                    grid: {
-                                        display: false
-                                    }
-                                },
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        callback: function(value) {
-                                            return '$' + value.toLocaleString();
-                                        }
-                                    }
-                                }
-                            },
-                            plugins: {
-                                legend: {
-                                    position: 'top'
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            const label = context.dataset.label || '';
-                                            const value = context.raw || 0;
-                                            return label + ': $' + value.toLocaleString();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-            }
         } catch (e) {
-            console.error('Error initializing charts:', e);
+            console.error('Error creating chart:', e);
         }
     }
 }

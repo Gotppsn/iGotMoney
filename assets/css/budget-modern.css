@@ -596,3 +596,21 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(var(--secondary-rgb), 0.2);
   }
+
+  .gauge-value h2 {
+    font-size: 3rem;
+    margin-bottom: 0;
+    line-height: 1;
+  }
+  
+  .gauge-value h2.text-success {
+    color: var(--success-color) !important;
+  }
+  
+  .gauge-value h2.text-warning {
+    color: var(--warning-color) !important;
+  }
+  
+  .gauge-value h2.text-danger {
+    color: var(--danger-color) !important;
+  }
