@@ -10,492 +10,445 @@ $additional_css = ['/assets/css/budget-modern.css'];
 require_once 'includes/header.php';
 ?>
 
-<div class="page-header d-flex justify-content-between align-items-center flex-wrap">
-    <div>
-        <h1 class="h2 fw-bold">Budget Management</h1>
-        <p class="text-muted mb-0">Track, allocate, and optimize your monthly budget with smart investments</p>
+<!-- Main Content Wrapper -->
+<div class="budget-page">
+    <!-- Page Header Section -->
+    <div class="page-header-section">
+        <div class="page-header-content">
+            <div class="page-title-group">
+                <h1 class="page-title">Budget Management</h1>
+                <p class="page-subtitle">Plan, track, and optimize your financial future with smart budgeting</p>
+            </div>
+            <div class="page-actions">
+                <button type="button" class="btn-generate-budget" data-bs-toggle="modal" data-bs-target="#generateBudgetModal">
+                    <i class="fas fa-magic"></i>
+                    <span>Auto-Generate</span>
+                </button>
+                <button type="button" class="btn-add-budget" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Add Budget</span>
+                </button>
+            </div>
+        </div>
     </div>
-    <div class="page-actions">
-        <button type="button" class="btn btn-outline-primary me-2" id="generateBudgetBtn" data-bs-toggle="modal" data-bs-target="#generateBudgetModal">
-            <i class="fas fa-magic me-2"></i> Auto-Generate
-        </button>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
-            <i class="fas fa-plus me-2"></i> Add Budget
-        </button>
-    </div>
-</div>
 
-<!-- Budget Overview Cards -->
-<div class="row mb-4 g-3">
-    <!-- Budget Health Card -->
-    <div class="col-lg-4">
-        <?php
-        $total_budget = 0;
-        $total_spent = 0;
-        $total_remaining = 0;
-        $investment_budget = 0;
-        $investment_spent = 0;
-        
-        if (!empty($budget_status)) {
-            foreach ($budget_status as $budget) {
-                $total_budget += $budget['budget_amount'];
-                $total_spent += $budget['spent'];
-                
-                if ($budget['is_investment']) {
-                    $investment_budget = $budget['budget_amount'];
-                    $investment_spent = $budget['spent'];
+    <!-- Quick Stats Section -->
+    <div class="quick-stats-section">
+        <div class="stats-grid">
+            <?php
+            $total_budget = 0;
+            $total_spent = 0;
+            $total_remaining = 0;
+            $investment_budget = 0;
+            $investment_spent = 0;
+            
+            if (!empty($budget_status)) {
+                foreach ($budget_status as $budget) {
+                    $total_budget += $budget['budget_amount'];
+                    $total_spent += $budget['spent'];
+                    
+                    if ($budget['is_investment']) {
+                        $investment_budget = $budget['budget_amount'];
+                        $investment_spent = $budget['spent'];
+                    }
                 }
+                $total_remaining = $total_budget - $total_spent;
             }
-            $total_remaining = $total_budget - $total_spent;
-        }
-        
-        // Calculate budget health as percentage
-        $budget_health = $total_budget > 0 ? (($total_budget - $total_spent) / $total_budget) * 100 : 0;
-        
-        // Determine health status based on remaining percentage
-        if ($budget_health >= 50) {
-            $health_class = 'success';
-            $health_icon = 'check-circle';
-            $health_status = 'good';
-            $health_message = 'Your budget is doing great!';
-        } elseif ($budget_health >= 30) {
-            $health_class = 'warning';
-            $health_icon = 'exclamation-triangle';
-            $health_status = 'warning';
-            $health_message = 'Your budget needs attention.';
-        } else {
-            $health_class = 'danger';
-            $health_icon = 'exclamation-circle';
-            $health_status = 'danger';
-            $health_message = 'Warning: Your budget is nearly depleted!';
-        }
-        ?>
-        <div class="card shadow-sm border-0 h-100 health-card" data-health="<?php echo $health_status; ?>">
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="icon-wrapper bg-soft-<?php echo $health_class; ?> me-3">
-                        <i class="fas fa-<?php echo $health_icon; ?> text-<?php echo $health_class; ?>"></i>
-                    </div>
-                    <h5 class="card-title mb-0">Budget Health</h5>
+            
+            $budget_health = $total_budget > 0 ? (($total_budget - $total_spent) / $total_budget) * 100 : 0;
+            ?>
+            
+            <div class="stat-card overview">
+                <div class="stat-icon">
+                    <i class="fas fa-wallet"></i>
                 </div>
-                
-                <div class="gauge-wrapper position-relative mb-4">
-                    <div class="gauge"></div>
-                    <div class="gauge-value">
-                        <?php
-                        // Use white text on danger (red) background for better contrast
-                        if ($health_class === 'danger') {
-                            $text_color = '#ffffff';
-                            $text_shadow = 'text-shadow: 0 2px 4px rgba(0,0,0,0.3);';
-                        } elseif ($health_class === 'warning') {
-                            $text_color = '#ffc107';
-                            $text_shadow = 'text-shadow: 0 1px 3px rgba(0,0,0,0.2);';
-                        } else {
-                            $text_color = '#28a745';
-                            $text_shadow = 'text-shadow: 0 1px 3px rgba(0,0,0,0.1);';
-                        }
-                        ?>
-                        <h2 class="fw-bold" style="color: <?php echo $text_color; ?> !important; <?php echo $text_shadow; ?>"><?php echo number_format($budget_health, 0); ?>%</h2>
-                        <p class="text-muted">remaining budget</p>
+                <div class="stat-content">
+                    <h3 class="stat-label">Total Budget</h3>
+                    <p class="stat-value">$<?php echo number_format($total_budget, 2); ?></p>
+                    <div class="stat-info">
+                        <i class="fas fa-calendar"></i>
+                        <span>This Month</span>
                     </div>
                 </div>
-                
-                <div class="row budget-stats text-center g-0">
-                    <div class="col-4 budget-stat">
-                        <p class="small text-muted mb-1">Total Budget</p>
-                        <h5 class="text-primary mb-0">$<?php echo number_format($total_budget, 0); ?></h5>
-                    </div>
-                    <div class="col-4 budget-stat">
-                        <p class="small text-muted mb-1">Spent</p>
-                        <h5 class="text-danger mb-0">$<?php echo number_format($total_spent, 0); ?></h5>
-                    </div>
-                    <div class="col-4 budget-stat">
-                        <p class="small text-muted mb-1">Remaining</p>
-                        <h5 class="text-success mb-0">$<?php echo number_format($total_remaining, 0); ?></h5>
+            </div>
+            
+            <div class="stat-card health">
+                <div class="stat-icon">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-label">Budget Health</h3>
+                    <p class="stat-value"><?php echo number_format($budget_health, 0); ?>%</p>
+                    <div class="stat-trend <?php echo $budget_health >= 50 ? 'positive' : ($budget_health >= 30 ? 'warning' : 'negative'); ?>">
+                        <i class="fas fa-<?php echo $budget_health >= 50 ? 'check-circle' : ($budget_health >= 30 ? 'exclamation-triangle' : 'exclamation-circle'); ?>"></i>
+                        <span><?php echo $budget_health >= 50 ? 'Healthy' : ($budget_health >= 30 ? 'Needs Attention' : 'Critical'); ?></span>
                     </div>
                 </div>
-                
-                <div class="mt-3 text-center">
-                    <p class="text-<?php echo $health_class; ?> fw-medium mb-0">
-                        <?php echo $health_message; ?>
-                    </p>
+            </div>
+            
+            <div class="stat-card investment">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-label">Investment Budget</h3>
+                    <p class="stat-value">$<?php echo number_format($investment_budget, 2); ?></p>
+                    <?php if ($investment_budget > 0): ?>
+                        <div class="stat-trend <?php echo $investment_spent >= $investment_budget ? 'positive' : 'warning'; ?>">
+                            <i class="fas fa-<?php echo $investment_spent >= $investment_budget ? 'check' : 'arrow-up'; ?>"></i>
+                            <span><?php echo $investment_spent >= $investment_budget ? 'Goal Reached' : '$' . number_format($investment_budget - $investment_spent, 2) . ' remaining'; ?></span>
+                        </div>
+                    <?php else: ?>
+                        <div class="stat-info">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Not set</span>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Investment Focus Card -->
-    <div class="col-lg-4">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="icon-wrapper bg-soft-info me-3">
-                        <i class="fas fa-coins text-info"></i>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+        <div class="charts-grid">
+            <!-- Budget Overview Chart -->
+            <div class="chart-card budget-overview">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-pie"></i>
+                        <h3>Budget Overview</h3>
                     </div>
-                    <h5 class="card-title mb-0">Monthly Investments</h5>
                 </div>
-                
-                <?php if ($investment_budget > 0): ?>
-                    <div class="investment-progress mb-4">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Investment Progress</span>
-                            <span class="fw-medium"><?php echo number_format(($investment_spent / $investment_budget) * 100, 0); ?>%</span>
+                <div class="chart-body">
+                    <div class="budget-gauge-container">
+                        <div class="gauge-wrapper">
+                            <div class="modern-gauge" data-percentage="<?php echo $budget_health; ?>">
+                                <svg viewBox="0 0 200 100" class="gauge-svg">
+                                    <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="#e5e7eb" stroke-width="20" stroke-linecap="round"/>
+                                    <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round" 
+                                          stroke-dasharray="251.2" stroke-dashoffset="<?php echo 251.2 * (1 - $budget_health / 100); ?>"
+                                          class="gauge-progress"/>
+                                </svg>
+                                <div class="gauge-center">
+                                    <span class="gauge-value"><?php echo number_format($budget_health, 0); ?>%</span>
+                                    <span class="gauge-label">Remaining</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="progress" style="height: 10px;">
-                            <div class="progress-bar bg-info" role="progressbar" 
-                                 style="width: <?php echo min(100, ($investment_spent / $investment_budget) * 100); ?>%" 
-                                 aria-valuenow="<?php echo ($investment_spent / $investment_budget) * 100; ?>" 
-                                 aria-valuemin="0" aria-valuemax="100"></div>
+                        <div class="budget-breakdown">
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">Total Budget</span>
+                                <span class="breakdown-value">$<?php echo number_format($total_budget, 2); ?></span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">Spent</span>
+                                <span class="breakdown-value text-danger">$<?php echo number_format($total_spent, 2); ?></span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">Remaining</span>
+                                <span class="breakdown-value text-success">$<?php echo number_format($total_remaining, 2); ?></span>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="row text-center g-3">
-                        <div class="col-6">
-                            <p class="text-muted small mb-1">Allocated</p>
-                            <h4 class="text-info mb-0">$<?php echo number_format($investment_budget, 2); ?></h4>
-                        </div>
-                        <div class="col-6">
-                            <p class="text-muted small mb-1">Invested</p>
-                            <h4 class="text-success mb-0">$<?php echo number_format($investment_spent, 2); ?></h4>
-                        </div>
+                </div>
+            </div>
+            
+            <!-- Category Distribution -->
+            <div class="chart-card category-distribution">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <i class="fas fa-list-ol"></i>
+                        <h3>Top Budget Categories</h3>
                     </div>
-                    
-                    <div class="mt-3 text-center">
-                        <?php if ($investment_spent < $investment_budget): ?>
-                            <p class="text-warning mb-0">
-                                <i class="fas fa-exclamation-triangle me-1"></i>
-                                $<?php echo number_format($investment_budget - $investment_spent, 2); ?> left to invest this month
-                            </p>
+                </div>
+                <div class="chart-body">
+                    <div class="categories-list-content">
+                        <?php if (!empty($budget_status)): ?>
+                            <?php 
+                            // Sort budgets by amount
+                            usort($budget_status, function($a, $b) {
+                                return $b['budget_amount'] - $a['budget_amount'];
+                            });
+                            
+                            $rank = 1;
+                            foreach (array_slice($budget_status, 0, 5) as $budget): 
+                                $percentage = ($budget['spent'] / max(0.01, $budget['budget_amount'])) * 100;
+                            ?>
+                                <div class="category-item">
+                                    <div class="category-rank"><?php echo $rank++; ?></div>
+                                    <div class="category-info">
+                                        <h4 class="category-name">
+                                            <?php echo htmlspecialchars($budget['category_name']); ?>
+                                            <?php if ($budget['is_investment']): ?>
+                                                <i class="fas fa-gem text-info ms-1"></i>
+                                            <?php endif; ?>
+                                        </h4>
+                                        <div class="category-progress">
+                                            <div class="progress-track">
+                                                <div class="progress-fill <?php echo $percentage >= 90 ? 'danger' : ($percentage >= 70 ? 'warning' : 'success'); ?>" 
+                                                     style="width: <?php echo min(100, $percentage); ?>%"></div>
+                                            </div>
+                                            <span class="progress-text"><?php echo number_format($percentage, 0); ?>%</span>
+                                        </div>
+                                    </div>
+                                    <div class="category-amount">
+                                        <span class="amount">$<?php echo number_format($budget['budget_amount'], 2); ?></span>
+                                        <span class="spent">$<?php echo number_format($budget['spent'], 2); ?> spent</span>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         <?php else: ?>
-                            <p class="text-success mb-0">
-                                <i class="fas fa-check-circle me-1"></i>
-                                Investment goal reached!
-                            </p>
+                            <div class="empty-categories">
+                                <i class="fas fa-folder-open"></i>
+                                <p>No budgets created yet</p>
+                            </div>
                         <?php endif; ?>
                     </div>
-                <?php else: ?>
-                    <div class="text-center py-4">
-                        <div class="empty-state-icon mb-3">
-                            <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Categories Table Section -->
+    <div class="budget-table-section">
+        <div class="table-card">
+            <div class="table-header">
+                <div class="table-title">
+                    <i class="fas fa-tasks"></i>
+                    <h3>Budget Categories</h3>
+                </div>
+                <div class="table-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="categorySearch" placeholder="Search categories..." data-table-search="budgetTable">
+                    </div>
+                </div>
+            </div>
+            <div class="table-body">
+                <?php if (empty($budget_status)): ?>
+                    <div class="table-empty">
+                        <div class="empty-icon">
+                            <i class="fas fa-chart-pie"></i>
                         </div>
-                        <p class="text-muted mb-3">No investment budget set</p>
-                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#addBudgetModal" 
-                                onclick="selectInvestmentCategory()">
-                            <i class="fas fa-plus me-1"></i> Add Investment Budget
-                        </button>
+                        <h4>No budgets defined yet</h4>
+                        <p>Start by creating a budget for each expense category.</p>
+                        <div class="empty-actions">
+                            <button type="button" class="btn-add-first" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
+                                <i class="fas fa-plus"></i>
+                                Add Your First Budget
+                            </button>
+                            <span class="action-separator">or</span>
+                            <button type="button" class="btn-generate-first" data-bs-toggle="modal" data-bs-target="#generateBudgetModal">
+                                <i class="fas fa-magic"></i>
+                                Auto-Generate Budget
+                            </button>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="budget-table" id="budgetTable">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Budget</th>
+                                    <th>Spent</th>
+                                    <th>Remaining</th>
+                                    <th>Progress</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($budget_status as $budget): ?>
+                                    <tr class="<?php echo $budget['is_investment'] ? 'investment-row' : ''; ?>">
+                                        <td class="category-cell">
+                                            <span class="category-text">
+                                                <?php if ($budget['is_investment']): ?>
+                                                    <i class="fas fa-gem text-info me-2"></i>
+                                                <?php endif; ?>
+                                                <?php echo htmlspecialchars($budget['category_name']); ?>
+                                            </span>
+                                        </td>
+                                        <td class="amount-cell">$<?php echo number_format($budget['budget_amount'], 2); ?></td>
+                                        <td class="amount-cell">$<?php echo number_format($budget['spent'], 2); ?></td>
+                                        <td class="amount-cell">
+                                            <span class="<?php echo $budget['available'] < 0 ? 'text-danger' : 'text-success'; ?>">
+                                                $<?php echo number_format($budget['available'], 2); ?>
+                                            </span>
+                                        </td>
+                                        <td class="progress-cell">
+                                            <?php
+                                            $progress_class = 'success';
+                                            if ($budget['percentage'] >= 90) {
+                                                $progress_class = 'danger';
+                                            } elseif ($budget['percentage'] >= 70) {
+                                                $progress_class = 'warning';
+                                            }
+                                            
+                                            if ($budget['is_investment']) {
+                                                $progress_class = 'info';
+                                            }
+                                            ?>
+                                            <div class="budget-progress">
+                                                <div class="progress-bar <?php echo $progress_class; ?>" 
+                                                     style="width: <?php echo min(100, $budget['percentage']); ?>%"></div>
+                                                <span class="progress-label"><?php echo number_format($budget['percentage'], 0); ?>%</span>
+                                            </div>
+                                        </td>
+                                        <td class="status-cell">
+                                            <?php
+                                            if ($budget['is_investment']) {
+                                                if ($budget['percentage'] >= 100) {
+                                                    echo '<span class="status-badge success">On Track</span>';
+                                                } else {
+                                                    echo '<span class="status-badge warning">Invest More</span>';
+                                                }
+                                            } else {
+                                                if ($budget['percentage'] >= 90) {
+                                                    echo '<span class="status-badge danger">Critical</span>';
+                                                } elseif ($budget['percentage'] >= 70) {
+                                                    echo '<span class="status-badge warning">Warning</span>';
+                                                } else {
+                                                    echo '<span class="status-badge success">Good</span>';
+                                                }
+                                            }
+                                            ?>
+                                        </td>
+                                        <td class="actions-cell">
+                                            <button class="btn-action edit" data-budget-id="<?php echo $budget['budget_id']; ?>" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-action delete" data-budget-id="<?php echo $budget['budget_id']; ?>" title="Delete">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     </div>
                 <?php endif; ?>
             </div>
         </div>
     </div>
-    
-    <!-- Budget vs. Actual Chart Card -->
-    <div class="col-lg-4">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
-                <h5 class="mb-0">
-                    <i class="fas fa-chart-bar text-primary me-2"></i>
-                    Budget Analysis
-                </h5>
+
+    <!-- Budget Recommendations -->
+    <?php if (isset($monthly_income) && $monthly_income > 0 && isset($budget_plan) && !empty($budget_plan)): ?>
+    <div class="recommendations-section">
+        <div class="recommendations-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-lightbulb"></i>
+                    <h3>Smart Budget Recommendations</h3>
+                </div>
+                <button class="btn-adopt-all" id="adoptAllRecommendations">
+                    <i class="fas fa-check"></i>
+                    Adopt All
+                </button>
             </div>
             <div class="card-body">
-                <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
-                    <canvas id="budgetDonutChart" style="width: 100%; height: 100%;"></canvas>
+                <div class="recommendation-info">
+                    <i class="fas fa-info-circle"></i>
+                    <p>Based on your income of <strong>$<?php echo number_format($monthly_income, 2); ?></strong> per month, we recommend prioritizing <strong>investments</strong> and optimizing your budget allocation.</p>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Budget Categories Status -->
-<div class="card shadow-sm border-0 mb-4">
-    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
-        <h5 class="mb-0">
-            <i class="fas fa-tasks text-primary me-2"></i>
-            Budget Categories Status
-        </h5>
-        <div class="search-container">
-            <span class="input-group-text">
-                <i class="fa fa-search"></i>
-            </span>
-            <input type="text" class="form-control" 
-                   placeholder="Search categories..." 
-                   id="categorySearch">
-        </div>
-    </div>
-    <div class="card-body p-0">
-        <?php if (empty($budget_status)): ?>
-            <div class="text-center py-5 empty-state">
-                <div class="empty-state-icon mb-3">
-                    <i class="fas fa-chart-pie"></i>
-                </div>
-                <h4 class="mb-2">No budgets defined yet</h4>
-                <p class="text-muted mb-4">Start by creating a budget for each expense category.</p>
-                <div class="d-flex justify-content-center">
-                    <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
-                        <i class="fas fa-plus me-2"></i> Add Your First Budget
-                    </button>
-                    <span class="mx-1">or</span>
-                    <button type="button" class="btn btn-success ms-2" data-bs-toggle="modal" data-bs-target="#generateBudgetModal">
-                        <i class="fas fa-magic me-2"></i> Auto-Generate Budget
-                    </button>
-                </div>
-            </div>
-        <?php else: ?>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle budget-table mb-0" id="budgetCategoriesTable">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="ps-4">Category</th>
-                            <th>Budget</th>
-                            <th>Spent</th>
-                            <th>Remaining</th>
-                            <th>Progress</th>
-                            <th>Status</th>
-                            <th class="text-end pe-4">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($budget_status as $budget): ?>
-                            <tr class="<?php echo $budget['is_investment'] ? 'table-info' : ''; ?>">
-                                <td class="ps-4 fw-medium">
-                                    <?php if ($budget['is_investment']): ?>
-                                        <i class="fas fa-coins text-info me-2"></i>
-                                    <?php endif; ?>
-                                    <?php echo htmlspecialchars($budget['category_name']); ?>
-                                </td>
-                                <td class="budget-amount">
-                                    $<?php echo number_format($budget['budget_amount'], 2); ?>
-                                </td>
-                                <td class="spent-amount">
-                                    $<?php echo number_format($budget['spent'], 2); ?>
-                                </td>
-                                <td class="remaining-amount">
-                                    <span class="<?php echo $budget['available'] < 0 ? 'text-danger' : 'text-success'; ?>">
-                                        $<?php echo number_format($budget['available'], 2); ?>
-                                    </span>
-                                </td>
-                                <td style="width: 20%;">
-                                    <?php
-                                    $progress_class = 'bg-success';
-                                    if ($budget['percentage'] >= 90) {
-                                        $progress_class = 'bg-danger';
-                                    } elseif ($budget['percentage'] >= 70) {
-                                        $progress_class = 'bg-warning';
-                                    }
-                                    
-                                    if ($budget['is_investment']) {
-                                        $progress_class = 'bg-info';
-                                    }
-                                    ?>
-                                    <div class="progress budget-progress">
-                                        <div class="progress-bar <?php echo $progress_class; ?>" 
-                                            role="progressbar" 
-                                            style="width: <?php echo min(100, $budget['percentage']); ?>%" 
-                                            aria-valuenow="<?php echo $budget['percentage']; ?>" 
-                                            aria-valuemin="0" aria-valuemax="100">
-                                            <?php echo number_format($budget['percentage'], 0); ?>%
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <?php
-                                    if ($budget['is_investment']) {
-                                        if ($budget['percentage'] >= 100) {
-                                            echo '<span class="badge bg-soft-success text-success">On Track</span>';
-                                        } else {
-                                            echo '<span class="badge bg-soft-warning text-warning">Invest More</span>';
-                                        }
-                                    } else {
-                                        if ($budget['percentage'] >= 90) {
-                                            echo '<span class="badge bg-soft-danger text-danger">Critical</span>';
-                                        } elseif ($budget['percentage'] >= 70) {
-                                            echo '<span class="badge bg-soft-warning text-warning">Warning</span>';
-                                        } else {
-                                            echo '<span class="badge bg-soft-success text-success">Good</span>';
-                                        }
-                                    }
-                                    ?>
-                                </td>
-                                <td class="text-end pe-4">
-                                    <div class="budget-actions">
-                                        <button type="button" class="btn btn-sm btn-icon btn-outline-primary edit-budget" 
-                                                data-budget-id="<?php echo $budget['budget_id']; ?>" 
-                                                title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-icon btn-outline-danger delete-budget" 
-                                                data-budget-id="<?php echo $budget['budget_id']; ?>" 
-                                                title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        <?php endif; ?>
-    </div>
-</div>
-
-<!-- Budget Recommendations -->
-<?php if (isset($monthly_income) && $monthly_income > 0 && isset($budget_plan) && !empty($budget_plan)): ?>
-<div class="card shadow-sm border-0 mb-4">
-    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
-        <h5 class="mb-0">
-            <i class="fas fa-lightbulb text-primary me-2"></i>
-            Smart Budget Recommendations
-        </h5>
-        <button class="btn btn-sm btn-success" id="adoptAllRecommendations">
-            <i class="fas fa-check me-1"></i> Adopt All Recommendations
-        </button>
-    </div>
-    <div class="card-body">
-        <div class="alert alert-info d-flex align-items-center" role="alert">
-            <i class="fas fa-info-circle me-3 fs-4"></i>
-            <div>
-                Based on your income of <strong>$<?php echo number_format($monthly_income, 2); ?></strong> per month, 
-                we recommend prioritizing <strong>investments</strong> and optimizing your budget allocation.
-            </div>
-        </div>
-        
-        <div class="table-responsive">
-            <table class="table table-hover align-middle recommendations-table">
-                <thead class="table-light">
-                    <tr>
-                        <th>Category</th>
-                        <th>Recommended Budget</th>
-                        <th>Percentage of Income</th>
-                        <th class="text-end">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
+                
+                <div class="recommendations-grid">
                     <?php foreach ($budget_plan as $recommendation): ?>
-                        <tr class="<?php echo $recommendation['is_investment'] ? 'table-info' : ''; ?>">
-                            <td class="fw-medium">
-                                <?php if ($recommendation['is_investment']): ?>
-                                    <i class="fas fa-coins text-info me-2"></i>
-                                <?php endif; ?>
-                                <?php echo htmlspecialchars($recommendation['category_name']); ?>
-                            </td>
-                            <td>
-                                $<?php echo number_format($recommendation['allocated_amount'], 2); ?>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="progress flex-grow-1 me-2" style="height: 8px;">
-                                        <div class="progress-bar <?php echo $recommendation['is_investment'] ? 'bg-info' : 'bg-primary'; ?>" 
-                                            role="progressbar" 
-                                            style="width: <?php echo $recommendation['percentage']; ?>%" 
-                                            aria-valuenow="<?php echo $recommendation['percentage']; ?>" 
-                                            aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                    <span class="text-muted small"><?php echo number_format($recommendation['percentage'], 1); ?>%</span>
-                                </div>
-                            </td>
-                            <td class="text-end">
-                                <button type="button" class="btn btn-sm btn-outline-success adopt-recommendation" 
-                                        data-category-id="<?php echo $recommendation['category_id']; ?>"
-                                        data-amount="<?php echo $recommendation['allocated_amount']; ?>">
-                                    <i class="fas fa-check me-1"></i> Adopt
-                                </button>
-                            </td>
-                        </tr>
+                        <div class="recommendation-item <?php echo $recommendation['is_investment'] ? 'investment' : ''; ?>">
+                            <div class="recommendation-header">
+                                <h4 class="recommendation-category">
+                                    <?php if ($recommendation['is_investment']): ?>
+                                        <i class="fas fa-gem text-info me-2"></i>
+                                    <?php endif; ?>
+                                    <?php echo htmlspecialchars($recommendation['category_name']); ?>
+                                </h4>
+                                <span class="recommendation-amount">$<?php echo number_format($recommendation['allocated_amount'], 2); ?></span>
+                            </div>
+                            <div class="recommendation-progress">
+                                <div class="progress-bar" style="width: <?php echo $recommendation['percentage']; ?>%"></div>
+                                <span class="progress-percentage"><?php echo number_format($recommendation['percentage'], 1); ?>%</span>
+                            </div>
+                            <button class="btn-adopt adopt-recommendation" 
+                                    data-category-id="<?php echo $recommendation['category_id']; ?>"
+                                    data-amount="<?php echo $recommendation['allocated_amount']; ?>">
+                                <i class="fas fa-check"></i>
+                                Adopt
+                            </button>
+                        </div>
                     <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-<?php elseif (isset($monthly_income) && $monthly_income <= 0): ?>
-<div class="card shadow-sm border-0 mb-4">
-    <div class="card-header bg-transparent border-0 py-3">
-        <h5 class="mb-0">
-            <i class="fas fa-lightbulb text-primary me-2"></i>
-            Budget Recommendations
-        </h5>
-    </div>
-    <div class="card-body">
-        <div class="alert alert-warning d-flex align-items-center" role="alert">
-            <i class="fas fa-exclamation-triangle me-3 fs-4"></i>
-            <div>
-                You need to add income sources before we can generate budget recommendations.
-                <a href="<?php echo BASE_PATH; ?>/income" class="alert-link">Go to Income Management</a> to add your income sources.
+                </div>
             </div>
         </div>
     </div>
+    <?php endif; ?>
 </div>
-<?php endif; ?>
 
 <!-- Modals -->
 <!-- Add Budget Modal -->
-<div class="modal fade" id="addBudgetModal" tabindex="-1" aria-labelledby="addBudgetModalLabel" aria-hidden="true">
+<div class="modal fade modern-modal" id="addBudgetModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
+        <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addBudgetModalLabel">
-                    <i class="fas fa-plus-circle me-2"></i>Add Budget
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <h5 class="modal-title">Add New Budget</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <form action="<?php echo BASE_PATH; ?>/budget" method="post" id="addBudgetForm" class="needs-validation" novalidate>
                 <input type="hidden" name="action" value="add">
                 
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="category_id" class="form-label">Category <span class="text-danger">*</span></label>
-                        <select class="form-select" id="category_id" name="category_id" required>
-                            <option value="">Select a category</option>
-                            <?php 
-                            // Check if categories exist
-                            if (isset($categories) && $categories->num_rows > 0) {
-                                // Reset the categories result pointer
-                                $categories->data_seek(0);
-                                while ($category = $categories->fetch_assoc()): 
-                            ?>
-                                <option value="<?php echo $category['category_id']; ?>" 
-                                        <?php echo ($category['name'] === 'Investments') ? 'class="text-info fw-medium"' : ''; ?>>
-                                    <?php echo htmlspecialchars($category['name']); ?>
-                                    <?php echo ($category['name'] === 'Investments') ? ' 💎' : ''; ?>
-                                </option>
-                            <?php 
-                                endwhile;
-                            }
-                            ?>
-                        </select>
-                        <div class="invalid-feedback">Please select a category.</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="amount" class="form-label">Budget Amount <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" required>
-                            <div class="invalid-feedback">Please enter a valid amount greater than zero.</div>
-                        </div>
-                    </div>
-                    
-                    <div class="row g-3">
-                        <div class="col-md-6 mb-3">
-                            <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
-                            <div class="invalid-feedback">Please select a start date.</div>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="category_id">Category</label>
+                            <select class="modern-select" id="category_id" name="category_id" required>
+                                <option value="">Select a category</option>
+                                <?php 
+                                if (isset($categories) && $categories->num_rows > 0) {
+                                    $categories->data_seek(0);
+                                    while ($category = $categories->fetch_assoc()): 
+                                ?>
+                                    <option value="<?php echo $category['category_id']; ?>" 
+                                            <?php echo ($category['name'] === 'Investments') ? 'class="investment-option"' : ''; ?>>
+                                        <?php echo htmlspecialchars($category['name']); ?>
+                                        <?php echo ($category['name'] === 'Investments') ? ' 💎' : ''; ?>
+                                    </option>
+                                <?php 
+                                    endwhile;
+                                }
+                                ?>
+                            </select>
                         </div>
                         
-                        <div class="col-md-6 mb-3">
-                            <label for="end_date" class="form-label">End Date <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="end_date" name="end_date" value="<?php echo date('Y-m-d', strtotime('+1 month')); ?>" required>
-                            <div class="invalid-feedback">Please select an end date.</div>
+                        <div class="form-field">
+                            <label for="amount">Budget Amount</label>
+                            <div class="amount-input">
+                                <span class="currency-symbol">$</span>
+                                <input type="number" id="amount" name="amount" step="0.01" min="0.01" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="start_date">Start Date</label>
+                            <input type="date" id="start_date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="end_date">End Date</label>
+                            <input type="date" id="end_date" name="end_date" value="<?php echo date('Y-m-d', strtotime('+1 month')); ?>" required>
                         </div>
                     </div>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-plus-circle me-1"></i> Add Budget
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-plus"></i>
+                        Add Budget
                     </button>
                 </div>
             </form>
@@ -504,72 +457,70 @@ require_once 'includes/header.php';
 </div>
 
 <!-- Edit Budget Modal -->
-<div class="modal fade" id="editBudgetModal" tabindex="-1" aria-labelledby="editBudgetModalLabel" aria-hidden="true">
+<div class="modal fade modern-modal" id="editBudgetModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
+        <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editBudgetModalLabel">
-                    <i class="fas fa-edit me-2"></i>Edit Budget
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-icon edit">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <h5 class="modal-title">Edit Budget</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <form action="<?php echo BASE_PATH; ?>/budget" method="post" id="editBudgetForm" class="needs-validation" novalidate>
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="budget_id" id="edit_budget_id">
                 
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="edit_category_id" class="form-label">Category <span class="text-danger">*</span></label>
-                        <select class="form-select" id="edit_category_id" name="category_id" required>
-                            <option value="">Select a category</option>
-                            <?php 
-                            // Check if categories exist
-                            if (isset($categories) && $categories->num_rows > 0) {
-                                // Reset the categories result pointer
-                                $categories->data_seek(0);
-                                while ($category = $categories->fetch_assoc()): 
-                            ?>
-                                <option value="<?php echo $category['category_id']; ?>"
-                                        <?php echo ($category['name'] === 'Investments') ? 'class="text-info fw-medium"' : ''; ?>>
-                                    <?php echo htmlspecialchars($category['name']); ?>
-                                    <?php echo ($category['name'] === 'Investments') ? ' 💎' : ''; ?>
-                                </option>
-                            <?php 
-                                endwhile;
-                            }
-                            ?>
-                        </select>
-                        <div class="invalid-feedback">Please select a category.</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="edit_amount" class="form-label">Budget Amount <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0.01" required>
-                            <div class="invalid-feedback">Please enter a valid amount greater than zero.</div>
-                        </div>
-                    </div>
-                    
-                    <div class="row g-3">
-                        <div class="col-md-6 mb-3">
-                            <label for="edit_start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="edit_start_date" name="start_date" required>
-                            <div class="invalid-feedback">Please select a start date.</div>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="edit_category_id">Category</label>
+                            <select class="modern-select" id="edit_category_id" name="category_id" required>
+                                <option value="">Select a category</option>
+                                <?php 
+                                if (isset($categories) && $categories->num_rows > 0) {
+                                    $categories->data_seek(0);
+                                    while ($category = $categories->fetch_assoc()): 
+                                ?>
+                                    <option value="<?php echo $category['category_id']; ?>"
+                                            <?php echo ($category['name'] === 'Investments') ? 'class="investment-option"' : ''; ?>>
+                                        <?php echo htmlspecialchars($category['name']); ?>
+                                        <?php echo ($category['name'] === 'Investments') ? ' 💎' : ''; ?>
+                                    </option>
+                                <?php 
+                                    endwhile;
+                                }
+                                ?>
+                            </select>
                         </div>
                         
-                        <div class="col-md-6 mb-3">
-                            <label for="edit_end_date" class="form-label">End Date <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="edit_end_date" name="end_date" required>
-                            <div class="invalid-feedback">Please select an end date.</div>
+                        <div class="form-field">
+                            <label for="edit_amount">Budget Amount</label>
+                            <div class="amount-input">
+                                <span class="currency-symbol">$</span>
+                                <input type="number" id="edit_amount" name="amount" step="0.01" min="0.01" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="edit_start_date">Start Date</label>
+                            <input type="date" id="edit_start_date" name="start_date" required>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="edit_end_date">End Date</label>
+                            <input type="date" id="edit_end_date" name="end_date" required>
                         </div>
                     </div>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-1"></i> Save Changes
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-save"></i>
+                        Save Changes
                     </button>
                 </div>
             </form>
@@ -578,29 +529,30 @@ require_once 'includes/header.php';
 </div>
 
 <!-- Delete Budget Modal -->
-<div class="modal fade" id="deleteBudgetModal" tabindex="-1" aria-labelledby="deleteBudgetModalLabel" aria-hidden="true">
+<div class="modal fade modern-modal" id="deleteBudgetModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteBudgetModalLabel">
-                    <i class="fas fa-trash-alt me-2"></i>Delete Budget
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-icon delete">
+                    <i class="fas fa-trash-alt"></i>
+                </div>
+                <h5 class="modal-title">Delete Budget</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="modal-body text-center">
-                <div class="delete-icon mb-4">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <h5 class="mb-2">Are you sure?</h5>
-                <p class="text-muted mb-0">This action cannot be undone. This will permanently delete the budget.</p>
+                <p>Are you sure you want to delete this budget?</p>
+                <p class="text-muted">This action cannot be undone.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
                 <form action="<?php echo BASE_PATH; ?>/budget" method="post" id="deleteBudgetForm">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="budget_id" id="delete_budget_id">
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash-alt me-1"></i> Delete
+                    <button type="submit" class="btn-submit danger">
+                        <i class="fas fa-trash-alt"></i>
+                        Delete
                     </button>
                 </form>
             </div>
@@ -609,14 +561,17 @@ require_once 'includes/header.php';
 </div>
 
 <!-- Generate Budget Modal -->
-<div class="modal fade" id="generateBudgetModal" tabindex="-1" aria-labelledby="generateBudgetModalLabel" aria-hidden="true">
+<div class="modal fade modern-modal" id="generateBudgetModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
+        <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="generateBudgetModalLabel">
-                    <i class="fas fa-magic me-2"></i>Auto-Generate Budget
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-icon generate">
+                    <i class="fas fa-magic"></i>
+                </div>
+                <h5 class="modal-title">Auto-Generate Budget</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <form action="<?php echo BASE_PATH; ?>/budget" method="post" id="generateBudgetForm">
                 <input type="hidden" name="action" value="generate_plan">
@@ -624,52 +579,43 @@ require_once 'includes/header.php';
                 
                 <div class="modal-body">
                     <?php if (isset($monthly_income) && $monthly_income > 0): ?>
-                        <div class="alert alert-info d-flex">
-                            <i class="fas fa-info-circle me-3 fs-4"></i>
-                            <div>
-                                The system will generate a budget optimized for your financial growth, prioritizing investments.
-                            </div>
+                        <div class="alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <p>The system will generate a budget optimized for your financial growth, prioritizing investments.</p>
                         </div>
                         
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="fw-medium">Your current monthly income:</span>
-                                <span class="badge bg-primary p-2 fs-6">$<?php echo number_format($monthly_income, 2); ?></span>
-                            </div>
-                            
-                            <div class="card bg-light border-0">
-                                <div class="card-body">
-                                    <h6 class="card-subtitle mb-2 text-muted">Budget will be created with:</h6>
-                                    <ul class="mb-0">
-                                        <li><strong>10% minimum for investments</strong></li>
-                                        <li>Smart allocation based on spending patterns</li>
-                                        <li>Optimal financial ratios for wealth building</li>
-                                    </ul>
-                                </div>
-                            </div>
+                        <div class="income-display">
+                            <span class="income-label">Your current monthly income:</span>
+                            <span class="income-amount">$<?php echo number_format($monthly_income, 2); ?></span>
                         </div>
                         
-                        <div class="alert alert-warning d-flex">
-                            <i class="fas fa-exclamation-triangle me-3 fs-4"></i>
-                            <div>
-                                This will replace any existing budgets for the current month.
-                            </div>
+                        <div class="generation-info">
+                            <h6>Budget will be created with:</h6>
+                            <ul>
+                                <li><strong>10% minimum for investments</strong></li>
+                                <li>Smart allocation based on spending patterns</li>
+                                <li>Optimal financial ratios for wealth building</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>This will replace any existing budgets for the current month.</p>
                         </div>
                     <?php else: ?>
-                        <div class="alert alert-danger d-flex">
-                            <i class="fas fa-exclamation-triangle me-3 fs-4"></i>
-                            <div>
-                                You need to add income sources before generating a budget plan.
-                                <a href="<?php echo BASE_PATH; ?>/income" class="alert-link">Go to Income Management</a> to add your income sources.
-                            </div>
+                        <div class="alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>You need to add income sources before generating a budget plan.
+                               <a href="<?php echo BASE_PATH; ?>/income" class="alert-link">Go to Income Management</a> to add your income sources.</p>
                         </div>
                     <?php endif; ?>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success" <?php echo (isset($monthly_income) && $monthly_income > 0) ? '' : 'disabled'; ?>>
-                        <i class="fas fa-magic me-1"></i> Generate Budget
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-submit" <?php echo (isset($monthly_income) && $monthly_income > 0) ? '' : 'disabled'; ?>>
+                        <i class="fas fa-magic"></i>
+                        Generate Budget
                     </button>
                 </div>
             </form>
@@ -678,65 +624,11 @@ require_once 'includes/header.php';
 </div>
 
 <?php
-// Chart data
-$categories = [];
-$budget_amounts = [];
-$spent_amounts = [];
-
-if (!empty($budget_status)) {
-    foreach ($budget_status as $budget) {
-        $categories[] = $budget['category_name'] . ($budget['is_investment'] ? ' 💎' : '');
-        $budget_amounts[] = $budget['budget_amount'];
-        $spent_amounts[] = $budget['spent'];
-    }
-}
-
 // Add BASE_PATH as a global JavaScript variable to use in AJAX requests
 echo '<script>const BASE_PATH = "' . BASE_PATH . '";</script>';
 
-// Pass chart data to JS with improved handling
-echo '<script>
-// Budget chart data
-var budgetData = ' . json_encode($budget_amounts) . ';
-var spentData = ' . json_encode($spent_amounts) . ';
-var categoryLabels = ' . json_encode($categories) . ';
-
-// Debug information
-console.log("Budget data loaded:", {
-    budgetData: budgetData,
-    spentData: spentData,
-    categoryLabels: categoryLabels
-});
-
-// Initialize chart when Chart.js is ready
-function initializeChartWhenReady() {
-    if (typeof Chart !== "undefined") {
-        if (categoryLabels.length > 0) {
-            initializeBudgetCharts(budgetData, spentData, categoryLabels);
-        } else {
-            console.log("No budget data available for chart");
-            // Show empty state message
-            const chartContainer = document.querySelector(".chart-container");
-            if (chartContainer) {
-                chartContainer.innerHTML = \'<div class="text-center text-muted p-4">No budget data available to display chart.</div>\';
-            }
-        }
-    } else {
-        // Retry after a short delay
-        setTimeout(initializeChartWhenReady, 100);
-    }
-}
-
-// Start initialization when DOM is ready
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initializeChartWhenReady);
-} else {
-    initializeChartWhenReady();
-}
-</script>';
-
 // Additional JS
-$additional_js = ['/assets/js/budget.js'];
+$additional_js = ['/assets/js/budget-modern.js'];
 
 // Include footer
 require_once 'includes/footer.php';
