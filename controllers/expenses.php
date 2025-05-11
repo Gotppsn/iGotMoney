@@ -1,26 +1,14 @@
 <?php
-/**
- * Expenses Controller
- * 
- * Handles expense management functionality
- */
-
-// Check if user is logged in
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header('Location: ' . BASE_PATH . '/login');
     exit();
 }
 
-// Include required models
 require_once 'models/Expense.php';
 
-// Get user ID
 $user_id = $_SESSION['user_id'];
-
-// Initialize Expense object
 $expense = new Expense();
 
-// Handle AJAX requests
 if (isset($_GET['action'])) {
     header('Content-Type: application/json');
     
@@ -88,7 +76,6 @@ if (isset($_GET['action'])) {
                     ];
                 }
                 
-                // Calculate total for the period
                 $total = 0;
                 foreach ($expenses_data as $exp) {
                     $total += floatval($exp['amount']);
@@ -111,7 +98,6 @@ if (isset($_GET['action'])) {
         case 'get_expense_analytics':
             $period = isset($_GET['period']) ? $_GET['period'] : 'current-month';
             
-            // Calculate date range based on period
             $start_date = null;
             $end_date = null;
             
@@ -119,7 +105,6 @@ if (isset($_GET['action'])) {
             
             switch ($period) {
                 case 'all':
-                    // Get all expenses - set a very early start date
                     $start_date = '2000-01-01';
                     $end_date = $now->format('Y-m-d');
                     break;
@@ -148,7 +133,6 @@ if (isset($_GET['action'])) {
                     break;
             }
             
-            // Get expenses for the period
             $result = $expense->getByDateRange($user_id, $start_date, $end_date);
             
             if ($result && $result->num_rows > 0) {
@@ -161,36 +145,29 @@ if (isset($_GET['action'])) {
                 while ($row = $result->fetch_assoc()) {
                     $expenses_data[] = $row;
                     
-                    // Calculate total
                     $amount = floatval($row['amount']);
                     $total_amount += $amount;
                     
-                    // Track highest expense
                     if ($amount > $highest_amount) {
                         $highest_amount = $amount;
                         $highest_category = $row['category_name'];
                     }
                     
-                    // Track category totals
                     if (!isset($category_totals[$row['category_name']])) {
                         $category_totals[$row['category_name']] = 0;
                     }
                     $category_totals[$row['category_name']] += $amount;
                 }
                 
-                // Sort categories by total
                 arsort($category_totals);
                 
-                // Calculate days in period
                 $date1 = new DateTime($start_date);
                 $date2 = new DateTime($end_date);
                 $interval = $date1->diff($date2);
                 $days_in_period = $interval->days + 1;
                 
-                // Calculate daily average
                 $daily_average = $days_in_period > 0 ? $total_amount / $days_in_period : 0;
                 
-                // Calculate projected monthly
                 $projected_monthly = $daily_average * 30;
                 
                 echo json_encode([
@@ -229,9 +206,7 @@ if (isset($_GET['action'])) {
     }
 }
 
-// Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Check if this is an AJAX request
     $is_ajax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
     
     if ($is_ajax) {
@@ -421,59 +396,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
     }
     
-    // Non-AJAX redirect
     if (!$is_ajax) {
         header('Location: ' . BASE_PATH . '/expenses');
         exit();
     }
 }
 
-// Get filter parameters - Modified for month/year filtering
-$filter_month = isset($_GET['month']) ? intval($_GET['month']) : null;
-$filter_year = isset($_GET['year']) ? intval($_GET['year']) : null;
+$filter_month = isset($_GET['month']) ? intval($_GET['month']) : 0;
+$filter_year = isset($_GET['year']) ? intval($_GET['year']) : 0;
+$filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
 
-// If no filter provided, default to current month
-if (!$filter_month && !$filter_year) {
+if ($filter_month === 0 && $filter_year === 0 && $filter_category === 0) {
     $filter_month = date('n');
     $filter_year = date('Y');
 }
 
-// Calculate date range from month/year
-if ($filter_month && $filter_year) {
-    $filter_start_date = date('Y-m-01', mktime(0, 0, 0, $filter_month, 1, $filter_year));
-    $filter_end_date = date('Y-m-t', mktime(0, 0, 0, $filter_month, 1, $filter_year));
-} elseif ($filter_year && !$filter_month) {
-    // If only year is selected, show whole year
-    $filter_start_date = date('Y-01-01', mktime(0, 0, 0, 1, 1, $filter_year));
-    $filter_end_date = date('Y-12-31', mktime(0, 0, 0, 12, 31, $filter_year));
-} else {
-    // Show all if no valid filters
-    $filter_start_date = null;
-    $filter_end_date = null;
-}
-
-// Get all expense categories
 $categories = $expense->getAllCategories();
 
-// Get expenses for the current period
-if ($filter_start_date && $filter_end_date) {
-    $expenses = $expense->getByDateRange($user_id, $filter_start_date, $filter_end_date);
-} else {
-    // Get all expenses if no date filter is applied
-    $expenses = $expense->getAll($user_id);
-}
+$expenses = $expense->getFilteredExpenses($user_id, $filter_month, $filter_year, $filter_category);
 
-// Calculate total monthly and yearly expenses
 $monthly_expenses = $expense->getMonthlyTotal($user_id);
 $yearly_expenses = $expense->getYearlyTotal($user_id);
 
-// Get top expense categories for the selected period
-if ($filter_start_date && $filter_end_date) {
-    $top_expenses = $expense->getTopCategoriesByDateRange($user_id, $filter_start_date, $filter_end_date, 5);
-} else {
-    $top_expenses = $expense->getTopCategories($user_id, 5);
-}
+$top_expenses = $expense->getTopCategories($user_id, 5);
 
-// Include view
 require_once 'views/expenses.php';
 ?>

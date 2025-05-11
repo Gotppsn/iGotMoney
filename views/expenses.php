@@ -1,23 +1,18 @@
 <?php
-// Set page title and current page for menu highlighting
 $page_title = 'Expense Management - iGotMoney';
 $current_page = 'expenses';
 
-// Additional CSS and JS
 $additional_css = ['/assets/css/expenses-modern.css'];
 $additional_js = ['/assets/js/expenses-modern.js', '/assets/js/direct-form-handler.js'];
 
-// Include header
 require_once 'includes/header.php';
 
-// Get current month and year for selection
-$current_month = isset($_GET['month']) ? $_GET['month'] : date('n');
-$current_year = isset($_GET['year']) ? $_GET['year'] : date('Y');
+$current_month = isset($_GET['month']) ? intval($_GET['month']) : date('n');
+$current_year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
+$filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
 ?>
 
-<!-- Main Content Wrapper -->
 <div class="expenses-page">
-    <!-- Page Header Section -->
     <div class="page-header-section">
         <div class="page-header-content">
             <div class="page-title-group">
@@ -31,7 +26,6 @@ $current_year = isset($_GET['year']) ? $_GET['year'] : date('Y');
         </div>
     </div>
 
-    <!-- Quick Stats Section -->
     <div class="quick-stats-section">
         <div class="stats-grid">
             <div class="stat-card monthly">
@@ -83,10 +77,8 @@ $current_year = isset($_GET['year']) ? $_GET['year'] : date('Y');
         </div>
     </div>
 
-    <!-- Charts Section -->
     <div class="charts-section">
         <div class="charts-grid">
-            <!-- Category Distribution Chart -->
             <div class="chart-card category-chart">
                 <div class="chart-header">
                     <div class="chart-title">
@@ -114,7 +106,6 @@ $current_year = isset($_GET['year']) ? $_GET['year'] : date('Y');
                 </div>
             </div>
             
-            <!-- Top Categories List -->
             <div class="chart-card categories-list">
                 <div class="chart-header">
                     <div class="chart-title">
@@ -160,7 +151,6 @@ $current_year = isset($_GET['year']) ? $_GET['year'] : date('Y');
         </div>
     </div>
 
-    <!-- Expenses Table Section -->
     <div class="expenses-table-section">
         <div class="table-card">
             <div class="table-header">
@@ -179,45 +169,59 @@ $current_year = isset($_GET['year']) ? $_GET['year'] : date('Y');
                             <span>Filter</span>
                         </button>
                         <div class="dropdown-menu filter-menu" aria-labelledby="filterDropdown">
-                            <div class="filter-section">
-                                <h5>Month</h5>
-                                <select id="monthSelect" class="filter-select">
-                                    <option value="all" <?php echo (!isset($_GET['month']) && !isset($_GET['year'])) ? 'selected' : ''; ?>>All Time</option>
-                                    <option value="0" data-year="<?php echo date('Y'); ?>" <?php echo ($current_month == date('n') && $current_year == date('Y')) ? 'selected' : ''; ?>>Current Month</option>
-                                    <?php 
-                                    $months = [
-                                        1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
-                                        5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
-                                        9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
-                                    ];
-                                    
-                                    // Show past 12 months
-                                    for ($i = 0; $i < 12; $i++) {
-                                        $timestamp = strtotime("-$i months");
-                                        $month_num = date('n', $timestamp);
-                                        $year = date('Y', $timestamp);
-                                        $is_selected = ($month_num == $current_month && $year == $current_year) ? 'selected' : '';
-                                        echo "<option value='$month_num' data-year='$year' $is_selected>{$months[$month_num]} $year</option>";
-                                    }
-                                    ?>
-                                </select>
-                            </div>
-                            <div class="filter-section">
-                                <h5>Year</h5>
-                                <select id="yearSelect" class="filter-select">
-                                    <option value="all" <?php echo (!isset($_GET['year'])) ? 'selected' : ''; ?>>All Years</option>
-                                    <?php 
-                                    $current_year_actual = date('Y');
-                                    for ($year = $current_year_actual; $year >= $current_year_actual - 5; $year--) {
-                                        $is_selected = ($year == $current_year && isset($_GET['year'])) ? 'selected' : '';
-                                        echo "<option value='$year' $is_selected>$year</option>";
-                                    }
-                                    ?>
-                                </select>
-                            </div>
-                            <div class="filter-actions">
-                                <button class="btn-apply-filter" id="applyMonthFilter">Apply Filter</button>
-                            </div>
+                            <form id="filterForm" action="<?php echo BASE_PATH; ?>/expenses" method="GET">
+                                <div class="filter-section">
+                                    <h5>Month</h5>
+                                    <select id="monthSelect" name="month" class="filter-select">
+                                        <option value="0" <?php echo (!isset($_GET['month']) || $_GET['month'] == 0) ? 'selected' : ''; ?>>All Months</option>
+                                        <?php 
+                                        $months = [
+                                            1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
+                                            5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
+                                            9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
+                                        ];
+                                        
+                                        foreach ($months as $month_num => $month_name): 
+                                            $is_selected = ($month_num == $current_month) ? 'selected' : '';
+                                        ?>
+                                            <option value="<?php echo $month_num; ?>" <?php echo $is_selected; ?>><?php echo $month_name; ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="filter-section">
+                                    <h5>Year</h5>
+                                    <select id="yearSelect" name="year" class="filter-select">
+                                        <option value="0" <?php echo (!isset($_GET['year']) || $_GET['year'] == 0) ? 'selected' : ''; ?>>All Years</option>
+                                        <?php 
+                                        $current_year_actual = date('Y');
+                                        for ($year = $current_year_actual; $year >= $current_year_actual - 5; $year--): 
+                                            $is_selected = ($year == $current_year) ? 'selected' : '';
+                                        ?>
+                                            <option value="<?php echo $year; ?>" <?php echo $is_selected; ?>><?php echo $year; ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                </div>
+                                <div class="filter-section">
+                                    <h5>Category</h5>
+                                    <select id="categorySelect" name="category" class="filter-select">
+                                        <option value="0">All Categories</option>
+                                        <?php 
+                                        $categories->data_seek(0);
+                                        while($category = $categories->fetch_assoc()): 
+                                            $is_selected = ($category['category_id'] == $filter_category) ? 'selected' : '';
+                                        ?>
+                                            <option value="<?php echo $category['category_id']; ?>" <?php echo $is_selected; ?>>
+                                                <?php echo htmlspecialchars($category['name']); ?>
+                                            </option>
+                                        <?php endwhile; ?>
+                                        <?php $categories->data_seek(0); ?>
+                                    </select>
+                                </div>
+                                <div class="filter-actions">
+                                    <button type="submit" class="btn-apply-filter" id="applyFilter">Apply Filter</button>
+                                    <button type="button" class="btn-reset-filter" id="resetFilter">Reset</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -290,7 +294,6 @@ $current_year = isset($_GET['year']) ? $_GET['year'] : date('Y');
     </div>
 </div>
 
-<!-- Add Expense Modal -->
 <div class="modal fade modern-modal" id="addExpenseModal" tabindex="-1" aria-labelledby="addExpenseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -316,12 +319,14 @@ $current_year = isset($_GET['year']) ? $_GET['year'] : date('Y');
                             <label for="category_id">Category</label>
                             <select id="category_id" name="category_id" class="modern-select" required>
                                 <option value="">Select Category</option>
-                                <?php while($category = $categories->fetch_assoc()): ?>
+                                <?php 
+                                $categories->data_seek(0);
+                                while($category = $categories->fetch_assoc()): ?>
                                     <option value="<?php echo $category['category_id']; ?>">
                                         <?php echo htmlspecialchars($category['name']); ?>
                                     </option>
                                 <?php endwhile; ?>
-                                <?php $categories->data_seek(0); // Reset pointer ?>
+                                <?php $categories->data_seek(0); ?>
                             </select>
                         </div>
                         
@@ -375,7 +380,6 @@ $current_year = isset($_GET['year']) ? $_GET['year'] : date('Y');
     </div>
 </div>
 
-<!-- Edit Expense Modal -->
 <div class="modal fade modern-modal" id="editExpenseModal" tabindex="-1" aria-labelledby="editExpenseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -402,13 +406,13 @@ $current_year = isset($_GET['year']) ? $_GET['year'] : date('Y');
                             <label for="edit_category_id">Category</label>
                             <select id="edit_category_id" name="category_id" class="modern-select" required>
                                 <option value="">Select Category</option>
-                                <?php $categories->data_seek(0); // Reset pointer ?>
+                                <?php $categories->data_seek(0); ?>
                                 <?php while($category = $categories->fetch_assoc()): ?>
                                     <option value="<?php echo $category['category_id']; ?>">
                                         <?php echo htmlspecialchars($category['name']); ?>
                                     </option>
                                 <?php endwhile; ?>
-                                <?php $categories->data_seek(0); // Reset pointer ?>
+                                <?php $categories->data_seek(0); ?>
                             </select>
                         </div>
                         
@@ -462,7 +466,6 @@ $current_year = isset($_GET['year']) ? $_GET['year'] : date('Y');
     </div>
 </div>
 
-<!-- Delete Expense Modal -->
 <div class="modal fade modern-modal" id="deleteExpenseModal" tabindex="-1" aria-labelledby="deleteExpenseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
@@ -497,7 +500,6 @@ $current_year = isset($_GET['year']) ? $_GET['year'] : date('Y');
 </div>
 
 <?php
-// Chart data
 $chart_labels = [];
 $chart_data = [];
 $chart_colors = [
@@ -513,7 +515,6 @@ if (isset($top_expenses) && $top_expenses->num_rows > 0) {
     }
 }
 
-// Add meta tags for passing data to JS
 echo '<meta name="base-path" content="' . BASE_PATH . '">';
 echo '<meta name="chart-labels" content="' . htmlspecialchars(json_encode($chart_labels)) . '">';
 echo '<meta name="chart-data" content="' . htmlspecialchars(json_encode($chart_data)) . '">';

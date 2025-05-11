@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Modern Expenses JS loaded');
     
-    // Initialize all components
     initializeChart();
     initializeEventListeners();
     initializeFormValidation();
@@ -22,7 +21,6 @@ function initializeChart() {
     }
 
     try {
-        // Get chart data from meta tags
         const chartLabelsEl = document.querySelector('meta[name="chart-labels"]');
         const chartDataEl = document.querySelector('meta[name="chart-data"]');
         const chartColorsEl = document.querySelector('meta[name="chart-colors"]');
@@ -42,7 +40,6 @@ function initializeChart() {
             return;
         }
 
-        // Create chart with modern styling
         const ctx = chartCanvas.getContext('2d');
         window.categoryChart = new Chart(ctx, {
             type: 'doughnut',
@@ -116,7 +113,6 @@ function initializeChart() {
             }
         });
 
-        // Hide no data message
         const noDataMessage = document.getElementById('chartNoData');
         if (noDataMessage) {
             noDataMessage.style.display = 'none';
@@ -142,7 +138,6 @@ function showNoDataMessage() {
 }
 
 function initializeEventListeners() {
-    // Edit expense buttons
     document.addEventListener('click', function(e) {
         if (e.target.closest('.btn-action.edit')) {
             e.preventDefault();
@@ -154,7 +149,6 @@ function initializeEventListeners() {
         }
     });
 
-    // Delete expense buttons
     document.addEventListener('click', function(e) {
         if (e.target.closest('.btn-action.delete')) {
             e.preventDefault();
@@ -168,7 +162,6 @@ function initializeEventListeners() {
         }
     });
 
-    // Chart period selector
     const chartPeriodSelect = document.getElementById('chartPeriodSelect');
     if (chartPeriodSelect) {
         chartPeriodSelect.addEventListener('change', function() {
@@ -176,7 +169,6 @@ function initializeEventListeners() {
         });
     }
 
-    // Recurring expense toggle
     const recurringCheckbox = document.getElementById('is_recurring');
     const recurringEditCheckbox = document.getElementById('edit_is_recurring');
     
@@ -204,33 +196,39 @@ function initializeEventListeners() {
         });
     }
 
-    // Month/Year filter functionality
-    const monthSelect = document.getElementById('monthSelect');
-    const yearSelect = document.getElementById('yearSelect');
-    const applyMonthFilter = document.getElementById('applyMonthFilter');
-
-    if (monthSelect) {
-        monthSelect.addEventListener('change', function() {
-            // Update year select when month changes if needed
-            if (this.value !== 'all' && this.value !== '0') {
-                const selectedOption = this.options[this.selectedIndex];
-                const year = selectedOption.getAttribute('data-year');
-                if (year && yearSelect) {
-                    yearSelect.value = year;
-                }
-            }
-        });
-    }
-
-    if (applyMonthFilter) {
-        applyMonthFilter.addEventListener('click', function(e) {
+    const resetFilter = document.getElementById('resetFilter');
+    if (resetFilter) {
+        resetFilter.addEventListener('click', function(e) {
             e.preventDefault();
-            e.stopPropagation();
-            applyMonthFilters();
+            const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
+            window.location.href = `${basePath}/expenses`;
         });
     }
     
-    // Prevent dropdown from closing when interacting with elements inside
+    const filterForm = document.getElementById('filterForm');
+    if (filterForm) {
+        filterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(filterForm);
+            const month = formData.get('month');
+            const year = formData.get('year');
+            const category = formData.get('category');
+            
+            const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
+            const params = new URLSearchParams();
+            
+            if (month && month !== '0') params.append('month', month);
+            if (year && year !== '0') params.append('year', year);
+            if (category && category !== '0') params.append('category', category);
+            
+            const queryString = params.toString();
+            const url = queryString ? `${basePath}/expenses?${queryString}` : `${basePath}/expenses`;
+            
+            window.location.href = url;
+        });
+    }
+    
     const filterMenu = document.querySelector('.filter-menu');
     if (filterMenu) {
         filterMenu.addEventListener('click', function(e) {
@@ -250,7 +248,6 @@ function loadExpenseForEdit(expenseId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Populate edit form
             document.getElementById('edit_expense_id').value = data.expense.expense_id;
             document.getElementById('edit_category_id').value = data.expense.category_id;
             document.getElementById('edit_description').value = data.expense.description;
@@ -266,7 +263,6 @@ function loadExpenseForEdit(expenseId) {
                 frequencyField.disabled = !isRecurring;
             }
             
-            // Show edit modal
             const editModal = new bootstrap.Modal(document.getElementById('editExpenseModal'));
             editModal.show();
         } else {
@@ -282,7 +278,6 @@ function loadExpenseForEdit(expenseId) {
 function updateChartData(period) {
     const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
     
-    // Show loading state
     const chartContainer = document.querySelector('.chart-container');
     if (chartContainer) {
         chartContainer.style.opacity = '0.5';
@@ -296,10 +291,8 @@ function updateChartData(period) {
     .then(response => response.json())
     .then(data => {
         if (data.success && data.analytics && data.analytics.category_totals && Object.keys(data.analytics.category_totals).length > 0) {
-            // Process data for chart
             const categoryTotals = data.analytics.category_totals;
             
-            // Sort by value
             const sortedCategories = Object.entries(categoryTotals)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 10);
@@ -307,13 +300,11 @@ function updateChartData(period) {
             const labels = sortedCategories.map(item => item[0]);
             const values = sortedCategories.map(item => item[1]);
             
-            // Generate colors
             const colors = [
                 '#6366f1', '#8b5cf6', '#ec4899', '#ef4444', '#f59e0b',
                 '#10b981', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1'
             ];
             
-            // Update chart
             if (window.categoryChart) {
                 window.categoryChart.data.labels = labels;
                 window.categoryChart.data.datasets[0].data = values;
@@ -321,10 +312,8 @@ function updateChartData(period) {
                 window.categoryChart.update();
             }
             
-            // Update categories list
             updateCategoriesList(sortedCategories, data.analytics.total_amount);
             
-            // Show chart, hide no data message
             const noDataMessage = document.getElementById('chartNoData');
             if (noDataMessage) {
                 noDataMessage.style.display = 'none';
@@ -336,7 +325,6 @@ function updateChartData(period) {
             showNoDataMessage();
         }
         
-        // Restore opacity
         if (chartContainer) {
             chartContainer.style.opacity = '1';
         }
@@ -380,7 +368,6 @@ function updateCategoriesList(categories, totalAmount) {
     
     listContainer.innerHTML = html;
     
-    // Animate the bars
     setTimeout(() => {
         const bars = listContainer.querySelectorAll('.category-bar-fill');
         bars.forEach(bar => {
@@ -388,46 +375,6 @@ function updateCategoriesList(categories, totalAmount) {
             bar.style.width = percentage + '%';
         });
     }, 100);
-}
-
-function applyMonthFilters() {
-    const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
-    const monthSelect = document.getElementById('monthSelect');
-    const yearSelect = document.getElementById('yearSelect');
-    
-    if (!monthSelect || !yearSelect) return;
-    
-    const selectedMonth = monthSelect.value;
-    const selectedYear = yearSelect.value;
-    
-    let url = `${basePath}/expenses`;
-    const params = [];
-    
-    if (selectedMonth === 'all' && selectedYear === 'all') {
-        // Show all expenses - no parameters needed
-    } else if (selectedMonth === 'all' && selectedYear !== 'all') {
-        // Show whole year
-        params.push(`year=${selectedYear}`);
-    } else if (selectedMonth === '0') {
-        // Current month
-        const now = new Date();
-        const selectedOption = monthSelect.options[monthSelect.selectedIndex];
-        const year = selectedOption.getAttribute('data-year') || now.getFullYear();
-        params.push(`month=${now.getMonth() + 1}`);
-        params.push(`year=${year}`);
-    } else {
-        // Specific month and year
-        const selectedOption = monthSelect.options[monthSelect.selectedIndex];
-        const year = selectedOption.getAttribute('data-year') || selectedYear;
-        params.push(`month=${selectedMonth}`);
-        params.push(`year=${year}`);
-    }
-    
-    if (params.length > 0) {
-        url += '?' + params.join('&');
-    }
-    
-    window.location.href = url;
 }
 
 function initializeFormValidation() {
@@ -446,7 +393,6 @@ function initializeFormValidation() {
 }
 
 function initializeAnimations() {
-    // Animate category bars on load
     const categoryBars = document.querySelectorAll('.category-bar-fill');
     categoryBars.forEach((bar, index) => {
         setTimeout(() => {
@@ -475,7 +421,6 @@ function initializeSearch() {
                 }
             });
             
-            // Show/hide no results message
             const noDataMessage = document.getElementById('tableNoData');
             const tableBody = document.querySelector('.table-responsive');
             
@@ -496,12 +441,10 @@ function initializeSearch() {
 }
 
 function showNotification(message, type = 'info') {
-    // Create a simple notification system
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.textContent = message;
     
-    // Add styles (you might want to add these to your CSS file)
     notification.style.position = 'fixed';
     notification.style.top = '20px';
     notification.style.right = '20px';
@@ -515,12 +458,10 @@ function showNotification(message, type = 'info') {
     
     document.body.appendChild(notification);
     
-    // Fade in
     setTimeout(() => {
         notification.style.opacity = '1';
     }, 10);
     
-    // Fade out and remove
     setTimeout(() => {
         notification.style.opacity = '0';
         setTimeout(() => {
