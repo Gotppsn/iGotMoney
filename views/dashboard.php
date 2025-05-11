@@ -136,6 +136,7 @@ require_once 'includes/header.php';
                         <option value="last-month">Last Month</option>
                         <option value="last-3-months">Last 3 Months</option>
                         <option value="current-year">This Year</option>
+                        <option value="all-time">All Time</option>
                     </select>
                 </div>
             </div>
@@ -416,6 +417,9 @@ require_once 'includes/header.php';
                             </div>
                             <h4>No financial advice available</h4>
                             <p>We'll provide personalized advice as we learn more about your finances.</p>
+                            <button type="button" class="btn-primary" id="generateAdviceEmpty">
+                                <i class="fas fa-magic"></i> Generate Advice
+                            </button>
                         </div>
                     <?php else: ?>
                         <?php while ($advice = $financial_advice->fetch_assoc()): ?>

@@ -174,6 +174,19 @@ function initializeEventListeners() {
         });
     }
     
+    // Generate advice button in empty state
+    const generateAdviceEmptyBtn = document.getElementById('generateAdviceEmpty');
+    if (generateAdviceEmptyBtn) {
+        generateAdviceEmptyBtn.addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            
+            setTimeout(() => {
+                window.location.href = '?generate_advice=true';
+            }, 1000);
+        });
+    }
+    
     // Chart period selector
     const chartPeriodSelect = document.getElementById('chartPeriodSelect');
     if (chartPeriodSelect) {
@@ -192,10 +205,36 @@ function updateChartData(period) {
         chartContainer.style.opacity = '0.5';
     }
     
-    // Simulate data update (in a real app, this would fetch from server)
-    setTimeout(() => {
+    // Fetch new data from server
+    fetch(`${basePath}/dashboard?period=${period}`, {
+        headers: {
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (window.expenseCategoryChart && data.labels && data.data) {
+            // Update chart with new data
+            window.expenseCategoryChart.data.labels = data.labels;
+            window.expenseCategoryChart.data.datasets[0].data = data.data;
+            window.expenseCategoryChart.update();
+            
+            // Update categories list (optional - requires additional implementation)
+            updateCategoriesList(data);
+        }
+        
+        // Restore opacity
+        if (chartContainer) {
+            chartContainer.style.opacity = '1';
+        }
+        
+        showNotification(`Chart updated to show ${period} data`, 'info');
+    })
+    .catch(error => {
+        console.error('Error fetching chart data:', error);
+        
+        // Fallback to client-side simulation
         if (window.expenseCategoryChart) {
-            // Generate new data based on period
             const currentData = window.expenseCategoryChart.data.datasets[0].data;
             const newData = currentData.map(value => {
                 switch(period) {
@@ -205,6 +244,8 @@ function updateChartData(period) {
                         return value * 2.5;
                     case 'current-year':
                         return value * 10;
+                    case 'all-time':
+                        return value * 15;
                     default:
                         return value;
                 }
@@ -219,8 +260,13 @@ function updateChartData(period) {
             chartContainer.style.opacity = '1';
         }
         
-        showNotification('Chart updated to show ' + period + ' data', 'info');
-    }, 500);
+        showNotification(`Chart updated to show ${period} data`, 'info');
+    });
+}
+
+function updateCategoriesList(data) {
+    // This function would update the categories list below the chart
+    // You can implement this if needed
 }
 
 function initializeAnimations() {

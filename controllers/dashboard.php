@@ -53,9 +53,49 @@ $investment_summary = $investment->getSummary($_SESSION['user_id']);
 $goal = new FinancialGoal();
 $goals = $goal->getActiveGoals($_SESSION['user_id']);
 
-// Get financial advice
+// Handle generate advice request
 $advice = new FinancialAdvice();
+if (isset($_GET['generate_advice']) && $_GET['generate_advice'] == 'true') {
+    $advice->generateAdvice($_SESSION['user_id']);
+    header('Location: ' . BASE_PATH . '/dashboard');
+    exit();
+}
+
+// Get financial advice
 $financial_advice = $advice->getLatestAdvice($_SESSION['user_id'], 3);
+
+// Get expense data for different periods
+$expense_data = array();
+if (isset($_GET['period'])) {
+    $period = $_GET['period'];
+    switch($period) {
+        case 'current-month':
+            $expense_data = $expense->getTopCategories($_SESSION['user_id'], 5, 'current-month');
+            break;
+        case 'last-month':
+            $expense_data = $expense->getTopCategories($_SESSION['user_id'], 5, 'last-month');
+            break;
+        case 'last-3-months':
+            $expense_data = $expense->getTopCategories($_SESSION['user_id'], 5, 'last-3-months');
+            break;
+        case 'current-year':
+            $expense_data = $expense->getTopCategories($_SESSION['user_id'], 5, 'current-year');
+            break;
+        case 'all-time':
+            $expense_data = $expense->getTopCategories($_SESSION['user_id'], 5, 'all-time');
+            break;
+        default:
+            $expense_data = $expense->getTopCategories($_SESSION['user_id'], 5);
+    }
+    
+    // Return JSON response for AJAX requests
+    header('Content-Type: application/json');
+    echo json_encode(array(
+        'labels' => array_column($expense_data->fetch_all(MYSQLI_ASSOC), 'category_name'),
+        'data' => array_column($expense_data->fetch_all(MYSQLI_ASSOC), 'total')
+    ));
+    exit();
+}
 
 // Include view
 require_once 'views/dashboard.php';
