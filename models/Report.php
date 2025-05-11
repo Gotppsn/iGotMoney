@@ -239,7 +239,25 @@ class Report {
             ];
         }
         
-        // Now get recurring income sources
+        // Create array of all months in range
+        $start = new DateTime($this->start_date);
+        $end = new DateTime($this->end_date);
+        $period = new DatePeriod(
+            new DateTime($start->format('Y-m-01')),
+            new DateInterval('P1M'),
+            (new DateTime($end->format('Y-m-01')))->modify('+1 month')
+        );
+        
+        $monthly_projections = [];
+        foreach ($period as $month) {
+            $monthKey = $month->format('Y-m');
+            $monthly_projections[$monthKey] = [
+                'income' => 0,
+                'expenses' => 0
+            ];
+        }
+        
+        // Get recurring income sources
         $query = "SELECT income_id, name, amount, frequency, start_date, end_date, is_active
                   FROM income_sources
                   WHERE user_id = ?
@@ -253,31 +271,6 @@ class Report {
         $income_sources = $stmt->get_result();
         
         // Calculate monthly income projections
-        $monthly_projections = [];
-        $start = new DateTime($this->start_date);
-        $end = new DateTime($this->end_date);
-        
-        // Create array of all months in range
-        $period = new DatePeriod(
-            new DateTime($start->format('Y-m-01')),
-            new DateInterval('P1M'),
-            (new DateTime($end->format('Y-m-01')))->modify('+1 month')
-        );
-        
-        foreach ($period as $month) {
-            $monthKey = $month->format('Y-m');
-            $monthly_projections[$monthKey] = [
-                'income' => 0,
-                'expenses' => 0
-            ];
-            
-            // Add actual expenses if they exist
-            if (isset($actual_data[$monthKey])) {
-                $monthly_projections[$monthKey]['expenses'] = $actual_data[$monthKey]['expenses'];
-            }
-        }
-        
-        // Calculate projected income from recurring sources
         while ($source = $income_sources->fetch_assoc()) {
             $sourceStart = new DateTime($source['start_date']);
             $sourceEnd = $source['end_date'] ? new DateTime($source['end_date']) : null;
@@ -290,51 +283,61 @@ class Report {
                 // Check if this income source is active in this month
                 if ($month >= $sourceStart && (!$sourceEnd || $month <= $sourceEnd)) {
                     // Calculate the monthly amount based on frequency
-                    $monthlyAmount = 0;
-                    
-                    switch ($source['frequency']) {
-                        case 'monthly':
-                            $monthlyAmount = $source['amount'];
-                            break;
-                        case 'bi-weekly':
-                            $monthlyAmount = $source['amount'] * 2.17; // Average bi-weekly in a month
-                            break;
-                        case 'weekly':
-                            $monthlyAmount = $source['amount'] * 4.33; // Average weeks in a month
-                            break;
-                        case 'quarterly':
-                            // Check if this is a quarter month
-                            $monthNum = (int)$month->format('n');
-                            if (in_array($monthNum, [1, 4, 7, 10])) {
-                                $monthlyAmount = $source['amount'];
-                            }
-                            break;
-                        case 'annually':
-                            // Check if this is the annual month
-                            if ($month->format('n') == $sourceStart->format('n')) {
-                                $monthlyAmount = $source['amount'];
-                            }
-                            break;
-                        case 'daily':
-                            $daysInMonth = $month->format('t');
-                            $monthlyAmount = $source['amount'] * $daysInMonth;
-                            break;
-                        case 'one-time':
-                            if ($month->format('Y-m') == $sourceStart->format('Y-m')) {
-                                $monthlyAmount = $source['amount'];
-                            }
-                            break;
-                    }
-                    
+                    $monthlyAmount = $this->calculateMonthlyAmount($source['amount'], $source['frequency']);
                     $monthly_projections[$monthKey]['income'] += $monthlyAmount;
                 }
             }
         }
         
-        // Add actual transaction income to projections (to handle one-time income)
+        // Get recurring expenses
+        $query = "SELECT e.expense_id, e.amount, e.frequency, e.expense_date, e.is_recurring, 
+                         e.next_due_date, c.name as category_name
+                  FROM expenses e
+                  JOIN expense_categories c ON e.category_id = c.category_id
+                  WHERE e.user_id = ?
+                  AND e.is_recurring = 1
+                  AND (e.next_due_date IS NULL OR e.expense_date <= ?)";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("is", $this->user_id, $this->end_date);
+        $stmt->execute();
+        $recurring_expenses = $stmt->get_result();
+        
+        // Calculate monthly expense projections for recurring expenses
+        while ($expense = $recurring_expenses->fetch_assoc()) {
+            $expenseStart = new DateTime($expense['expense_date']);
+            
+            foreach ($period as $month) {
+                $monthKey = $month->format('Y-m');
+                $monthStart = clone $month;
+                $monthEnd = clone $month;
+                $monthEnd->modify('last day of this month');
+                
+                // Check if this recurring expense applies to this month
+                if ($monthStart >= $expenseStart) {
+                    // Calculate the monthly amount based on frequency
+                    $monthlyAmount = $this->calculateMonthlyAmount($expense['amount'], $expense['frequency']);
+                    $monthly_projections[$monthKey]['expenses'] += $monthlyAmount;
+                }
+            }
+        }
+        
+        // Merge actual data with projections (actual data takes precedence)
         foreach ($actual_data as $month => $data) {
             if (isset($monthly_projections[$month])) {
-                // Add actual one-time income that's not from recurring sources
+                // For expenses, add actual one-time expenses to recurring projections
+                $monthly_projections[$month]['expenses'] = max($data['expenses'], $monthly_projections[$month]['expenses']);
+                
+                // For income, use actual if available
+                if ($data['income'] > 0) {
+                    $monthly_projections[$month]['income'] = $data['income'];
+                }
+            }
+        }
+        
+        // Add actual one-time income that's not from recurring sources
+        foreach ($actual_data as $month => $data) {
+            if (isset($monthly_projections[$month])) {
                 $query = "SELECT SUM(amount) as actual_income
                           FROM transactions
                           WHERE user_id = ?
@@ -353,7 +356,7 @@ class Report {
             }
         }
         
-        // Convert to MySQL result format
+        // Convert to result format
         $result_data = [];
         foreach ($monthly_projections as $month => $data) {
             $result_data[] = [
@@ -364,7 +367,7 @@ class Report {
             ];
         }
         
-        // SQL query for income vs expense by type (keeping existing code)
+        // SQL query for income vs expense by type
         $query = "SELECT 
                     'Income' as transaction_type,
                     SUM(amount) as total
@@ -522,6 +525,28 @@ class Report {
         ];
         
         return $ranges;
+    }
+    
+    // Helper method to calculate monthly equivalent amount based on frequency
+    private function calculateMonthlyAmount($amount, $frequency) {
+        switch ($frequency) {
+            case 'daily':
+                return $amount * 30; // Approximate days in a month
+            case 'weekly':
+                return $amount * 4.33; // Average weeks in a month
+            case 'bi-weekly':
+                return $amount * 2.17; // Average bi-weeks in a month
+            case 'monthly':
+                return $amount;
+            case 'quarterly':
+                return $amount / 3;
+            case 'annually':
+                return $amount / 12;
+            case 'one-time':
+                return 0; // One-time should not be recurring
+            default:
+                return 0;
+        }
     }
 }
 ?>
