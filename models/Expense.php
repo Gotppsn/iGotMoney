@@ -237,6 +237,83 @@ class Expense {
         return $result;
     }
     
+    // Get filtered expenses
+    public function getFilteredExpenses($user_id, $month = 0, $year = 0, $category_id = 0) {
+        try {
+            // Build the base query
+            $query = "SELECT e.*, c.name as category_name 
+                      FROM " . $this->table . " e
+                      JOIN " . $this->categories_table . " c ON e.category_id = c.category_id
+                      WHERE e.user_id = ?";
+            
+            // Add month filter if specified
+            if ($month > 0) {
+                $query .= " AND MONTH(e.expense_date) = ?";
+            }
+            
+            // Add year filter if specified
+            if ($year > 0) {
+                $query .= " AND YEAR(e.expense_date) = ?";
+            }
+            
+            // Add category filter if specified
+            if ($category_id > 0) {
+                $query .= " AND e.category_id = ?";
+            }
+            
+            $query .= " ORDER BY e.expense_date DESC";
+            
+            // Prepare statement
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Get filtered expenses query preparation failed: " . $this->conn->error);
+            }
+            
+            // Bind parameters based on filters
+            $types = "i";
+            $params = [$user_id];
+            
+            if ($month > 0) {
+                $types .= "i";
+                $params[] = $month;
+            }
+            
+            if ($year > 0) {
+                $types .= "i";
+                $params[] = $year;
+            }
+            
+            if ($category_id > 0) {
+                $types .= "i";
+                $params[] = $category_id;
+            }
+            
+            // Use reflection to bind parameters dynamically
+            if (count($params) > 1) {
+                $bindParams = array($types);
+                foreach ($params as $key => $value) {
+                    $bindParams[] = &$params[$key];
+                }
+                call_user_func_array(array($stmt, 'bind_param'), $bindParams);
+            } else {
+                $stmt->bind_param($types, $user_id);
+            }
+            
+            // Execute query
+            if (!$stmt->execute()) {
+                throw new Exception("Filter query execution failed: " . $stmt->error);
+            }
+            
+            // Get result
+            $result = $stmt->get_result();
+            
+            return $result;
+        } catch (Exception $e) {
+            error_log("Error getting filtered expenses: " . $e->getMessage());
+            return false;
+        }
+    }
+    
     // Get expense by ID
     public function getById($expense_id, $user_id) {
         try {
