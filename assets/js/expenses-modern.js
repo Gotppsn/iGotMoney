@@ -209,15 +209,35 @@ function initializeEventListeners() {
     const customDateRange = document.getElementById('customDateRange');
     const applyDateFilter = document.getElementById('applyDateFilter');
 
-    if (dateRangeSelect && customDateRange) {
+    if (dateRangeSelect) {
         dateRangeSelect.addEventListener('change', function() {
-            customDateRange.style.display = this.value === 'custom' ? 'block' : 'none';
+            const selectedValue = this.value;
+            
+            // Show/hide custom date range inputs
+            if (customDateRange) {
+                customDateRange.style.display = selectedValue === 'custom' ? 'block' : 'none';
+            }
+            
+            // Auto-apply filter for non-custom selections
+            if (selectedValue !== 'custom') {
+                applyDateFilters();
+            }
         });
     }
 
     if (applyDateFilter) {
-        applyDateFilter.addEventListener('click', function() {
+        applyDateFilter.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             applyDateFilters();
+        });
+    }
+    
+    // Prevent dropdown from closing when interacting with elements inside
+    const filterMenu = document.querySelector('.filter-menu');
+    if (filterMenu) {
+        filterMenu.addEventListener('click', function(e) {
+            e.stopPropagation();
         });
     }
 }
@@ -379,6 +399,7 @@ function applyDateFilters() {
     
     switch(selectedRange) {
         case 'all':
+            // For "All Time", redirect without date parameters
             window.location.href = `${basePath}/expenses`;
             return;
         case 'current-month':
@@ -390,7 +411,7 @@ function applyDateFilters() {
             endDate = new Date(now.getFullYear(), now.getMonth(), 0);
             break;
         case 'last-3-months':
-            startDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+            startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
             endDate = now;
             break;
         case 'custom':
@@ -406,6 +427,7 @@ function applyDateFilters() {
             }
             break;
         default:
+            // Default to current month
             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
             endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     }

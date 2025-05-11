@@ -168,17 +168,17 @@ require_once 'includes/header.php';
                         <i class="fas fa-search"></i>
                         <input type="text" id="expenseSearch" placeholder="Search expenses..." data-table-search="expenseTable">
                     </div>
-                    <div class="filter-dropdown">
-                        <button class="btn-filter" id="filterDropdown" data-bs-toggle="dropdown">
+                    <div class="dropdown filter-dropdown">
+                        <button class="btn-filter dropdown-toggle" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-filter"></i>
                             <span>Filter</span>
                         </button>
-                        <div class="dropdown-menu filter-menu">
+                        <div class="dropdown-menu filter-menu" aria-labelledby="filterDropdown">
                             <div class="filter-section">
                                 <h5>Date Range</h5>
                                 <select id="dateRangeSelect" class="filter-select">
-                                    <option value="all">All Time</option>
-                                    <option value="current-month" selected>Current Month</option>
+                                    <option value="all" <?php echo (!isset($_GET['start_date']) && !isset($_GET['end_date'])) ? 'selected' : ''; ?>>All Time</option>
+                                    <option value="current-month" <?php echo (isset($_GET['start_date']) && $_GET['start_date'] == date('Y-m-01')) ? 'selected' : ''; ?>>Current Month</option>
                                     <option value="last-month">Last Month</option>
                                     <option value="last-3-months">Last 3 Months</option>
                                     <option value="custom">Custom Range</option>
