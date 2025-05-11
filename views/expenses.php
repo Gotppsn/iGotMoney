@@ -290,20 +290,210 @@ $current_year = isset($_GET['year']) ? $_GET['year'] : date('Y');
     </div>
 </div>
 
-<!-- Modals remain the same -->
 <!-- Add Expense Modal -->
-<div class="modal fade modern-modal" id="addExpenseModal" tabindex="-1">
-    <!-- ... modal content remains the same ... -->
+<div class="modal fade modern-modal" id="addExpenseModal" tabindex="-1" aria-labelledby="addExpenseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <h5 class="modal-title" id="addExpenseModalLabel">Add New Expense</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="addExpenseForm" method="POST" action="<?php echo BASE_PATH; ?>/expenses" class="direct-form">
+                <input type="hidden" name="action" value="add">
+                <div class="modal-body">
+                    <div class="form-grid">
+                        <div class="form-field full-width">
+                            <label for="description">Description</label>
+                            <input type="text" id="description" name="description" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="category_id">Category</label>
+                            <select id="category_id" name="category_id" class="modern-select" required>
+                                <option value="">Select Category</option>
+                                <?php while($category = $categories->fetch_assoc()): ?>
+                                    <option value="<?php echo $category['category_id']; ?>">
+                                        <?php echo htmlspecialchars($category['name']); ?>
+                                    </option>
+                                <?php endwhile; ?>
+                                <?php $categories->data_seek(0); // Reset pointer ?>
+                            </select>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="amount">Amount</label>
+                            <div class="amount-input">
+                                <span class="currency-symbol">$</span>
+                                <input type="number" id="amount" name="amount" class="form-control" step="0.01" min="0.01" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="expense_date">Date</label>
+                            <input type="date" id="expense_date" name="expense_date" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="frequency">Frequency</label>
+                            <select id="frequency" name="frequency" class="modern-select" disabled>
+                                <option value="one-time">One-time</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="bi-weekly">Bi-weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="quarterly">Quarterly</option>
+                                <option value="annually">Annually</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-field full-width">
+                            <label class="toggle-field">
+                                <input type="checkbox" id="is_recurring" name="is_recurring">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Recurring Expense</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-save"></i>
+                        Add Expense
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <!-- Edit Expense Modal -->
-<div class="modal fade modern-modal" id="editExpenseModal" tabindex="-1">
-    <!-- ... modal content remains the same ... -->
+<div class="modal fade modern-modal" id="editExpenseModal" tabindex="-1" aria-labelledby="editExpenseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-icon edit">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <h5 class="modal-title" id="editExpenseModalLabel">Edit Expense</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editExpenseForm" method="POST" action="<?php echo BASE_PATH; ?>/expenses" class="direct-form">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" id="edit_expense_id" name="expense_id">
+                <div class="modal-body">
+                    <div class="form-grid">
+                        <div class="form-field full-width">
+                            <label for="edit_description">Description</label>
+                            <input type="text" id="edit_description" name="description" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="edit_category_id">Category</label>
+                            <select id="edit_category_id" name="category_id" class="modern-select" required>
+                                <option value="">Select Category</option>
+                                <?php $categories->data_seek(0); // Reset pointer ?>
+                                <?php while($category = $categories->fetch_assoc()): ?>
+                                    <option value="<?php echo $category['category_id']; ?>">
+                                        <?php echo htmlspecialchars($category['name']); ?>
+                                    </option>
+                                <?php endwhile; ?>
+                                <?php $categories->data_seek(0); // Reset pointer ?>
+                            </select>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="edit_amount">Amount</label>
+                            <div class="amount-input">
+                                <span class="currency-symbol">$</span>
+                                <input type="number" id="edit_amount" name="amount" class="form-control" step="0.01" min="0.01" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="edit_expense_date">Date</label>
+                            <input type="date" id="edit_expense_date" name="expense_date" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="edit_frequency">Frequency</label>
+                            <select id="edit_frequency" name="frequency" class="modern-select">
+                                <option value="one-time">One-time</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="bi-weekly">Bi-weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="quarterly">Quarterly</option>
+                                <option value="annually">Annually</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-field full-width">
+                            <label class="toggle-field">
+                                <input type="checkbox" id="edit_is_recurring" name="is_recurring">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Recurring Expense</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-save"></i>
+                        Update Expense
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <!-- Delete Expense Modal -->
-<div class="modal fade modern-modal" id="deleteExpenseModal" tabindex="-1">
-    <!-- ... modal content remains the same ... -->
+<div class="modal fade modern-modal" id="deleteExpenseModal" tabindex="-1" aria-labelledby="deleteExpenseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-icon delete">
+                    <i class="fas fa-trash-alt"></i>
+                </div>
+                <h5 class="modal-title" id="deleteExpenseModalLabel">Delete Expense</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="deleteExpenseForm" method="POST" action="<?php echo BASE_PATH; ?>/expenses" class="direct-form">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" id="delete_expense_id" name="expense_id">
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this expense? This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-submit danger">
+                        <i class="fas fa-trash-alt"></i>
+                        Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <?php

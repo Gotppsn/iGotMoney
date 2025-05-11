@@ -411,8 +411,10 @@ function applyMonthFilters() {
     } else if (selectedMonth === '0') {
         // Current month
         const now = new Date();
+        const selectedOption = monthSelect.options[monthSelect.selectedIndex];
+        const year = selectedOption.getAttribute('data-year') || now.getFullYear();
         params.push(`month=${now.getMonth() + 1}`);
-        params.push(`year=${now.getFullYear()}`);
+        params.push(`year=${year}`);
     } else {
         // Specific month and year
         const selectedOption = monthSelect.options[monthSelect.selectedIndex];
