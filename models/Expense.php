@@ -684,6 +684,40 @@ class Expense {
         }
     }
     
+    // Get top expense categories by date range
+    public function getTopCategoriesByDateRange($user_id, $start_date, $end_date, $limit = 5) {
+        try {
+            // SQL query for date range period
+            $query = "SELECT c.name as category_name, SUM(e.amount) as total 
+                      FROM " . $this->table . " e
+                      JOIN " . $this->categories_table . " c ON e.category_id = c.category_id
+                      WHERE e.user_id = ? AND e.expense_date BETWEEN ? AND ?
+                      GROUP BY e.category_id 
+                      ORDER BY total DESC 
+                      LIMIT ?";
+            
+            // Prepare statement
+            $stmt = $this->conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Top categories query preparation failed: " . $this->conn->error);
+            }
+            
+            // Bind parameters
+            $stmt->bind_param("issi", $user_id, $start_date, $end_date, $limit);
+            
+            // Execute query
+            $stmt->execute();
+            
+            // Get result
+            $result = $stmt->get_result();
+            
+            return $result;
+        } catch (Exception $e) {
+            error_log("Error fetching top categories by date range: " . $e->getMessage());
+            return false;
+        }
+    }
+    
     // Get expenses by date range
     public function getByDateRange($user_id, $start_date, $end_date) {
         try {

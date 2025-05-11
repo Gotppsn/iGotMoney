@@ -204,32 +204,29 @@ function initializeEventListeners() {
         });
     }
 
-    // Filter functionality
-    const dateRangeSelect = document.getElementById('dateRangeSelect');
-    const customDateRange = document.getElementById('customDateRange');
-    const applyDateFilter = document.getElementById('applyDateFilter');
+    // Month/Year filter functionality
+    const monthSelect = document.getElementById('monthSelect');
+    const yearSelect = document.getElementById('yearSelect');
+    const applyMonthFilter = document.getElementById('applyMonthFilter');
 
-    if (dateRangeSelect) {
-        dateRangeSelect.addEventListener('change', function() {
-            const selectedValue = this.value;
-            
-            // Show/hide custom date range inputs
-            if (customDateRange) {
-                customDateRange.style.display = selectedValue === 'custom' ? 'block' : 'none';
-            }
-            
-            // Auto-apply filter for non-custom selections
-            if (selectedValue !== 'custom') {
-                applyDateFilters();
+    if (monthSelect) {
+        monthSelect.addEventListener('change', function() {
+            // Update year select when month changes if needed
+            if (this.value !== 'all' && this.value !== '0') {
+                const selectedOption = this.options[this.selectedIndex];
+                const year = selectedOption.getAttribute('data-year');
+                if (year && yearSelect) {
+                    yearSelect.value = year;
+                }
             }
         });
     }
 
-    if (applyDateFilter) {
-        applyDateFilter.addEventListener('click', function(e) {
+    if (applyMonthFilter) {
+        applyMonthFilter.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            applyDateFilters();
+            applyMonthFilters();
         });
     }
     
@@ -298,16 +295,9 @@ function updateChartData(period) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success && data.expenses.length > 0) {
+        if (data.success && data.analytics && data.analytics.category_totals && Object.keys(data.analytics.category_totals).length > 0) {
             // Process data for chart
-            const categoryTotals = {};
-            data.expenses.forEach(expense => {
-                const category = expense.category_name;
-                if (!categoryTotals[category]) {
-                    categoryTotals[category] = 0;
-                }
-                categoryTotals[category] += parseFloat(expense.amount);
-            });
+            const categoryTotals = data.analytics.category_totals;
             
             // Sort by value
             const sortedCategories = Object.entries(categoryTotals)
@@ -317,20 +307,30 @@ function updateChartData(period) {
             const labels = sortedCategories.map(item => item[0]);
             const values = sortedCategories.map(item => item[1]);
             
+            // Generate colors
+            const colors = [
+                '#6366f1', '#8b5cf6', '#ec4899', '#ef4444', '#f59e0b',
+                '#10b981', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1'
+            ];
+            
             // Update chart
             if (window.categoryChart) {
                 window.categoryChart.data.labels = labels;
                 window.categoryChart.data.datasets[0].data = values;
+                window.categoryChart.data.datasets[0].backgroundColor = colors.slice(0, values.length);
                 window.categoryChart.update();
             }
             
             // Update categories list
-            updateCategoriesList(sortedCategories, data.total);
+            updateCategoriesList(sortedCategories, data.analytics.total_amount);
             
-            // Hide no data message
+            // Show chart, hide no data message
             const noDataMessage = document.getElementById('chartNoData');
             if (noDataMessage) {
                 noDataMessage.style.display = 'none';
+            }
+            if (chartContainer) {
+                chartContainer.style.display = 'block';
             }
         } else {
             showNoDataMessage();
@@ -390,56 +390,42 @@ function updateCategoriesList(categories, totalAmount) {
     }, 100);
 }
 
-function applyDateFilters() {
+function applyMonthFilters() {
     const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
-    const selectedRange = document.getElementById('dateRangeSelect').value;
+    const monthSelect = document.getElementById('monthSelect');
+    const yearSelect = document.getElementById('yearSelect');
     
-    let startDate, endDate;
-    const now = new Date();
+    if (!monthSelect || !yearSelect) return;
     
-    switch(selectedRange) {
-        case 'all':
-            // For "All Time", redirect without date parameters
-            window.location.href = `${basePath}/expenses`;
-            return;
-        case 'current-month':
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            break;
-        case 'last-month':
-            startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-            endDate = new Date(now.getFullYear(), now.getMonth(), 0);
-            break;
-        case 'last-3-months':
-            startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-            endDate = now;
-            break;
-        case 'custom':
-            const startInput = document.getElementById('startDate');
-            const endInput = document.getElementById('endDate');
-            
-            if (startInput.value && endInput.value) {
-                startDate = new Date(startInput.value);
-                endDate = new Date(endInput.value);
-            } else {
-                showNotification('Please select both start and end dates', 'warning');
-                return;
-            }
-            break;
-        default:
-            // Default to current month
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const selectedMonth = monthSelect.value;
+    const selectedYear = yearSelect.value;
+    
+    let url = `${basePath}/expenses`;
+    const params = [];
+    
+    if (selectedMonth === 'all' && selectedYear === 'all') {
+        // Show all expenses - no parameters needed
+    } else if (selectedMonth === 'all' && selectedYear !== 'all') {
+        // Show whole year
+        params.push(`year=${selectedYear}`);
+    } else if (selectedMonth === '0') {
+        // Current month
+        const now = new Date();
+        params.push(`month=${now.getMonth() + 1}`);
+        params.push(`year=${now.getFullYear()}`);
+    } else {
+        // Specific month and year
+        const selectedOption = monthSelect.options[monthSelect.selectedIndex];
+        const year = selectedOption.getAttribute('data-year') || selectedYear;
+        params.push(`month=${selectedMonth}`);
+        params.push(`year=${year}`);
     }
     
-    const formatDate = date => {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
+    if (params.length > 0) {
+        url += '?' + params.join('&');
+    }
     
-    window.location.href = `${basePath}/expenses?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+    window.location.href = url;
 }
 
 function initializeFormValidation() {

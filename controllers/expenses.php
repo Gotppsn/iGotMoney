@@ -118,6 +118,11 @@ if (isset($_GET['action'])) {
             $now = new DateTime();
             
             switch ($period) {
+                case 'all':
+                    // Get all expenses - set a very early start date
+                    $start_date = '2000-01-01';
+                    $end_date = $now->format('Y-m-d');
+                    break;
                 case 'current-month':
                     $start_date = $now->format('Y-m-01');
                     $end_date = $now->format('Y-m-t');
@@ -423,22 +428,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get filter parameters
-$filter_start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
-$filter_end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-t');
+// Get filter parameters - Modified for month/year filtering
+$filter_month = isset($_GET['month']) ? intval($_GET['month']) : null;
+$filter_year = isset($_GET['year']) ? intval($_GET['year']) : null;
+
+// If no filter provided, default to current month
+if (!$filter_month && !$filter_year) {
+    $filter_month = date('n');
+    $filter_year = date('Y');
+}
+
+// Calculate date range from month/year
+if ($filter_month && $filter_year) {
+    $filter_start_date = date('Y-m-01', mktime(0, 0, 0, $filter_month, 1, $filter_year));
+    $filter_end_date = date('Y-m-t', mktime(0, 0, 0, $filter_month, 1, $filter_year));
+} elseif ($filter_year && !$filter_month) {
+    // If only year is selected, show whole year
+    $filter_start_date = date('Y-01-01', mktime(0, 0, 0, 1, 1, $filter_year));
+    $filter_end_date = date('Y-12-31', mktime(0, 0, 0, 12, 31, $filter_year));
+} else {
+    // Show all if no valid filters
+    $filter_start_date = null;
+    $filter_end_date = null;
+}
 
 // Get all expense categories
 $categories = $expense->getAllCategories();
 
 // Get expenses for the current period
-$expenses = $expense->getByDateRange($user_id, $filter_start_date, $filter_end_date);
+if ($filter_start_date && $filter_end_date) {
+    $expenses = $expense->getByDateRange($user_id, $filter_start_date, $filter_end_date);
+} else {
+    // Get all expenses if no date filter is applied
+    $expenses = $expense->getAll($user_id);
+}
 
 // Calculate total monthly and yearly expenses
 $monthly_expenses = $expense->getMonthlyTotal($user_id);
 $yearly_expenses = $expense->getYearlyTotal($user_id);
 
-// Get top expense categories
-$top_expenses = $expense->getTopCategories($user_id, 5);
+// Get top expense categories for the selected period
+if ($filter_start_date && $filter_end_date) {
+    $top_expenses = $expense->getTopCategoriesByDateRange($user_id, $filter_start_date, $filter_end_date, 5);
+} else {
+    $top_expenses = $expense->getTopCategories($user_id, 5);
+}
 
 // Include view
 require_once 'views/expenses.php';
