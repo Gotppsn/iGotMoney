@@ -9,6 +9,9 @@ require_once 'models/Expense.php';
 $user_id = $_SESSION['user_id'];
 $expense = new Expense();
 
+// Process any due recurring expenses before showing the list
+$expense->processDueRecurringExpenses($user_id);
+
 if (isset($_GET['action'])) {
     header('Content-Type: application/json');
     
@@ -251,8 +254,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $expense->amount = floatval($_POST['amount']); 
                 $expense->description = $_POST['description'];
                 $expense->expense_date = $_POST['expense_date'];
-                $expense->frequency = isset($_POST['frequency']) ? $_POST['frequency'] : 'one-time';
                 $expense->is_recurring = isset($_POST['is_recurring']) ? 1 : 0;
+                
+                // If recurring, use the selected frequency. Otherwise, use 'one-time'
+                if ($expense->is_recurring) {
+                    $expense->frequency = isset($_POST['frequency']) ? $_POST['frequency'] : 'monthly';
+                } else {
+                    $expense->frequency = 'one-time';
+                }
                 
                 if ($expense->create()) {
                     $success = 'Expense added successfully!';
@@ -319,8 +328,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $expense->amount = floatval($_POST['amount']);
                     $expense->description = $_POST['description'];
                     $expense->expense_date = $_POST['expense_date'];
-                    $expense->frequency = isset($_POST['frequency']) ? $_POST['frequency'] : 'one-time';
                     $expense->is_recurring = isset($_POST['is_recurring']) ? 1 : 0;
+                    
+                    // If recurring, use the selected frequency. Otherwise, use 'one-time'
+                    if ($expense->is_recurring) {
+                        $expense->frequency = isset($_POST['frequency']) ? $_POST['frequency'] : 'monthly';
+                    } else {
+                        $expense->frequency = 'one-time';
+                    }
                     
                     if ($expense->update()) {
                         $success = 'Expense updated successfully!';

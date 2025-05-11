@@ -95,6 +95,11 @@ class Expense {
                 return false;
             }
             
+            // If this is a recurring expense, generate future entries
+            if ($this->is_recurring) {
+                $this->generateRecurringEntries($this->expense_id, $this->expense_date, 12); // Generate for next 12 occurrences
+            }
+            
             // Commit transaction
             $this->conn->commit();
             return true;
@@ -948,6 +953,195 @@ class Expense {
             return true;
         } catch (Exception $e) {
             error_log("Error updating transaction: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    // Generate recurring expense entries
+    public function generateRecurringEntries($parent_expense_id, $start_date, $occurrences = 12) {
+        try {
+            // Get the parent expense details
+            $query = "SELECT * FROM " . $this->table . " WHERE expense_id = ?";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bind_param("i", $parent_expense_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if ($result->num_rows === 0) {
+                throw new Exception("Parent expense not found");
+            }
+            
+            $parent_expense = $result->fetch_assoc();
+            
+            // Start from the next occurrence
+            $current_date = new DateTime($start_date);
+            
+            for ($i = 0; $i < $occurrences; $i++) {
+                // Calculate next date based on frequency
+                switch ($parent_expense['frequency']) {
+                    case 'daily':
+                        $current_date->add(new DateInterval('P1D'));
+                        break;
+                    case 'weekly':
+                        $current_date->add(new DateInterval('P1W'));
+                        break;
+                    case 'bi-weekly':
+                        $current_date->add(new DateInterval('P2W'));
+                        break;
+                    case 'monthly':
+                        $current_date->add(new DateInterval('P1M'));
+                        break;
+                    case 'quarterly':
+                        $current_date->add(new DateInterval('P3M'));
+                        break;
+                    case 'annually':
+                        $current_date->add(new DateInterval('P1Y'));
+                        break;
+                    default:
+                        return; // Skip if not a valid recurring frequency
+                }
+                
+                // Create the new expense entry
+                $insert_query = "INSERT INTO " . $this->table . " 
+                                (user_id, category_id, amount, description, expense_date, frequency, is_recurring, next_due_date) 
+                                VALUES (?, ?, ?, ?, ?, ?, 0, NULL)";
+                
+                $insert_stmt = $this->conn->prepare($insert_query);
+                
+                // Add "(Recurring)" to description to indicate it's a generated entry
+                $description = $parent_expense['description'] . " (Recurring)";
+                
+                $insert_stmt->bind_param("iidsss", 
+                                       $parent_expense['user_id'], 
+                                       $parent_expense['category_id'], 
+                                       $parent_expense['amount'], 
+                                       $description, 
+                                       $current_date->format('Y-m-d'), 
+                                       $parent_expense['frequency']);
+                
+                if (!$insert_stmt->execute()) {
+                    error_log("Failed to create recurring expense entry: " . $insert_stmt->error);
+                    continue;
+                }
+                
+                // Record transaction for the new expense
+                $new_expense_id = $this->conn->insert_id;
+                $this->recordTransactionForRecurring($new_expense_id, $parent_expense);
+            }
+            
+            return true;
+        } catch (Exception $e) {
+            error_log("Error generating recurring entries: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    // Record transaction for recurring expense
+    private function recordTransactionForRecurring($expense_id, $expense_data) {
+        try {
+            // Get category name
+            $category_query = "SELECT name FROM " . $this->categories_table . " WHERE category_id = ?";
+            $category_stmt = $this->conn->prepare($category_query);
+            $category_stmt->bind_param("i", $expense_data['category_id']);
+            $category_stmt->execute();
+            $category_result = $category_stmt->get_result();
+            $category_row = $category_result->fetch_assoc();
+            $category_name = $category_row['name'] ?? 'Unknown Category';
+            
+            // Set description
+            $full_description = "Expense: " . $expense_data['description'] . " (Category: " . $category_name . ")";
+            
+            // SQL query
+            $query = "INSERT INTO " . $this->transactions_table . " 
+                      (user_id, type, amount, description, transaction_date, category_id, expense_id) 
+                      VALUES (?, 'expense', ?, ?, ?, ?, ?)";
+            
+            // Prepare statement
+            $stmt = $this->conn->prepare($query);
+            
+            // Bind parameters
+            $stmt->bind_param("idssii", 
+                            $expense_data['user_id'], 
+                            $expense_data['amount'], 
+                            $full_description, 
+                            $expense_data['expense_date'], 
+                            $expense_data['category_id'], 
+                            $expense_id);
+            
+            // Execute query
+            $stmt->execute();
+            
+            return true;
+        } catch (Exception $e) {
+            error_log("Error recording transaction for recurring expense: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    // Process all due recurring expenses
+    public function processDueRecurringExpenses($user_id = null) {
+        try {
+            $query = "SELECT * FROM " . $this->table . " 
+                      WHERE is_recurring = 1 
+                      AND (next_due_date IS NULL OR next_due_date <= CURDATE())";
+            
+            if ($user_id !== null) {
+                $query .= " AND user_id = ?";
+            }
+            
+            $stmt = $this->conn->prepare($query);
+            
+            if ($user_id !== null) {
+                $stmt->bind_param("i", $user_id);
+            }
+            
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            while ($expense = $result->fetch_assoc()) {
+                // Generate entries for this expense
+                $this->generateRecurringEntries($expense['expense_id'], $expense['expense_date'], 12);
+                
+                // Update the next_due_date for the parent expense
+                $update_query = "UPDATE " . $this->table . " 
+                                SET next_due_date = ? 
+                                WHERE expense_id = ?";
+                
+                $update_stmt = $this->conn->prepare($update_query);
+                
+                // Calculate the next due date 12 periods from now
+                $next_date = new DateTime($expense['expense_date']);
+                for ($i = 0; $i < 12; $i++) {
+                    switch ($expense['frequency']) {
+                        case 'daily':
+                            $next_date->add(new DateInterval('P1D'));
+                            break;
+                        case 'weekly':
+                            $next_date->add(new DateInterval('P1W'));
+                            break;
+                        case 'bi-weekly':
+                            $next_date->add(new DateInterval('P2W'));
+                            break;
+                        case 'monthly':
+                            $next_date->add(new DateInterval('P1M'));
+                            break;
+                        case 'quarterly':
+                            $next_date->add(new DateInterval('P3M'));
+                            break;
+                        case 'annually':
+                            $next_date->add(new DateInterval('P1Y'));
+                            break;
+                    }
+                }
+                
+                $next_due_date = $next_date->format('Y-m-d');
+                $update_stmt->bind_param("si", $next_due_date, $expense['expense_id']);
+                $update_stmt->execute();
+            }
+            
+            return true;
+        } catch (Exception $e) {
+            error_log("Error processing due recurring expenses: " . $e->getMessage());
             return false;
         }
     }

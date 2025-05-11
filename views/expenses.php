@@ -340,7 +340,7 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                         
                         <div class="form-field">
                             <label for="expense_date">Date</label>
-                            <input type="date" id="expense_date" name="expense_date" class="form-control" required>
+                            <input type="date" id="expense_date" name="expense_date" class="form-control" value="<?php echo date('Y-m-d'); ?>" required>
                         </div>
                         
                         <div class="form-field">
@@ -350,7 +350,7 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                                 <option value="daily">Daily</option>
                                 <option value="weekly">Weekly</option>
                                 <option value="bi-weekly">Bi-weekly</option>
-                                <option value="monthly">Monthly</option>
+                                <option value="monthly" selected>Monthly</option>
                                 <option value="quarterly">Quarterly</option>
                                 <option value="annually">Annually</option>
                             </select>

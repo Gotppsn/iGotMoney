@@ -169,9 +169,8 @@ function initializeEventListeners() {
         });
     }
 
+    // Handle recurring expense checkbox for ADD form
     const recurringCheckbox = document.getElementById('is_recurring');
-    const recurringEditCheckbox = document.getElementById('edit_is_recurring');
-    
     if (recurringCheckbox) {
         recurringCheckbox.addEventListener('change', function() {
             const frequencyField = document.getElementById('frequency');
@@ -179,11 +178,15 @@ function initializeEventListeners() {
                 frequencyField.disabled = !this.checked;
                 if (!this.checked) {
                     frequencyField.value = 'one-time';
+                } else {
+                    frequencyField.value = 'monthly'; // Default to monthly for recurring
                 }
             }
         });
     }
-
+    
+    // Handle recurring expense checkbox for EDIT form
+    const recurringEditCheckbox = document.getElementById('edit_is_recurring');
     if (recurringEditCheckbox) {
         recurringEditCheckbox.addEventListener('change', function() {
             const frequencyField = document.getElementById('edit_frequency');
@@ -191,6 +194,8 @@ function initializeEventListeners() {
                 frequencyField.disabled = !this.checked;
                 if (!this.checked) {
                     frequencyField.value = 'one-time';
+                } else if (frequencyField.value === 'one-time') {
+                    frequencyField.value = 'monthly'; // Default to monthly for recurring
                 }
             }
         });
