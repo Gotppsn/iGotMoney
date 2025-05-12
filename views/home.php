@@ -1,6 +1,6 @@
 <?php
 // Set page title
-$page_title = 'iGotMoney - Your Personal Finance Manager';
+$page_title = __('home_title');
 
 // Include header
 require_once 'includes/header.php';
@@ -11,12 +11,12 @@ require_once 'includes/header.php';
     <div class="container py-5">
         <div class="row align-items-center">
             <div class="col-lg-7 hero-content">
-                <span class="badge bg-primary-light text-primary mb-3">Personal Finance Management</span>
-                <h1 class="display-4 fw-bold mb-4">Take Control of Your Finances</h1>
-                <p class="lead mb-4">iGotMoney helps you manage your finances, track expenses, set budgets, and achieve your financial goals - all in one place.</p>
+                <span class="badge bg-primary-light text-primary mb-3"><?php echo __('hero_badge'); ?></span>
+                <h1 class="display-4 fw-bold mb-4"><?php echo __('hero_heading'); ?></h1>
+                <p class="lead mb-4"><?php echo __('hero_description'); ?></p>
                 <div class="d-flex gap-3 hero-buttons">
-                    <a href="<?php echo BASE_PATH; ?>/register" class="btn btn-primary btn-lg">Get Started</a>
-                    <a href="#features" class="btn btn-outline-primary btn-lg">Learn More</a>
+                    <a href="<?php echo BASE_PATH; ?>/register" class="btn btn-primary btn-lg"><?php echo __('get_started_button'); ?></a>
+                    <a href="#features" class="btn btn-outline-primary btn-lg"><?php echo __('learn_more_button'); ?></a>
                 </div>
             </div>
             <div class="col-lg-5 d-none d-lg-block">
@@ -33,9 +33,9 @@ require_once 'includes/header.php';
 <!-- Features Section -->
 <div id="features" class="container py-5">
     <div class="text-center mb-5">
-        <span class="badge bg-primary-light text-primary mb-2">POWERFUL TOOLS</span>
-        <h2 class="fw-bold">Financial Tools for Everyone</h2>
-        <p class="text-muted mx-auto" style="max-width: 700px;">Everything you need to manage your financial life in one secure, easy-to-use platform</p>
+        <span class="badge bg-primary-light text-primary mb-2"><?php echo __('features_badge'); ?></span>
+        <h2 class="fw-bold"><?php echo __('features_heading'); ?></h2>
+        <p class="text-muted mx-auto" style="max-width: 700px;"><?php echo __('features_description'); ?></p>
     </div>
     
     <div class="row g-4">
@@ -45,8 +45,8 @@ require_once 'includes/header.php';
                     <i class="fas fa-wallet"></i>
                 </div>
                 <div class="feature-content">
-                    <h4>Income & Expense Tracking</h4>
-                    <p>Easily track all your income sources and expenses in one place. Categorize and analyze your spending habits.</p>
+                    <h4><?php echo __('income_expense_tracking_title'); ?></h4>
+                    <p><?php echo __('income_expense_tracking_description'); ?></p>
                 </div>
             </div>
         </div>
@@ -57,8 +57,8 @@ require_once 'includes/header.php';
                     <i class="fas fa-chart-pie"></i>
                 </div>
                 <div class="feature-content">
-                    <h4>Budgeting</h4>
-                    <p>Create and manage budgets for different categories. Get alerts when you're approaching your limits.</p>
+                    <h4><?php echo __('budgeting_title'); ?></h4>
+                    <p><?php echo __('budgeting_description'); ?></p>
                 </div>
             </div>
         </div>
@@ -69,8 +69,8 @@ require_once 'includes/header.php';
                     <i class="fas fa-bullseye"></i>
                 </div>
                 <div class="feature-content">
-                    <h4>Financial Goals</h4>
-                    <p>Set and track progress toward your financial goals. Whether it's saving for a home, a vacation, or retirement.</p>
+                    <h4><?php echo __('financial_goals_title'); ?></h4>
+                    <p><?php echo __('financial_goals_description'); ?></p>
                 </div>
             </div>
         </div>
@@ -81,8 +81,8 @@ require_once 'includes/header.php';
                     <i class="fas fa-chart-line"></i>
                 </div>
                 <div class="feature-content">
-                    <h4>Investment Tracking</h4>
-                    <p>Monitor your investments and analyze their performance over time. Make informed decisions about your portfolio.</p>
+                    <h4><?php echo __('investment_tracking_title'); ?></h4>
+                    <p><?php echo __('investment_tracking_description'); ?></p>
                 </div>
             </div>
         </div>
@@ -93,8 +93,8 @@ require_once 'includes/header.php';
                     <i class="fas fa-exchange-alt"></i>
                 </div>
                 <div class="feature-content">
-                    <h4>Stock Analysis</h4>
-                    <p>Analyze stocks and identify optimal buying and selling points. Keep track of your stock watchlist.</p>
+                    <h4><?php echo __('stock_analysis_title'); ?></h4>
+                    <p><?php echo __('stock_analysis_description'); ?></p>
                 </div>
             </div>
         </div>
@@ -105,8 +105,8 @@ require_once 'includes/header.php';
                     <i class="fas fa-file-invoice-dollar"></i>
                 </div>
                 <div class="feature-content">
-                    <h4>Tax Planning</h4>
-                    <p>Get assistance with tax planning and estimation. Maximize your deductions and minimize your tax burden.</p>
+                    <h4><?php echo __('tax_planning_title'); ?></h4>
+                    <p><?php echo __('tax_planning_description'); ?></p>
                 </div>
             </div>
         </div>
@@ -117,9 +117,9 @@ require_once 'includes/header.php';
 <div class="how-it-works-section py-5">
     <div class="container py-3">
         <div class="text-center mb-5">
-            <span class="badge bg-primary-light text-primary mb-2">SIMPLE PROCESS</span>
-            <h2 class="fw-bold">How It Works</h2>
-            <p class="text-muted mx-auto" style="max-width: 700px;">Four simple steps to financial freedom and peace of mind</p>
+            <span class="badge bg-primary-light text-primary mb-2"><?php echo __('how_it_works_badge'); ?></span>
+            <h2 class="fw-bold"><?php echo __('how_it_works_heading'); ?></h2>
+            <p class="text-muted mx-auto" style="max-width: 700px;"><?php echo __('how_it_works_description'); ?></p>
         </div>
         
         <div class="steps-container">
@@ -128,32 +128,32 @@ require_once 'includes/header.php';
                 <div class="col-md-3">
                     <div class="step-card">
                         <div class="step-number">1</div>
-                        <h5 class="step-title">Sign Up</h5>
-                        <p class="step-description">Create your free account and set up your profile in minutes.</p>
+                        <h5 class="step-title"><?php echo __('step_1_title'); ?></h5>
+                        <p class="step-description"><?php echo __('step_1_description'); ?></p>
                     </div>
                 </div>
                 
                 <div class="col-md-3">
                     <div class="step-card">
                         <div class="step-number">2</div>
-                        <h5 class="step-title">Add Income & Expenses</h5>
-                        <p class="step-description">Add your income sources and begin tracking your expenses.</p>
+                        <h5 class="step-title"><?php echo __('step_2_title'); ?></h5>
+                        <p class="step-description"><?php echo __('step_2_description'); ?></p>
                     </div>
                 </div>
                 
                 <div class="col-md-3">
                     <div class="step-card">
                         <div class="step-number">3</div>
-                        <h5 class="step-title">Set Budgets & Goals</h5>
-                        <p class="step-description">Create budgets for different categories and set your financial goals.</p>
+                        <h5 class="step-title"><?php echo __('step_3_title'); ?></h5>
+                        <p class="step-description"><?php echo __('step_3_description'); ?></p>
                     </div>
                 </div>
                 
                 <div class="col-md-3">
                     <div class="step-card">
                         <div class="step-number">4</div>
-                        <h5 class="step-title">Track & Improve</h5>
-                        <p class="step-description">Monitor your progress and use insights to improve your financial health.</p>
+                        <h5 class="step-title"><?php echo __('step_4_title'); ?></h5>
+                        <p class="step-description"><?php echo __('step_4_description'); ?></p>
                     </div>
                 </div>
             </div>
@@ -161,7 +161,7 @@ require_once 'includes/header.php';
     </div>
     
     <div class="text-center mt-5">
-        <a href="<?php echo BASE_PATH; ?>/register" class="btn btn-primary btn-lg">Get Started For Free</a>
+        <a href="<?php echo BASE_PATH; ?>/register" class="btn btn-primary btn-lg"><?php echo __('get_started_free_button'); ?></a>
     </div>
 </div>
 

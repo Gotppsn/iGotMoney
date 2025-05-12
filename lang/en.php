@@ -679,6 +679,54 @@ return [
 
     'create_account' => 'Create Account',
     'confirm_password' => 'Confirm Password',
-    'create_a_password' => 'Create a password'
+    'create_a_password' => 'Create a password',
+    
+    // Home page translations
+    'home_title' => 'iGotMoney - Your Personal Finance Manager',
+    'hero_badge' => 'Personal Finance Management',
+    'hero_heading' => 'Take Control of Your Finances',
+    'hero_description' => 'iGotMoney helps you manage your finances, track expenses, set budgets, and achieve your financial goals - all in one place.',
+    'get_started_button' => 'Get Started',
+    'learn_more_button' => 'Learn More',
+    
+    'features_badge' => 'POWERFUL TOOLS',
+    'features_heading' => 'Financial Tools for Everyone',
+    'features_description' => 'Everything you need to manage your financial life in one secure, easy-to-use platform',
+    
+    'income_expense_tracking_title' => 'Income & Expense Tracking',
+    'income_expense_tracking_description' => 'Easily track all your income sources and expenses in one place. Categorize and analyze your spending habits.',
+    
+    'budgeting_title' => 'Budgeting',
+    'budgeting_description' => 'Create and manage budgets for different categories. Get alerts when you\'re approaching your limits.',
+    
+    'financial_goals_title' => 'Financial Goals',
+    'financial_goals_description' => 'Set and track progress toward your financial goals. Whether it\'s saving for a home, a vacation, or retirement.',
+    
+    'investment_tracking_title' => 'Investment Tracking',
+    'investment_tracking_description' => 'Monitor your investments and analyze their performance over time. Make informed decisions about your portfolio.',
+    
+    'stock_analysis_title' => 'Stock Analysis',
+    'stock_analysis_description' => 'Analyze stocks and identify optimal buying and selling points. Keep track of your stock watchlist.',
+    
+    'tax_planning_title' => 'Tax Planning',
+    'tax_planning_description' => 'Get assistance with tax planning and estimation. Maximize your deductions and minimize your tax burden.',
+    
+    'how_it_works_badge' => 'SIMPLE PROCESS',
+    'how_it_works_heading' => 'How It Works',
+    'how_it_works_description' => 'Four simple steps to financial freedom and peace of mind',
+    
+    'step_1_title' => 'Sign Up',
+    'step_1_description' => 'Create your free account and set up your profile in minutes.',
+    
+    'step_2_title' => 'Add Income & Expenses',
+    'step_2_description' => 'Add your income sources and begin tracking your expenses.',
+    
+    'step_3_title' => 'Set Budgets & Goals',
+    'step_3_description' => 'Create budgets for different categories and set your financial goals.',
+    
+    'step_4_title' => 'Track & Improve',
+    'step_4_description' => 'Monitor your progress and use insights to improve your financial health.',
+    
+    'get_started_free_button' => 'Get Started For Free'
 ];
 ?>
