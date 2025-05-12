@@ -1,6 +1,6 @@
 <?php
 // Set page title and current page for menu highlighting
-$page_title = 'Income Management - iGotMoney';
+$page_title = __('income_management') . ' - ' . __('app_name');
 $current_page = 'income';
 
 // Additional CSS and JS
@@ -17,12 +17,12 @@ require_once 'includes/header.php';
     <div class="page-header-section">
         <div class="page-header-content">
             <div class="page-title-group">
-                <h1 class="page-title">Income Management</h1>
-                <p class="page-subtitle">Track and manage all your income sources effectively</p>
+                <h1 class="page-title"><?php echo __('income_management'); ?></h1>
+                <p class="page-subtitle"><?php echo __('track_manage_income'); ?></p>
             </div>
             <button type="button" class="btn-add-income" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
                 <i class="fas fa-plus-circle"></i>
-                <span>Add Income</span>
+                <span><?php echo __('add_income'); ?></span>
             </button>
         </div>
     </div>
@@ -35,7 +35,7 @@ require_once 'includes/header.php';
                     <i class="fas fa-calendar-alt"></i>
                 </div>
                 <div class="stat-content">
-                    <h3 class="stat-label">Monthly Income</h3>
+                    <h3 class="stat-label"><?php echo __('monthly_income'); ?></h3>
                     <p class="stat-value">$<?php echo number_format($monthly_income, 2); ?></p>
                     <?php
                     $previous_month = isset($prev_monthly_income) ? $prev_monthly_income : $monthly_income * 0.95;
@@ -44,7 +44,7 @@ require_once 'includes/header.php';
                     ?>
                     <div class="stat-trend <?php echo $is_increased ? 'positive' : 'negative'; ?>">
                         <i class="fas fa-<?php echo $is_increased ? 'arrow-up' : 'arrow-down'; ?>"></i>
-                        <span><?php echo number_format($percent_change, 1); ?>% from last month</span>
+                        <span><?php echo number_format($percent_change, 1); ?>% <?php echo __('from_last_month'); ?></span>
                     </div>
                 </div>
             </div>
@@ -54,11 +54,11 @@ require_once 'includes/header.php';
                     <i class="fas fa-chart-line"></i>
                 </div>
                 <div class="stat-content">
-                    <h3 class="stat-label">Annual Income</h3>
+                    <h3 class="stat-label"><?php echo __('annual_income'); ?></h3>
                     <p class="stat-value">$<?php echo number_format($yearly_income, 2); ?></p>
                     <div class="stat-info">
                         <i class="fas fa-info-circle"></i>
-                        <span>Projected for <?php echo date('Y'); ?></span>
+                        <span><?php echo __('projected_for'); ?> <?php echo date('Y'); ?></span>
                     </div>
                 </div>
             </div>
@@ -68,7 +68,7 @@ require_once 'includes/header.php';
                     <i class="fas fa-wallet"></i>
                 </div>
                 <div class="stat-content">
-                    <h3 class="stat-label">Active Sources</h3>
+                    <h3 class="stat-label"><?php echo __('active_sources'); ?></h3>
                     <?php
                     $active_count = 0;
                     if (isset($income_sources) && $income_sources->num_rows > 0) {
@@ -84,7 +84,7 @@ require_once 'includes/header.php';
                     <p class="stat-value"><?php echo $active_count; ?></p>
                     <div class="stat-info">
                         <i class="fas fa-check-circle"></i>
-                        <span>Currently active</span>
+                        <span><?php echo __('currently_active'); ?></span>
                     </div>
                 </div>
             </div>
@@ -99,7 +99,7 @@ require_once 'includes/header.php';
                 <div class="chart-header">
                     <div class="chart-title">
                         <i class="fas fa-chart-pie"></i>
-                        <h3>Income by Frequency</h3>
+                        <h3><?php echo __('income_by_frequency'); ?></h3>
                     </div>
                 </div>
                 <div class="chart-body">
@@ -108,7 +108,7 @@ require_once 'includes/header.php';
                     </div>
                     <div id="chartNoData" class="no-data-message" style="display: <?php echo ($active_count > 0) ? 'none' : 'block'; ?>">
                         <i class="fas fa-chart-bar"></i>
-                        <p>No active income sources to display</p>
+                        <p><?php echo __('no_active_income_sources'); ?></p>
                     </div>
                 </div>
             </div>
@@ -118,7 +118,7 @@ require_once 'includes/header.php';
                 <div class="chart-header">
                     <div class="chart-title">
                         <i class="fas fa-list-ol"></i>
-                        <h3>Top Income Sources</h3>
+                        <h3><?php echo __('top_income_sources'); ?></h3>
                     </div>
                 </div>
                 <div class="chart-body">
@@ -168,7 +168,7 @@ require_once 'includes/header.php';
                                     <div class="source-rank"><?php echo $rank++; ?></div>
                                     <div class="source-info">
                                         <h4 class="source-name"><?php echo htmlspecialchars($source['name']); ?></h4>
-                                        <span class="source-frequency"><?php echo ucfirst(str_replace('-', ' ', $source['frequency'])); ?></span>
+                                        <span class="source-frequency"><?php echo __($source['frequency']); ?></span>
                                         <div class="source-bar">
                                             <div class="source-bar-fill" 
                                                  style="width: <?php echo $percentage; ?>%"
@@ -185,7 +185,7 @@ require_once 'includes/header.php';
                         <?php else: ?>
                             <div class="empty-sources">
                                 <i class="fas fa-folder-open"></i>
-                                <p>No income sources recorded yet</p>
+                                <p><?php echo __('no_income_sources_recorded'); ?></p>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -200,12 +200,12 @@ require_once 'includes/header.php';
             <div class="table-header">
                 <div class="table-title">
                     <i class="fas fa-list"></i>
-                    <h3>Income Sources</h3>
+                    <h3><?php echo __('income_sources'); ?></h3>
                 </div>
                 <div class="table-controls">
                     <div class="search-box">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="incomeSearch" placeholder="Search income sources..." data-table-search="incomeTable">
+                        <input type="text" id="incomeSearch" placeholder="<?php echo __('search_income_sources'); ?>" data-table-search="incomeTable">
                     </div>
                 </div>
             </div>
@@ -214,13 +214,13 @@ require_once 'includes/header.php';
                     <table class="income-table" id="incomeTable">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Amount</th>
-                                <th>Frequency</th>
-                                <th>Start Date</th>
-                                <th>End Date</th>
-                                <th>Status</th>
-                                <th>Actions</th>
+                                <th><?php echo __('name'); ?></th>
+                                <th><?php echo __('amount'); ?></th>
+                                <th><?php echo __('frequency'); ?></th>
+                                <th><?php echo __('start_date'); ?></th>
+                                <th><?php echo __('end_date'); ?></th>
+                                <th><?php echo __('status'); ?></th>
+                                <th><?php echo __('actions'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -234,7 +234,7 @@ require_once 'includes/header.php';
                                         <td class="amount-cell">$<?php echo number_format($income_source['amount'], 2); ?></td>
                                         <td>
                                             <span class="frequency-badge">
-                                                <?php echo ucfirst(str_replace('-', ' ', $income_source['frequency'])); ?>
+                                                <?php echo __($income_source['frequency']); ?>
                                             </span>
                                         </td>
                                         <td><?php echo date('M j, Y', strtotime($income_source['start_date'])); ?></td>
@@ -245,23 +245,23 @@ require_once 'includes/header.php';
                                                 if ($timestamp > 0) {
                                                     echo date('M j, Y', $timestamp);
                                                 } else {
-                                                    echo '<span class="text-muted">Ongoing</span>';
+                                                    echo '<span class="text-muted">' . __('ongoing') . '</span>';
                                                 }
                                             } else {
-                                                echo '<span class="text-muted">Ongoing</span>';
+                                                echo '<span class="text-muted">' . __('ongoing') . '</span>';
                                             }
                                             ?>
                                         </td>
                                         <td>
                                             <span class="status-badge <?php echo $income_source['is_active'] ? 'active' : 'inactive'; ?>">
-                                                <?php echo $income_source['is_active'] ? 'Active' : 'Inactive'; ?>
+                                                <?php echo $income_source['is_active'] ? __('active') : __('inactive'); ?>
                                             </span>
                                         </td>
                                         <td class="actions-cell">
-                                            <button class="btn-action edit" data-income-id="<?php echo $income_source['income_id']; ?>" title="Edit">
+                                            <button class="btn-action edit" data-income-id="<?php echo $income_source['income_id']; ?>" title="<?php echo __('edit'); ?>">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button class="btn-action delete" data-income-id="<?php echo $income_source['income_id']; ?>" title="Delete">
+                                            <button class="btn-action delete" data-income-id="<?php echo $income_source['income_id']; ?>" title="<?php echo __('delete'); ?>">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </td>
@@ -275,11 +275,11 @@ require_once 'includes/header.php';
                     <div class="empty-icon">
                         <i class="fas fa-wallet"></i>
                     </div>
-                    <h4>No income sources recorded yet</h4>
-                    <p>Start tracking your income by adding your first income source</p>
+                    <h4><?php echo __('no_income_sources_recorded_yet'); ?></h4>
+                    <p><?php echo __('start_tracking_income'); ?></p>
                     <button type="button" class="btn-add-first" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
                         <i class="fas fa-plus"></i>
-                        Add Your First Income
+                        <?php echo __('add_your_first_income'); ?>
                     </button>
                 </div>
             </div>
@@ -295,7 +295,7 @@ require_once 'includes/header.php';
                 <div class="modal-icon">
                     <i class="fas fa-plus-circle"></i>
                 </div>
-                <h5 class="modal-title">Add New Income Source</h5>
+                <h5 class="modal-title"><?php echo __('add_new_income_source'); ?></h5>
                 <button type="button" class="modal-close" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i>
                 </button>
@@ -306,12 +306,12 @@ require_once 'includes/header.php';
                 <div class="modal-body">
                     <div class="form-grid">
                         <div class="form-field full-width">
-                            <label for="name">Income Name</label>
+                            <label for="name"><?php echo __('income_name'); ?></label>
                             <input type="text" id="name" name="name" required>
                         </div>
                         
                         <div class="form-field">
-                            <label for="amount">Amount</label>
+                            <label for="amount"><?php echo __('amount'); ?></label>
                             <div class="amount-input">
                                 <span class="currency-symbol">$</span>
                                 <input type="number" id="amount" name="amount" step="0.01" min="0.01" required>
@@ -319,25 +319,25 @@ require_once 'includes/header.php';
                         </div>
                         
                         <div class="form-field">
-                            <label for="frequency">Frequency</label>
+                            <label for="frequency"><?php echo __('frequency'); ?></label>
                             <select id="frequency" name="frequency" class="modern-select">
-                                <option value="one-time">One-time</option>
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="bi-weekly">Bi-Weekly</option>
-                                <option value="monthly" selected>Monthly</option>
-                                <option value="quarterly">Quarterly</option>
-                                <option value="annually">Annually</option>
+                                <option value="one-time"><?php echo __('one-time'); ?></option>
+                                <option value="daily"><?php echo __('daily'); ?></option>
+                                <option value="weekly"><?php echo __('weekly'); ?></option>
+                                <option value="bi-weekly"><?php echo __('bi-weekly'); ?></option>
+                                <option value="monthly" selected><?php echo __('monthly'); ?></option>
+                                <option value="quarterly"><?php echo __('quarterly'); ?></option>
+                                <option value="annually"><?php echo __('annually'); ?></option>
                             </select>
                         </div>
                         
                         <div class="form-field">
-                            <label for="start_date">Start Date</label>
+                            <label for="start_date"><?php echo __('start_date'); ?></label>
                             <input type="date" id="start_date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
                         </div>
                         
                         <div class="form-field">
-                            <label for="end_date">End Date (Optional)</label>
+                            <label for="end_date"><?php echo __('end_date_optional'); ?></label>
                             <input type="date" id="end_date" name="end_date">
                         </div>
                         
@@ -345,17 +345,17 @@ require_once 'includes/header.php';
                             <label class="toggle-field">
                                 <input type="checkbox" id="is_active" name="is_active" checked>
                                 <span class="toggle-slider"></span>
-                                <span class="toggle-label">Active Income Source</span>
+                                <span class="toggle-label"><?php echo __('active_income_source'); ?></span>
                             </label>
                         </div>
                     </div>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal"><?php echo __('cancel'); ?></button>
                     <button type="submit" class="btn-submit">
                         <i class="fas fa-plus"></i>
-                        Add Income
+                        <?php echo __('add_income'); ?>
                     </button>
                 </div>
             </form>
@@ -371,7 +371,7 @@ require_once 'includes/header.php';
                 <div class="modal-icon edit">
                     <i class="fas fa-edit"></i>
                 </div>
-                <h5 class="modal-title">Edit Income Source</h5>
+                <h5 class="modal-title"><?php echo __('edit_income_source'); ?></h5>
                 <button type="button" class="modal-close" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i>
                 </button>
@@ -383,12 +383,12 @@ require_once 'includes/header.php';
                 <div class="modal-body">
                     <div class="form-grid">
                         <div class="form-field full-width">
-                            <label for="edit_name">Income Name</label>
+                            <label for="edit_name"><?php echo __('income_name'); ?></label>
                             <input type="text" id="edit_name" name="name" required>
                         </div>
                         
                         <div class="form-field">
-                            <label for="edit_amount">Amount</label>
+                            <label for="edit_amount"><?php echo __('amount'); ?></label>
                             <div class="amount-input">
                                 <span class="currency-symbol">$</span>
                                 <input type="number" id="edit_amount" name="amount" step="0.01" min="0.01" required>
@@ -396,25 +396,25 @@ require_once 'includes/header.php';
                         </div>
                         
                         <div class="form-field">
-                            <label for="edit_frequency">Frequency</label>
+                            <label for="edit_frequency"><?php echo __('frequency'); ?></label>
                             <select id="edit_frequency" name="frequency" class="modern-select">
-                                <option value="one-time">One-time</option>
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="bi-weekly">Bi-Weekly</option>
-                                <option value="monthly">Monthly</option>
-                                <option value="quarterly">Quarterly</option>
-                                <option value="annually">Annually</option>
+                                <option value="one-time"><?php echo __('one-time'); ?></option>
+                                <option value="daily"><?php echo __('daily'); ?></option>
+                                <option value="weekly"><?php echo __('weekly'); ?></option>
+                                <option value="bi-weekly"><?php echo __('bi-weekly'); ?></option>
+                                <option value="monthly"><?php echo __('monthly'); ?></option>
+                                <option value="quarterly"><?php echo __('quarterly'); ?></option>
+                                <option value="annually"><?php echo __('annually'); ?></option>
                             </select>
                         </div>
                         
                         <div class="form-field">
-                            <label for="edit_start_date">Start Date</label>
+                            <label for="edit_start_date"><?php echo __('start_date'); ?></label>
                             <input type="date" id="edit_start_date" name="start_date" required>
                         </div>
                         
                         <div class="form-field">
-                            <label for="edit_end_date">End Date (Optional)</label>
+                            <label for="edit_end_date"><?php echo __('end_date_optional'); ?></label>
                             <input type="date" id="edit_end_date" name="end_date">
                         </div>
                         
@@ -422,17 +422,17 @@ require_once 'includes/header.php';
                             <label class="toggle-field">
                                 <input type="checkbox" id="edit_is_active" name="is_active">
                                 <span class="toggle-slider"></span>
-                                <span class="toggle-label">Active Income Source</span>
+                                <span class="toggle-label"><?php echo __('active_income_source'); ?></span>
                             </label>
                         </div>
                     </div>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal"><?php echo __('cancel'); ?></button>
                     <button type="submit" class="btn-submit">
                         <i class="fas fa-save"></i>
-                        Save Changes
+                        <?php echo __('save_changes'); ?>
                     </button>
                 </div>
             </form>
@@ -448,23 +448,23 @@ require_once 'includes/header.php';
                 <div class="modal-icon delete">
                     <i class="fas fa-trash-alt"></i>
                 </div>
-                <h5 class="modal-title">Delete Income Source</h5>
+                <h5 class="modal-title"><?php echo __('delete_income_source'); ?></h5>
                 <button type="button" class="modal-close" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body text-center">
-                <p>Are you sure you want to delete this income source?</p>
-                <p class="text-muted">This action cannot be undone.</p>
+                <p><?php echo __('are_you_sure_delete_income'); ?></p>
+                <p class="text-muted"><?php echo __('action_cannot_be_undone'); ?></p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-cancel" data-bs-dismiss="modal"><?php echo __('cancel'); ?></button>
                 <form action="<?php echo BASE_PATH; ?>/income" method="post">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="income_id" id="delete_income_id">
                     <button type="submit" class="btn-submit danger">
                         <i class="fas fa-trash-alt"></i>
-                        Delete
+                        <?php echo __('delete'); ?>
                     </button>
                 </form>
             </div>
@@ -509,7 +509,8 @@ if (isset($income_sources) && $income_sources->num_rows > 0) {
                     break;
             }
             
-            $freq_name = ucfirst(str_replace('-', ' ', $freq));
+            // Use translate function for frequency name
+            $freq_name = __($freq);
             if (!isset($frequency_totals[$freq_name])) {
                 $frequency_totals[$freq_name] = 0;
             }

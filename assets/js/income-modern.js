@@ -268,12 +268,12 @@ function loadIncomeForEdit(incomeId) {
             const editModal = new bootstrap.Modal(document.getElementById('editIncomeModal'));
             editModal.show();
         } else {
-            showNotification('Failed to load income data', 'error');
+            showNotification(getTranslation('failed_to_load_income_data'), 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('An error occurred while loading income data', 'error');
+        showNotification(getTranslation('an_error_occurred_loading'), 'error');
     });
 }
 
@@ -330,8 +330,8 @@ function initializeSearch() {
                 if (tableBody) tableBody.style.display = 'none';
                 if (noDataMessage) {
                     noDataMessage.style.display = 'block';
-                    noDataMessage.querySelector('h4').textContent = 'No matching income sources found';
-                    noDataMessage.querySelector('p').textContent = 'Try adjusting your search term';
+                    noDataMessage.querySelector('h4').textContent = getTranslation('no_matching_income_sources');
+                    noDataMessage.querySelector('p').textContent = getTranslation('try_adjusting_search');
                     noDataMessage.querySelector('.btn-add-first').style.display = 'none';
                 }
             } else {
@@ -374,6 +374,20 @@ function showNotification(message, type = 'info') {
             notification.remove();
         }, 300);
     }, 3000);
+}
+
+// Helper function to get translations from the data attributes
+function getTranslation(key, defaultValue = '') {
+    // For future implementation: we can add data attributes to the body element with translations
+    // For now, we'll use hardcoded fallbacks
+    const translations = {
+        'failed_to_load_income_data': 'Failed to load income data',
+        'an_error_occurred_loading': 'An error occurred while loading income data',
+        'no_matching_income_sources': 'No matching income sources found',
+        'try_adjusting_search': 'Try adjusting your search term'
+    };
+    
+    return translations[key] || defaultValue || key;
 }
 
 // Utility function to format currency

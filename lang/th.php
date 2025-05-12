@@ -157,5 +157,63 @@ return [
     
     // Auth
     'login' => 'เข้าสู่ระบบ',
+    
+    // Income page specific translations
+    'income_management' => 'จัดการรายได้',
+    'track_manage_income' => 'ติดตามและจัดการแหล่งรายได้ทั้งหมดของคุณอย่างมีประสิทธิภาพ',
+    'add_income' => 'เพิ่มรายได้',
+    'monthly_income' => 'รายได้รายเดือน',
+    'annual_income' => 'รายได้รายปี',
+    'active_sources' => 'แหล่งรายได้ที่ใช้งานอยู่',
+    'currently_active' => 'ใช้งานอยู่ในปัจจุบัน',
+    'income_by_frequency' => 'รายได้ตามความถี่',
+    'no_active_income_sources' => 'ไม่มีแหล่งรายได้ที่ใช้งานอยู่เพื่อแสดง',
+    'top_income_sources' => 'แหล่งรายได้หลัก',
+    'no_income_sources_recorded' => 'ยังไม่มีการบันทึกแหล่งรายได้',
+    'projected_for' => 'คาดการณ์สำหรับ',
+    'from_last_month' => 'จากเดือนที่แล้ว',
+    'income_sources' => 'แหล่งรายได้',
+    'search_income_sources' => 'ค้นหาแหล่งรายได้...',
+    'name' => 'ชื่อ',
+    'amount' => 'จำนวนเงิน',
+    'frequency' => 'ความถี่',
+    'start_date' => 'วันที่เริ่ม',
+    'end_date' => 'วันที่สิ้นสุด',
+    'status' => 'สถานะ',
+    'actions' => 'การกระทำ',
+    'no_income_sources_recorded_yet' => 'ยังไม่มีการบันทึกแหล่งรายได้',
+    'start_tracking_income' => 'เริ่มติดตามรายได้ของคุณโดยเพิ่มแหล่งรายได้แรกของคุณ',
+    'add_your_first_income' => 'เพิ่มรายได้แรกของคุณ',
+    'ongoing' => 'ต่อเนื่อง',
+    'active' => 'ใช้งาน',
+    'inactive' => 'ไม่ได้ใช้งาน',
+    'edit' => 'แก้ไข',
+    'delete' => 'ลบ',
+    
+    // Add Income Modal
+    'add_new_income_source' => 'เพิ่มแหล่งรายได้ใหม่',
+    'income_name' => 'ชื่อรายได้',
+    'one-time' => 'ครั้งเดียว',
+    'daily' => 'รายวัน',
+    'weekly' => 'รายสัปดาห์',
+    'bi-weekly' => 'รายสองสัปดาห์',
+    'monthly' => 'รายเดือน',
+    'quarterly' => 'รายไตรมาส',
+    'annually' => 'รายปี',
+    'end_date_optional' => 'วันที่สิ้นสุด (ไม่บังคับ)',
+    'active_income_source' => 'แหล่งรายได้ที่ใช้งานอยู่',
+    'save_changes' => 'บันทึกการเปลี่ยนแปลง',
+    
+    // Edit Income Modal
+    'edit_income_source' => 'แก้ไขแหล่งรายได้',
+    
+    // Delete Income Modal
+    'delete_income_source' => 'ลบแหล่งรายได้',
+    'are_you_sure_delete_income' => 'คุณแน่ใจหรือไม่ว่าต้องการลบแหล่งรายได้นี้?',
+    'action_cannot_be_undone' => 'การกระทำนี้ไม่สามารถยกเลิกได้',
+    
+    // No matching results
+    'no_matching_income_sources' => 'ไม่พบแหล่งรายได้ที่ตรงกัน',
+    'try_adjusting_search' => 'ลองปรับคำค้นหาของคุณ'
 ];
 ?>
