@@ -174,12 +174,14 @@ require_once 'includes/header.php';
                             $rank = 1;
                             foreach (array_slice($budget_status, 0, 5) as $budget): 
                                 $percentage = ($budget['spent'] / max(0.01, $budget['budget_amount'])) * 100;
+                                // Get translated category name
+                                $translated_category_name = $expense->getTranslatedCategoryName($budget['category_name']);
                             ?>
                                 <div class="category-item">
                                     <div class="category-rank"><?php echo $rank++; ?></div>
                                     <div class="category-info">
                                         <h4 class="category-name">
-                                            <?php echo htmlspecialchars($budget['category_name']); ?>
+                                            <?php echo htmlspecialchars($translated_category_name); ?>
                                             <?php if ($budget['is_investment']): ?>
                                                 <i class="fas fa-gem text-info ms-1"></i>
                                             <?php endif; ?>
@@ -260,14 +262,17 @@ require_once 'includes/header.php';
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($budget_status as $budget): ?>
+                                <?php foreach ($budget_status as $budget): 
+                                    // Get translated category name
+                                    $translated_category = $expense->getTranslatedCategoryName($budget['category_name']);
+                                ?>
                                     <tr class="<?php echo $budget['is_investment'] ? 'investment-row' : ''; ?>">
                                         <td class="category-cell">
                                             <span class="category-text">
                                                 <?php if ($budget['is_investment']): ?>
                                                     <i class="fas fa-gem text-info me-2"></i>
                                                 <?php endif; ?>
-                                                <?php echo htmlspecialchars($budget['category_name']); ?>
+                                                <?php echo htmlspecialchars($translated_category); ?>
                                             </span>
                                         </td>
                                         <td class="amount-cell">$<?php echo number_format($budget['budget_amount'], 2); ?></td>
@@ -354,14 +359,17 @@ require_once 'includes/header.php';
                 </div>
                 
                 <div class="recommendations-grid">
-                    <?php foreach ($budget_plan as $recommendation): ?>
+                    <?php foreach ($budget_plan as $recommendation): 
+                        // Get translated category name
+                        $translated_category = $expense->getTranslatedCategoryName($recommendation['category_name']);
+                    ?>
                         <div class="recommendation-item <?php echo $recommendation['is_investment'] ? 'investment' : ''; ?>">
                             <div class="recommendation-header">
                                 <h4 class="recommendation-category">
                                     <?php if ($recommendation['is_investment']): ?>
                                         <i class="fas fa-gem text-info me-2"></i>
                                     <?php endif; ?>
-                                    <?php echo htmlspecialchars($recommendation['category_name']); ?>
+                                    <?php echo htmlspecialchars($translated_category); ?>
                                 </h4>
                                 <span class="recommendation-amount">$<?php echo number_format($recommendation['allocated_amount'], 2); ?></span>
                             </div>
@@ -411,10 +419,12 @@ require_once 'includes/header.php';
                                 if (isset($categories) && $categories->num_rows > 0) {
                                     $categories->data_seek(0);
                                     while ($category = $categories->fetch_assoc()): 
+                                        // Get translated category name
+                                        $translated_name = $expense->getTranslatedCategoryName($category['name']);
                                 ?>
                                     <option value="<?php echo $category['category_id']; ?>" 
                                             <?php echo ($category['name'] === 'Investments') ? 'class="investment-option"' : ''; ?>>
-                                        <?php echo htmlspecialchars($category['name']); ?>
+                                        <?php echo htmlspecialchars($translated_name); ?>
                                         <?php echo ($category['name'] === 'Investments') ? ' 💎' : ''; ?>
                                     </option>
                                 <?php 
@@ -483,10 +493,12 @@ require_once 'includes/header.php';
                                 if (isset($categories) && $categories->num_rows > 0) {
                                     $categories->data_seek(0);
                                     while ($category = $categories->fetch_assoc()): 
+                                        // Get translated category name
+                                        $translated_name = $expense->getTranslatedCategoryName($category['name']);
                                 ?>
                                     <option value="<?php echo $category['category_id']; ?>"
                                             <?php echo ($category['name'] === 'Investments') ? 'class="investment-option"' : ''; ?>>
-                                        <?php echo htmlspecialchars($category['name']); ?>
+                                        <?php echo htmlspecialchars($translated_name); ?>
                                         <?php echo ($category['name'] === 'Investments') ? ' 💎' : ''; ?>
                                     </option>
                                 <?php 

@@ -210,6 +210,47 @@ class Expense {
         return $result;
     }
     
+    // Get translated category name - NEW METHOD
+    public function getTranslatedCategoryName($category_name) {
+        // Check if the translation key exists, otherwise return original name
+        $translated = __('expense_category_' . $category_name);
+        
+        // If the translation key doesn't exist and just returns the original key
+        if ($translated === 'expense_category_' . $category_name) {
+            return $category_name;
+        }
+        
+        return $translated;
+    }
+    
+    // Get translated category description - NEW METHOD
+    public function getTranslatedCategoryDescription($category_name) {
+        // Check if the translation key exists, otherwise return original description
+        $translated = __('expense_category_desc_' . $category_name);
+        
+        // If the translation key doesn't exist, try to get the original description
+        if ($translated === 'expense_category_desc_' . $category_name) {
+            // Get original description from database
+            $query = "SELECT description FROM " . $this->categories_table . " WHERE name = ?";
+            $stmt = $this->conn->prepare($query);
+            
+            if ($stmt) {
+                $stmt->bind_param("s", $category_name);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                
+                if ($result && $result->num_rows > 0) {
+                    $row = $result->fetch_assoc();
+                    return $row['description'];
+                }
+            }
+            
+            return $category_name;
+        }
+        
+        return $translated;
+    }
+    
     // Get all expenses for a user
     public function getAll($user_id, $limit = null) {
         // SQL query

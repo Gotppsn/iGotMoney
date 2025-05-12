@@ -6,6 +6,40 @@
  */
 
 return [
+    // Expense Categories
+    'expense_category_Housing' => 'ที่อยู่อาศัย',
+    'expense_category_Utilities' => 'สาธารณูปโภค',
+    'expense_category_Food' => 'อาหาร',
+    'expense_category_Transportation' => 'การเดินทาง',
+    'expense_category_Insurance' => 'ประกันภัย',
+    'expense_category_Healthcare' => 'การดูแลสุขภาพ',
+    'expense_category_Debt Payments' => 'การชำระหนี้',
+    'expense_category_Entertainment' => 'ความบันเทิง',
+    'expense_category_Shopping' => 'การซื้อสินค้า',
+    'expense_category_Personal Care' => 'การดูแลส่วนบุคคล',
+    'expense_category_Education' => 'การศึกษา',
+    'expense_category_Investments' => 'การลงทุน',
+    'expense_category_Gifts & Donations' => 'ของขวัญและการบริจาค',
+    'expense_category_Travel' => 'การท่องเที่ยว',
+    'expense_category_Miscellaneous' => 'เบ็ดเตล็ด',
+
+    // Expense Category Descriptions
+    'expense_category_desc_Housing' => 'ค่าเช่า, ค่าจำนอง, ภาษีทรัพย์สิน, การซ่อมแซม',
+    'expense_category_desc_Utilities' => 'ค่าไฟฟ้า, ค่าน้ำ, ค่าก๊าซ, อินเทอร์เน็ต, โทรศัพท์',
+    'expense_category_desc_Food' => 'ซื้อของชำ, ร้านอาหาร, อาหารสั่งกลับบ้าน',
+    'expense_category_desc_Transportation' => 'ค่าผ่อนรถ, ค่าน้ำมัน, ขนส่งสาธารณะ, รถรับส่ง',
+    'expense_category_desc_Insurance' => 'ประกันสุขภาพ, ประกันรถยนต์, ประกันบ้าน, ประกันชีวิต',
+    'expense_category_desc_Healthcare' => 'การตรวจกับแพทย์, ยา, หัตถการ',
+    'expense_category_desc_Debt Payments' => 'บัตรเครดิต, เงินกู้นักศึกษา, เงินกู้ส่วนบุคคล',
+    'expense_category_desc_Entertainment' => 'ภาพยนตร์, เกม, งานอดิเรก, การสมัครสมาชิก',
+    'expense_category_desc_Shopping' => 'เสื้อผ้า, อุปกรณ์อิเล็กทรอนิกส์, สิ่งของในครัวเรือน',
+    'expense_category_desc_Personal Care' => 'ตัดผม, ฟิตเนส, ผลิตภัณฑ์เสริมความงาม',
+    'expense_category_desc_Education' => 'ค่าเล่าเรียน, หนังสือ, คอร์สเรียน, อุปกรณ์การเรียน',
+    'expense_category_desc_Investments' => 'หุ้น, พันธบัตร, กองทุนเพื่อการเกษียณ',
+    'expense_category_desc_Gifts & Donations' => 'ของขวัญ, การบริจาคเพื่อการกุศล',
+    'expense_category_desc_Travel' => 'เที่ยวบิน, โรงแรม, ค่าใช้จ่ายในการท่องเที่ยว',
+    'expense_category_desc_Miscellaneous' => 'ค่าใช้จ่ายอื่นๆ ที่ไม่เข้ากับหมวดหมู่อื่น',
+
     // General
     'app_name' => 'iGotMoney',
     'language' => 'ภาษา',

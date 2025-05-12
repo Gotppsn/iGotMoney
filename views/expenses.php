@@ -121,11 +121,13 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                             $rank = 1;
                             while ($category = $top_expenses->fetch_assoc()): 
                                 $percentage = ($category['total'] / max(0.01, $monthly_expenses)) * 100;
+                                // Get translated category name
+                                $translated_category_name = $expense->getTranslatedCategoryName($category['category_name']);
                             ?>
                                 <div class="category-item">
                                     <div class="category-rank"><?php echo $rank++; ?></div>
                                     <div class="category-info">
-                                        <h4 class="category-name"><?php echo htmlspecialchars($category['category_name']); ?></h4>
+                                        <h4 class="category-name"><?php echo htmlspecialchars($translated_category_name); ?></h4>
                                         <div class="category-bar">
                                             <div class="category-bar-fill" 
                                                  style="width: <?php echo $percentage; ?>%"
@@ -209,9 +211,11 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                                         $categories->data_seek(0);
                                         while($category = $categories->fetch_assoc()): 
                                             $is_selected = ($category['category_id'] == $filter_category) ? 'selected' : '';
+                                            // Get translated category name
+                                            $translated_name = $expense->getTranslatedCategoryName($category['name']);
                                         ?>
                                             <option value="<?php echo $category['category_id']; ?>" <?php echo $is_selected; ?>>
-                                                <?php echo htmlspecialchars($category['name']); ?>
+                                                <?php echo htmlspecialchars($translated_name); ?>
                                             </option>
                                         <?php endwhile; ?>
                                         <?php $categories->data_seek(0); ?>
@@ -241,21 +245,24 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                         </thead>
                         <tbody>
                             <?php if (isset($expenses) && $expenses->num_rows > 0): ?>
-                                <?php while ($expense = $expenses->fetch_assoc()): ?>
+                                <?php while ($expense_item = $expenses->fetch_assoc()): 
+                                    // Get translated category name
+                                    $translated_category = $expense->getTranslatedCategoryName($expense_item['category_name']);
+                                ?>
                                     <tr>
                                         <td class="description-cell">
-                                            <span class="description-text"><?php echo htmlspecialchars($expense['description']); ?></span>
+                                            <span class="description-text"><?php echo htmlspecialchars($expense_item['description']); ?></span>
                                         </td>
                                         <td class="category-cell">
-                                            <span class="category-badge"><?php echo htmlspecialchars($expense['category_name']); ?></span>
+                                            <span class="category-badge"><?php echo htmlspecialchars($translated_category); ?></span>
                                         </td>
-                                        <td class="amount-cell">$<?php echo number_format($expense['amount'], 2); ?></td>
-                                        <td class="date-cell"><?php echo date('M j, Y', strtotime($expense['expense_date'])); ?></td>
+                                        <td class="amount-cell">$<?php echo number_format($expense_item['amount'], 2); ?></td>
+                                        <td class="date-cell"><?php echo date('M j, Y', strtotime($expense_item['expense_date'])); ?></td>
                                         <td class="type-cell">
-                                            <?php if ($expense['is_recurring']): ?>
+                                            <?php if ($expense_item['is_recurring']): ?>
                                                 <span class="type-badge recurring">
                                                     <i class="fas fa-sync-alt"></i>
-                                                    <?php echo ucfirst(str_replace('-', ' ', $expense['frequency'])); ?>
+                                                    <?php echo ucfirst(str_replace('-', ' ', $expense_item['frequency'])); ?>
                                                 </span>
                                             <?php else: ?>
                                                 <span class="type-badge one-time">
@@ -265,10 +272,10 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                                             <?php endif; ?>
                                         </td>
                                         <td class="actions-cell">
-                                            <button class="btn-action edit" data-expense-id="<?php echo $expense['expense_id']; ?>" title="<?php echo __('edit'); ?>">
+                                            <button class="btn-action edit" data-expense-id="<?php echo $expense_item['expense_id']; ?>" title="<?php echo __('edit'); ?>">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button class="btn-action delete" data-expense-id="<?php echo $expense['expense_id']; ?>" title="<?php echo __('delete'); ?>">
+                                            <button class="btn-action delete" data-expense-id="<?php echo $expense_item['expense_id']; ?>" title="<?php echo __('delete'); ?>">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </td>
@@ -321,9 +328,12 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                                 <option value=""><?php echo __('select_category'); ?></option>
                                 <?php 
                                 $categories->data_seek(0);
-                                while($category = $categories->fetch_assoc()): ?>
+                                while($category = $categories->fetch_assoc()): 
+                                    // Get translated category name
+                                    $translated_name = $expense->getTranslatedCategoryName($category['name']);
+                                ?>
                                     <option value="<?php echo $category['category_id']; ?>">
-                                        <?php echo htmlspecialchars($category['name']); ?>
+                                        <?php echo htmlspecialchars($translated_name); ?>
                                     </option>
                                 <?php endwhile; ?>
                                 <?php $categories->data_seek(0); ?>
@@ -406,10 +416,14 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                             <label for="edit_category_id"><?php echo __('category'); ?></label>
                             <select id="edit_category_id" name="category_id" class="modern-select" required>
                                 <option value=""><?php echo __('select_category'); ?></option>
-                                <?php $categories->data_seek(0); ?>
-                                <?php while($category = $categories->fetch_assoc()): ?>
+                                <?php 
+                                $categories->data_seek(0);
+                                while($category = $categories->fetch_assoc()): 
+                                    // Get translated category name
+                                    $translated_name = $expense->getTranslatedCategoryName($category['name']);
+                                ?>
                                     <option value="<?php echo $category['category_id']; ?>">
-                                        <?php echo htmlspecialchars($category['name']); ?>
+                                        <?php echo htmlspecialchars($translated_name); ?>
                                     </option>
                                 <?php endwhile; ?>
                                 <?php $categories->data_seek(0); ?>
@@ -510,7 +524,9 @@ $chart_colors = [
 if (isset($top_expenses) && $top_expenses->num_rows > 0) {
     $top_expenses->data_seek(0);
     while ($category = $top_expenses->fetch_assoc()) {
-        $chart_labels[] = $category['category_name'];
+        // Get translated category name for the chart
+        $translated_name = $expense->getTranslatedCategoryName($category['category_name']);
+        $chart_labels[] = $translated_name;
         $chart_data[] = floatval($category['total']);
     }
 }
