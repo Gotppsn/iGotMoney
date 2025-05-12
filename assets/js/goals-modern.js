@@ -1,6 +1,6 @@
 /**
  * iGotMoney - Modern Goals Page JavaScript
- * Enhanced goals functionality with modern interactions
+ * Enhanced goals functionality with modern interactions and multilingual support
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -15,7 +15,13 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeGoalMetrics();
 });
 
+// Translations object - will be populated from data attributes
+const translations = {};
+
 function initializeGoalsPage() {
+    // Load translations from data attributes on the page
+    loadTranslations();
+    
     // Initialize tooltips
     const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     tooltips.forEach(tooltip => {
@@ -23,7 +29,7 @@ function initializeGoalsPage() {
     });
     
     // Set up initial filter state
-    const filterAll = document.getElementById('filterAll');
+    const filterAll = document.querySelector('.filter-btn[data-filter="all"]');
     if (filterAll) {
         filterAll.classList.add('active');
     }
@@ -33,6 +39,26 @@ function initializeGoalsPage() {
     
     // Initialize progress bars
     animateProgressBars();
+}
+
+function loadTranslations() {
+    // Get the html tag to determine current language
+    const html = document.querySelector('html');
+    const currentLang = html ? html.getAttribute('lang') : 'en';
+    
+    // Try to get translations from the page
+    const translationElements = document.querySelectorAll('[data-translation-key]');
+    translationElements.forEach(element => {
+        const key = element.getAttribute('data-translation-key');
+        const value = element.getAttribute('data-translation-value');
+        if (key && value) {
+            translations[key] = value;
+        }
+    });
+}
+
+function getTranslation(key, defaultText) {
+    return translations[key] || defaultText;
 }
 
 function setupEventListeners() {
@@ -326,12 +352,12 @@ function loadGoalForEdit(goalId) {
             const editModal = new bootstrap.Modal(document.getElementById('editGoalModal'));
             editModal.show();
         } else {
-            showNotification('Failed to load goal data', 'danger');
+            showNotification(data.message || getTranslation('failed_to_load_goal_data', 'Failed to load goal data'), 'danger');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('An error occurred while loading goal data', 'danger');
+        showNotification(getTranslation('error_loading_goal_data', 'An error occurred while loading goal data'), 'danger');
     });
 }
 
@@ -385,12 +411,12 @@ function loadGoalProgress(goalId) {
             const progressModal = new bootstrap.Modal(document.getElementById('updateProgressModal'));
             progressModal.show();
         } else {
-            showNotification('Failed to load goal data', 'danger');
+            showNotification(data.message || getTranslation('failed_to_load_goal_data', 'Failed to load goal data'), 'danger');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('An error occurred while loading goal data', 'danger');
+        showNotification(getTranslation('error_loading_goal_data', 'An error occurred while loading goal data'), 'danger');
     });
 }
 
@@ -450,7 +476,7 @@ function submitAddGoal(form) {
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('An error occurred while adding the goal', 'danger');
+        showNotification(getTranslation('error_adding_goal', 'An error occurred while adding the goal'), 'danger');
     });
 }
 
@@ -491,7 +517,7 @@ function submitEditGoal(form) {
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('An error occurred while updating the goal', 'danger');
+        showNotification(getTranslation('error_updating_goal', 'An error occurred while updating the goal'), 'danger');
     });
 }
 
@@ -532,7 +558,7 @@ function submitUpdateProgress(form) {
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('An error occurred while updating the progress', 'danger');
+        showNotification(getTranslation('error_updating_progress', 'An error occurred while updating the progress'), 'danger');
     });
 }
 
@@ -568,7 +594,7 @@ function submitDeleteGoal(form) {
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('An error occurred while deleting the goal', 'danger');
+        showNotification(getTranslation('error_deleting_goal', 'An error occurred while deleting the goal'), 'danger');
     });
 }
 
@@ -600,9 +626,12 @@ function calculateGoalMetrics() {
         monthlyContribution = remainingAmount;
     }
     
+    // Get the translation of "months" from the UI
+    const monthsText = document.getElementById('timeToGoal').getAttribute('data-months-text') || 'months';
+    
     // Update UI
     document.getElementById('monthlyContribution').textContent = '$' + monthlyContribution.toFixed(2);
-    document.getElementById('timeToGoal').textContent = totalMonths + ' months';
+    document.getElementById('timeToGoal').textContent = totalMonths + ' ' + monthsText;
     document.getElementById('goalCalculator').classList.remove('d-none');
 }
 
@@ -634,9 +663,12 @@ function calculateEditGoalMetrics() {
         monthlyContribution = remainingAmount;
     }
     
+    // Get the translation of "months" from the UI
+    const monthsText = document.getElementById('editTimeToGoal').getAttribute('data-months-text') || 'months';
+    
     // Update UI
     document.getElementById('editMonthlyContribution').textContent = '$' + monthlyContribution.toFixed(2);
-    document.getElementById('editTimeToGoal').textContent = totalMonths + ' months';
+    document.getElementById('editTimeToGoal').textContent = totalMonths + ' ' + monthsText;
     document.getElementById('editGoalCalculator').classList.remove('d-none');
 }
 
@@ -667,12 +699,12 @@ function loadRecommendations() {
         if (data.success && data.recommended_goals) {
             displayRecommendations(data.recommended_goals);
         } else {
-            showNotification('Failed to load recommendations', 'danger');
+            showNotification(data.message || getTranslation('failed_to_load_recommendations', 'Failed to load recommendations'), 'danger');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('An error occurred while loading recommendations', 'danger');
+        showNotification(getTranslation('error_loading_recommendations', 'An error occurred while loading recommendations'), 'danger');
     });
 }
 
@@ -682,6 +714,10 @@ function displayRecommendations(recommendations) {
     
     let html = '';
     recommendations.forEach(goal => {
+        // Get translated "Adopt" text
+        const adoptText = document.querySelector('.btn-adopt') ? 
+            document.querySelector('.btn-adopt').textContent.trim() : 'Adopt';
+        
         html += `
             <tr>
                 <td>${escapeHtml(goal.name)}</td>
@@ -700,7 +736,7 @@ function displayRecommendations(recommendations) {
                         data-target="${goal.target_amount}"
                         data-priority="${goal.priority}"
                         data-timeline="${goal.timeline}">
-                        <i class="fas fa-plus"></i> Adopt
+                        <i class="fas fa-plus"></i> ${adoptText}
                     </button>
                 </td>
             </tr>
@@ -748,7 +784,7 @@ function validateDates(startDateInput, targetDateInput) {
     const targetDate = new Date(targetDateInput.value);
     
     if (targetDate <= startDate) {
-        targetDateInput.setCustomValidity('Target date must be after start date');
+        targetDateInput.setCustomValidity(getTranslation('target_date_after_start_date', 'Target date must be after start date'));
     } else {
         targetDateInput.setCustomValidity('');
     }
@@ -837,8 +873,12 @@ function initializeSearch() {
                 if (goalsList) goalsList.style.display = 'none';
                 if (emptyState) {
                     emptyState.style.display = 'block';
-                    emptyState.querySelector('h3').textContent = 'No matching goals found';
-                    emptyState.querySelector('p').textContent = 'Try adjusting your search term';
+                    // Try to get translated "No matching goals" text
+                    const noMatchingGoalsText = getTranslation('no_matching_goals', 'No matching goals found');
+                    const tryAdjustingText = getTranslation('try_adjusting_search', 'Try adjusting your search term');
+                    
+                    emptyState.querySelector('h3').textContent = noMatchingGoalsText;
+                    emptyState.querySelector('p').textContent = tryAdjustingText;
                 }
             } else {
                 if (goalsList) goalsList.style.display = 'block';

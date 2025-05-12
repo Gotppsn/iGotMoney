@@ -42,17 +42,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'add') {
         // Validate inputs
         if (empty($_POST['name'])) {
-            $error = 'Goal name is required.';
+            $error = __('goal_name_required');
         } elseif (!is_numeric($_POST['target_amount']) || floatval($_POST['target_amount']) <= 0) {
-            $error = 'Target amount must be a positive number.';
+            $error = __('target_amount_positive');
         } elseif (!is_numeric($_POST['current_amount']) || floatval($_POST['current_amount']) < 0) {
-            $error = 'Current amount must be a non-negative number.';
+            $error = __('current_amount_valid');
         } elseif (empty($_POST['start_date'])) {
-            $error = 'Start date is required.';
+            $error = __('please_provide_start_date');
         } elseif (empty($_POST['target_date'])) {
-            $error = 'Target date is required.';
+            $error = __('please_provide_target_date');
         } elseif (strtotime($_POST['target_date']) <= strtotime($_POST['start_date'])) {
-            $error = 'Target date must be after start date.';
+            $error = __('target_date_after_start_date');
         } else {
             // Set goal properties
             $goal->user_id = $user_id;
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Create new goal
             if ($goal->create()) {
-                $success = 'Financial goal added successfully!';
+                $success = __('financial_goal_added_success');
                 
                 // Check if this is an AJAX request
                 if (isAjaxRequest()) {
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit();
                 }
             } else {
-                $error = 'Failed to add financial goal.';
+                $error = __('failed_to_add_financial_goal');
                 
                 // Check if this is an AJAX request
                 if (isAjaxRequest()) {
@@ -99,17 +99,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Validate inputs
         if (empty($_POST['name'])) {
-            $error = 'Goal name is required.';
+            $error = __('goal_name_required');
         } elseif (!is_numeric($_POST['target_amount']) || floatval($_POST['target_amount']) <= 0) {
-            $error = 'Target amount must be a positive number.';
+            $error = __('target_amount_positive');
         } elseif (!is_numeric($_POST['current_amount']) || floatval($_POST['current_amount']) < 0) {
-            $error = 'Current amount must be a non-negative number.';
+            $error = __('current_amount_valid');
         } elseif (empty($_POST['start_date'])) {
-            $error = 'Start date is required.';
+            $error = __('please_provide_start_date');
         } elseif (empty($_POST['target_date'])) {
-            $error = 'Target date is required.';
+            $error = __('please_provide_target_date');
         } elseif (strtotime($_POST['target_date']) <= strtotime($_POST['start_date'])) {
-            $error = 'Target date must be after start date.';
+            $error = __('target_date_after_start_date');
         } else {
             // Get goal data
             if ($goal->getById($goal_id, $user_id)) {
@@ -125,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Update goal
                 if ($goal->update()) {
-                    $success = 'Financial goal updated successfully!';
+                    $success = __('financial_goal_updated_success');
                     
                     // Check if this is an AJAX request
                     if (isAjaxRequest()) {
@@ -139,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         exit();
                     }
                 } else {
-                    $error = 'Failed to update financial goal.';
+                    $error = __('failed_to_update_financial_goal');
                     
                     // Check if this is an AJAX request
                     if (isAjaxRequest()) {
@@ -150,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
             } else {
-                $error = 'Financial goal not found.';
+                $error = __('financial_goal_not_found');
                 
                 // Check if this is an AJAX request
                 if (isAjaxRequest()) {
@@ -167,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Delete goal
         if ($goal->delete($goal_id, $user_id)) {
-            $success = 'Financial goal deleted successfully!';
+            $success = __('financial_goal_deleted_success');
             
             // Check if this is an AJAX request
             if (isAjaxRequest()) {
@@ -181,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit();
             }
         } else {
-            $error = 'Failed to delete financial goal.';
+            $error = __('failed_to_delete_financial_goal');
             
             // Check if this is an AJAX request
             if (isAjaxRequest()) {
@@ -198,7 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Validate amount
         if (!is_numeric($amount) || floatval($amount) <= 0) {
-            $error = 'Please enter a valid positive amount.';
+            $error = __('please_enter_valid_amount');
             
             // Check if this is an AJAX request
             if (isAjaxRequest()) {
@@ -211,13 +211,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Update progress
             $amount = floatval($amount);
             if ($goal->updateProgress($goal_id, $user_id, $amount)) {
-                $success = 'Goal progress updated successfully!';
+                $success = __('goal_progress_updated_success');
                 
                 // Get updated goal to check if completed
                 $goal->getById($goal_id, $user_id);
                 
                 if ($goal->status === 'completed') {
-                    $success = 'Congratulations! You\'ve completed your goal!';
+                    $success = __('goal_completed_congrats');
                 }
                 
                 // Check if this is an AJAX request
@@ -237,7 +237,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit();
                 }
             } else {
-                $error = 'Failed to update goal progress.';
+                $error = __('failed_to_update_goal_progress');
                 
                 // Check if this is an AJAX request
                 if (isAjaxRequest()) {
@@ -267,7 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
             }
         } else {
-            $error = 'Failed to generate goal recommendations.';
+            $error = __('failed_to_generate_recommendations');
             
             // Check if this is an AJAX request
             if (isAjaxRequest()) {
@@ -321,7 +321,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_goal') {
     } else {
         echo json_encode([
             'success' => false,
-            'message' => 'Financial goal not found.'
+            'message' => __('financial_goal_not_found')
         ]);
     }
     
