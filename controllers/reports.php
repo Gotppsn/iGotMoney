@@ -3,12 +3,18 @@
  * Reports Controller
  * 
  * Handles financial reporting functionality
+ * Updated with Thai language support
  */
 
 // Check if user is logged in
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header('Location: /login');
     exit();
+}
+
+// Include language system if not already included
+if (!function_exists('__')) {
+    require_once 'includes/language.php';
 }
 
 // Include required models
@@ -28,8 +34,53 @@ $report = new Report();
 $report->user_id = $user_id;
 
 // Get available report types and date ranges
-$report_types = $report->getReportTypes();
-$date_ranges = $report->getDateRanges();
+$report_types = [
+    'income' => __('income'),
+    'expense' => __('expenses'),
+    'budget' => __('budget'),
+    'cash_flow' => __('cash_flow_report'),
+    'investment' => __('investments'),
+    'financial' => __('financial_summary')
+];
+
+// Get date ranges with translated labels
+$date_ranges = [
+    'this_month' => [
+        'label' => __('this_month'),
+        'start' => date('Y-m-01'),
+        'end' => date('Y-m-t')
+    ],
+    'last_month' => [
+        'label' => __('last_month'),
+        'start' => date('Y-m-01', strtotime('last month')),
+        'end' => date('Y-m-t', strtotime('last month'))
+    ],
+    'last_3_months' => [
+        'label' => __('last_3_months'),
+        'start' => date('Y-m-d', strtotime('-3 months')),
+        'end' => date('Y-m-d')
+    ],
+    'last_6_months' => [
+        'label' => __('last_6_months'),
+        'start' => date('Y-m-d', strtotime('-6 months')),
+        'end' => date('Y-m-d')
+    ],
+    'this_year' => [
+        'label' => __('this_year'),
+        'start' => date('Y-01-01'),
+        'end' => date('Y-12-31')
+    ],
+    'last_year' => [
+        'label' => __('last_year'),
+        'start' => date('Y-01-01', strtotime('-1 year')),
+        'end' => date('Y-12-31', strtotime('-1 year'))
+    ],
+    'custom' => [
+        'label' => __('custom_range'),
+        'start' => '',
+        'end' => ''
+    ]
+];
 
 // Set default report type and date range
 $selected_report_type = $_GET['report_type'] ?? 'financial';
@@ -204,7 +255,7 @@ switch ($selected_report_type) {
         // Prepare chart data for income vs expense
         if ($report_data && isset($report_data['summary'])) {
             $chart_data['income_vs_expense'] = [
-                'labels' => ['Income', 'Expenses'],
+                'labels' => [__('income'), __('expenses')],
                 'data' => [
                     $report_data['summary']['total_income'],
                     $report_data['summary']['total_expenses']
@@ -251,7 +302,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
     switch ($selected_report_type) {
         case 'income':
             // Write headers
-            fputcsv($output, ['Income Source', 'Amount', 'Frequency', 'Transactions', 'Total Amount']);
+            fputcsv($output, [__('income_source'), __('amount'), __('frequency'), __('transactions'), __('total_amount')]);
             
             // Write data
             if (isset($report_data['income_summary']) && $report_data['income_summary']->num_rows > 0) {
@@ -270,7 +321,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
         
         case 'expense':
             // Write headers
-            fputcsv($output, ['Expense Category', 'Transactions', 'Total Amount']);
+            fputcsv($output, [__('expense_category'), __('transactions'), __('total_amount')]);
             
             // Write data
             if (isset($report_data['expense_by_category']) && $report_data['expense_by_category']->num_rows > 0) {
@@ -287,7 +338,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
         
         case 'budget':
             // Write headers
-            fputcsv($output, ['Category', 'Budget Amount', 'Actual Amount', 'Difference', 'Percentage Used']);
+            fputcsv($output, [__('category'), __('budget'), __('actual'), __('variance'), __('used')]);
             
             // Write data
             if (isset($report_data['budget_vs_actual']) && $report_data['budget_vs_actual']->num_rows > 0) {
@@ -309,7 +360,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
         
         case 'cash_flow':
             // Write headers
-            fputcsv($output, ['Month', 'Income', 'Expenses', 'Net Cash Flow']);
+            fputcsv($output, [__('month'), __('income'), __('expenses'), __('net_cash_flow')]);
             
             // Write data
             if (isset($report_data['monthly_cash_flow']) && !empty($report_data['monthly_cash_flow'])) {
@@ -329,17 +380,17 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
         case 'financial':
         default:
             // Write summary
-            fputcsv($output, ['Financial Summary']);
-            fputcsv($output, ['Period', date('M j, Y', strtotime($start_date)) . ' to ' . date('M j, Y', strtotime($end_date))]);
-            fputcsv($output, ['Total Income', $report_data['summary']['total_income']]);
-            fputcsv($output, ['Total Expenses', $report_data['summary']['total_expenses']]);
-            fputcsv($output, ['Net Savings', $report_data['summary']['net_savings']]);
-            fputcsv($output, ['Saving Rate', number_format($report_data['summary']['saving_rate'], 2) . '%']);
+            fputcsv($output, [__('financial_summary')]);
+            fputcsv($output, [__('period'), date('M j, Y', strtotime($start_date)) . ' ' . __('to') . ' ' . date('M j, Y', strtotime($end_date))]);
+            fputcsv($output, [__('total_income'), $report_data['summary']['total_income']]);
+            fputcsv($output, [__('total_expenses'), $report_data['summary']['total_expenses']]);
+            fputcsv($output, [__('net_savings'), $report_data['summary']['net_savings']]);
+            fputcsv($output, [__('saving_rate'), number_format($report_data['summary']['saving_rate'], 2) . '%']);
             fputcsv($output, []);
             
             // Write monthly cash flow
-            fputcsv($output, ['Monthly Cash Flow']);
-            fputcsv($output, ['Month', 'Income', 'Expenses', 'Net']);
+            fputcsv($output, [__('monthly_cash_flow_details')]);
+            fputcsv($output, [__('month'), __('income'), __('expenses'), __('net')]);
             
             if (isset($report_data['cash_flow_data']['monthly_cash_flow']) && !empty($report_data['cash_flow_data']['monthly_cash_flow'])) {
                 foreach ($report_data['cash_flow_data']['monthly_cash_flow'] as $row) {
@@ -362,4 +413,3 @@ if (isset($_GET['export']) && $_GET['export'] == 'csv') {
 
 // Include view
 require_once 'views/reports.php';
-?>

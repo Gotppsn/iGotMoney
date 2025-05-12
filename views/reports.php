@@ -1,6 +1,6 @@
 <?php
 // Set page title and current page for menu highlighting
-$page_title = 'Financial Reports - iGotMoney';
+$page_title = __('financial_reports') . ' - ' . __('app_name');
 $current_page = 'reports';
 
 // Additional CSS and JS
@@ -16,15 +16,15 @@ require_once 'includes/header.php';
     <div class="reports-header">
         <div class="page-header-content">
             <div class="page-title-group">
-                <h1 class="page-title">Financial Reports</h1>
-                <p class="page-subtitle">Comprehensive insights into your financial performance</p>
+                <h1 class="page-title"><?php echo __('financial_reports'); ?></h1>
+                <p class="page-subtitle"><?php echo __('comprehensive_insights'); ?></p>
             </div>
             <div class="btn-toolbar">
                 <a href="<?php echo BASE_PATH; ?>/reports?report_type=<?php echo $selected_report_type; ?>&date_range=<?php echo $selected_date_range; ?>&start_date=<?php echo $start_date; ?>&end_date=<?php echo $end_date; ?>&export=csv" class="btn">
-                    <i class="fas fa-download"></i> Export CSV
+                    <i class="fas fa-download"></i> <?php echo __('export_csv'); ?>
                 </a>
                 <button type="button" class="btn" onclick="window.print()">
-                    <i class="fas fa-print"></i> Print Report
+                    <i class="fas fa-print"></i> <?php echo __('print_report'); ?>
                 </button>
             </div>
         </div>
@@ -33,39 +33,39 @@ require_once 'includes/header.php';
     <!-- Report Selection Form -->
     <div class="card report-selection-card">
         <div class="card-body">
-            <h3 class="card-title">Report Parameters</h3>
+            <h3 class="card-title"><?php echo __('report_parameters'); ?></h3>
             <form id="reportForm" method="get" action="<?php echo BASE_PATH; ?>/reports" class="report-form">
                 <div class="form-group">
-                    <label for="report_type">Report Type</label>
+                    <label for="report_type"><?php echo __('report_type'); ?></label>
                     <select class="form-select" id="report_type" name="report_type">
                         <?php foreach ($report_types as $type => $label): ?>
                             <option value="<?php echo $type; ?>" <?php echo ($selected_report_type == $type) ? 'selected' : ''; ?>>
-                                <?php echo $label; ?>
+                                <?php echo __($type . '_report'); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="date_range">Date Range</label>
+                    <label for="date_range"><?php echo __('date_range'); ?></label>
                     <select class="form-select" id="date_range" name="date_range">
                         <?php foreach ($date_ranges as $range => $data): ?>
                             <option value="<?php echo $range; ?>" <?php echo ($selected_date_range == $range) ? 'selected' : ''; ?>>
-                                <?php echo $data['label']; ?>
+                                <?php echo __($range); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="form-group" id="start_date_container" style="<?php echo ($selected_date_range == 'custom') ? '' : 'display: none;'; ?>">
-                    <label for="start_date">Start Date</label>
+                    <label for="start_date"><?php echo __('start_date'); ?></label>
                     <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo $start_date; ?>">
                 </div>
                 <div class="form-group" id="end_date_container" style="<?php echo ($selected_date_range == 'custom') ? '' : 'display: none;'; ?>">
-                    <label for="end_date">End Date</label>
+                    <label for="end_date"><?php echo __('end_date'); ?></label>
                     <input type="date" class="form-control" id="end_date" name="end_date" value="<?php echo $end_date; ?>">
                 </div>
                 <div class="form-group">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-chart-bar"></i> Generate Report
+                        <i class="fas fa-chart-bar"></i> <?php echo __('generate_report'); ?>
                     </button>
                 </div>
             </form>
@@ -78,11 +78,11 @@ require_once 'includes/header.php';
             <!-- Income Report -->
             <div class="card report-content-card income-report">
                 <div class="card-header">
-                    <h6><i class="fas fa-wallet"></i> Income Summary</h6>
+                    <h6><i class="fas fa-wallet"></i> <?php echo __('income_summary'); ?></h6>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
-                        <i class="fas fa-calendar-alt"></i> <strong>Period:</strong> <?php echo date('M j, Y', strtotime($start_date)); ?> - <?php echo date('M j, Y', strtotime($end_date)); ?>
+                        <i class="fas fa-calendar-alt"></i> <strong><?php echo __('period'); ?>:</strong> <?php echo date('M j, Y', strtotime($start_date)); ?> - <?php echo date('M j, Y', strtotime($end_date)); ?>
                     </div>
                     
                     <?php if (isset($report_data['income_summary']) && $report_data['income_summary']->num_rows > 0): ?>
@@ -90,11 +90,11 @@ require_once 'includes/header.php';
                             <table class="table report-table">
                                 <thead>
                                     <tr>
-                                        <th>Income Source</th>
-                                        <th>Amount</th>
-                                        <th>Frequency</th>
-                                        <th>Transactions</th>
-                                        <th>Total Amount</th>
+                                        <th><?php echo __('income_source'); ?></th>
+                                        <th><?php echo __('amount'); ?></th>
+                                        <th><?php echo __('frequency'); ?></th>
+                                        <th><?php echo __('transactions'); ?></th>
+                                        <th><?php echo __('total_amount'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -112,7 +112,7 @@ require_once 'includes/header.php';
                                         </tr>
                                     <?php endwhile; ?>
                                     <tr class="table-primary">
-                                        <td colspan="4"><strong>Total</strong></td>
+                                        <td colspan="4"><strong><?php echo __('total'); ?></strong></td>
                                         <td><strong>$<?php echo number_format($total_amount, 2); ?></strong></td>
                                     </tr>
                                 </tbody>
@@ -120,7 +120,7 @@ require_once 'includes/header.php';
                         </div>
                         
                         <?php if (isset($chart_data['income_trend'])): ?>
-                            <h6 class="mb-3"><i class="fas fa-chart-line"></i> Income Trend</h6>
+                            <h6 class="mb-3"><i class="fas fa-chart-line"></i> <?php echo __('income_trend'); ?></h6>
                             <div class="report-chart-container">
                                 <canvas id="incomeTrendChart"></canvas>
                             </div>
@@ -128,8 +128,8 @@ require_once 'includes/header.php';
                     <?php else: ?>
                         <div class="no-data-message">
                             <i class="fas fa-chart-bar"></i>
-                            <h4>No Data Available</h4>
-                            <p>No income data found for the selected period.</p>
+                            <h4><?php echo __('no_data_available'); ?></h4>
+                            <p><?php echo __('no_income_data'); ?></p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -139,11 +139,11 @@ require_once 'includes/header.php';
             <!-- Expense Report -->
             <div class="card report-content-card expense-report">
                 <div class="card-header">
-                    <h6><i class="fas fa-credit-card"></i> Expense Summary</h6>
+                    <h6><i class="fas fa-credit-card"></i> <?php echo __('expense_summary'); ?></h6>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
-                        <i class="fas fa-calendar-alt"></i> <strong>Period:</strong> <?php echo date('M j, Y', strtotime($start_date)); ?> - <?php echo date('M j, Y', strtotime($end_date)); ?>
+                        <i class="fas fa-calendar-alt"></i> <strong><?php echo __('period'); ?>:</strong> <?php echo date('M j, Y', strtotime($start_date)); ?> - <?php echo date('M j, Y', strtotime($end_date)); ?>
                     </div>
                     
                     <?php if (isset($report_data['expense_by_category']) && $report_data['expense_by_category']->num_rows > 0): ?>
@@ -153,10 +153,10 @@ require_once 'includes/header.php';
                                     <table class="table report-table">
                                         <thead>
                                             <tr>
-                                                <th>Expense Category</th>
-                                                <th>Transactions</th>
-                                                <th>Total Amount</th>
-                                                <th>Percentage</th>
+                                                <th><?php echo __('expense_category'); ?></th>
+                                                <th><?php echo __('transactions'); ?></th>
+                                                <th><?php echo __('total_amount'); ?></th>
+                                                <th><?php echo __('percentage'); ?></th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -183,7 +183,7 @@ require_once 'includes/header.php';
                                                 </tr>
                                             <?php endwhile; ?>
                                             <tr class="table-primary">
-                                                <td colspan="2"><strong>Total</strong></td>
+                                                <td colspan="2"><strong><?php echo __('total'); ?></strong></td>
                                                 <td><strong>$<?php echo number_format($total_amount, 2); ?></strong></td>
                                                 <td><strong>100%</strong></td>
                                             </tr>
@@ -202,7 +202,7 @@ require_once 'includes/header.php';
                         </div>
                         
                         <?php if (isset($chart_data['expense_trend'])): ?>
-                            <h6 class="mb-3"><i class="fas fa-chart-line"></i> Expense Trend</h6>
+                            <h6 class="mb-3"><i class="fas fa-chart-line"></i> <?php echo __('expense_trend'); ?></h6>
                             <div class="report-chart-container">
                                 <canvas id="expenseTrendChart"></canvas>
                             </div>
@@ -210,8 +210,8 @@ require_once 'includes/header.php';
                     <?php else: ?>
                         <div class="no-data-message">
                             <i class="fas fa-chart-bar"></i>
-                            <h4>No Data Available</h4>
-                            <p>No expense data found for the selected period.</p>
+                            <h4><?php echo __('no_data_available'); ?></h4>
+                            <p><?php echo __('no_expense_data'); ?></p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -221,11 +221,11 @@ require_once 'includes/header.php';
             <!-- Budget Report -->
             <div class="card report-content-card budget-report">
                 <div class="card-header">
-                    <h6><i class="fas fa-chart-pie"></i> Budget Performance Report</h6>
+                    <h6><i class="fas fa-chart-pie"></i> <?php echo __('budget_performance_report'); ?></h6>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
-                        <i class="fas fa-calendar-alt"></i> <strong>Period:</strong> <?php echo date('M j, Y', strtotime($start_date)); ?> - <?php echo date('M j, Y', strtotime($end_date)); ?>
+                        <i class="fas fa-calendar-alt"></i> <strong><?php echo __('period'); ?>:</strong> <?php echo date('M j, Y', strtotime($start_date)); ?> - <?php echo date('M j, Y', strtotime($end_date)); ?>
                     </div>
                     
                     <?php 
@@ -245,17 +245,17 @@ require_once 'includes/header.php';
                     
                     <!-- Overall Budget Status Card -->
                     <div class="summary-card">
-                        <h5><i class="fas fa-chart-line"></i> Overall Budget Status</h5>
+                        <h5><i class="fas fa-chart-line"></i> <?php echo __('overall_budget_status'); ?></h5>
                         <div class="summary-item">
-                            <span class="summary-label">Total Budget:</span>
+                            <span class="summary-label"><?php echo __('total_budget'); ?>:</span>
                             <span class="summary-value">$<?php echo number_format($total_budget, 2); ?></span>
                         </div>
                         <div class="summary-item">
-                            <span class="summary-label">Actual Spent:</span>
+                            <span class="summary-label"><?php echo __('actual_spent'); ?>:</span>
                             <span class="summary-value">$<?php echo number_format($total_actual, 2); ?></span>
                         </div>
                         <div class="summary-item">
-                            <span class="summary-label">Budget Used:</span>
+                            <span class="summary-label"><?php echo __('budget_used'); ?>:</span>
                             <span class="summary-value <?php echo $budget_used_percentage > 100 ? 'negative' : ($budget_used_percentage > 80 ? 'warning' : 'positive'); ?>">
                                 <?php echo number_format($budget_used_percentage, 1); ?>%
                             </span>
@@ -269,11 +269,11 @@ require_once 'includes/header.php';
                                     <table class="table report-table">
                                         <thead>
                                             <tr>
-                                                <th>Category</th>
-                                                <th>Budget</th>
-                                                <th>Actual</th>
-                                                <th>Variance</th>
-                                                <th>% Used</th>
+                                                <th><?php echo __('category'); ?></th>
+                                                <th><?php echo __('budget'); ?></th>
+                                                <th><?php echo __('actual'); ?></th>
+                                                <th><?php echo __('variance'); ?></th>
+                                                <th><?php echo __('used'); ?></th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -303,7 +303,7 @@ require_once 'includes/header.php';
                                                 </tr>
                                             <?php endwhile; ?>
                                             <tr class="table-primary">
-                                                <td><strong>Total</strong></td>
+                                                <td><strong><?php echo __('total'); ?></strong></td>
                                                 <td><strong>$<?php echo number_format($total_budget, 2); ?></strong></td>
                                                 <td><strong>$<?php echo number_format($total_actual, 2); ?></strong></td>
                                                 <td><strong>$<?php echo number_format($total_budget - $total_actual, 2); ?></strong></td>
@@ -325,8 +325,8 @@ require_once 'includes/header.php';
                     <?php else: ?>
                         <div class="no-data-message">
                             <i class="fas fa-chart-bar"></i>
-                            <h4>No Data Available</h4>
-                            <p>No budget data found for the selected period.</p>
+                            <h4><?php echo __('no_data_available'); ?></h4>
+                            <p><?php echo __('no_budget_data'); ?></p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -336,11 +336,11 @@ require_once 'includes/header.php';
             <!-- Cash Flow Report -->
             <div class="card report-content-card cash-flow-report">
                 <div class="card-header">
-                    <h6><i class="fas fa-chart-line"></i> Cash Flow Summary</h6>
+                    <h6><i class="fas fa-chart-line"></i> <?php echo __('cash_flow_summary'); ?></h6>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
-                        <i class="fas fa-calendar-alt"></i> <strong>Period:</strong> <?php echo date('M j, Y', strtotime($start_date)); ?> - <?php echo date('M j, Y', strtotime($end_date)); ?>
+                        <i class="fas fa-calendar-alt"></i> <strong><?php echo __('period'); ?>:</strong> <?php echo date('M j, Y', strtotime($start_date)); ?> - <?php echo date('M j, Y', strtotime($end_date)); ?>
                     </div>
                     
                     <?php if (isset($report_data['monthly_cash_flow']) && !empty($report_data['monthly_cash_flow'])): ?>
@@ -348,10 +348,10 @@ require_once 'includes/header.php';
                             <table class="table report-table">
                                 <thead>
                                     <tr>
-                                        <th>Month</th>
-                                        <th>Income</th>
-                                        <th>Expenses</th>
-                                        <th>Net Cash Flow</th>
+                                        <th><?php echo __('month'); ?></th>
+                                        <th><?php echo __('income'); ?></th>
+                                        <th><?php echo __('expenses'); ?></th>
+                                        <th><?php echo __('net_cash_flow'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -381,7 +381,7 @@ require_once 'includes/header.php';
                                         </tr>
                                     <?php endforeach; ?>
                                     <tr class="table-primary">
-                                        <td><strong>Total</strong></td>
+                                        <td><strong><?php echo __('total'); ?></strong></td>
                                         <td><strong>$<?php echo number_format($total_income, 2); ?></strong></td>
                                         <td><strong>$<?php echo number_format($total_expenses, 2); ?></strong></td>
                                         <td><strong>$<?php echo number_format($total_net, 2); ?></strong></td>
@@ -398,8 +398,8 @@ require_once 'includes/header.php';
                     <?php else: ?>
                         <div class="no-data-message">
                             <i class="fas fa-chart-bar"></i>
-                            <h4>No Data Available</h4>
-                            <p>No cash flow data found for the selected period.</p>
+                            <h4><?php echo __('no_data_available'); ?></h4>
+                            <p><?php echo __('no_cash_flow_data'); ?></p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -409,7 +409,7 @@ require_once 'includes/header.php';
             <!-- Investment Report -->
             <div class="card report-content-card investment-report">
                 <div class="card-header">
-                    <h6><i class="fas fa-chart-line"></i> Investment Summary</h6>
+                    <h6><i class="fas fa-chart-line"></i> <?php echo __('investment_summary'); ?></h6>
                 </div>
                 <div class="card-body">
                     <?php if (isset($report_data['investment_summary']) && !empty($report_data['investment_summary'])): ?>
@@ -417,11 +417,11 @@ require_once 'includes/header.php';
                             <div class="col-lg-6">
                                 <div class="summary-card">
                                     <div class="summary-item">
-                                        <span class="summary-label">Total Invested:</span> 
+                                        <span class="summary-label"><?php echo __('total_invested'); ?>:</span> 
                                         <span class="summary-value">$<?php echo number_format($report_data['investment_summary']['total_invested'], 2); ?></span>
                                     </div>
                                     <div class="summary-item">
-                                        <span class="summary-label">Current Value:</span> 
+                                        <span class="summary-label"><?php echo __('current_value'); ?>:</span> 
                                         <span class="summary-value">$<?php echo number_format($report_data['investment_summary']['current_value'], 2); ?></span>
                                     </div>
                                     <div class="summary-item">
@@ -429,7 +429,7 @@ require_once 'includes/header.php';
                                         $gain_loss = $report_data['investment_summary']['total_gain_loss'];
                                         $gain_loss_percent = $report_data['investment_summary']['percent_gain_loss'];
                                         ?>
-                                        <span class="summary-label">Total Gain/Loss:</span> 
+                                        <span class="summary-label"><?php echo __('total_gain_loss'); ?>:</span> 
                                         <span class="summary-value <?php echo $gain_loss >= 0 ? 'positive' : 'negative'; ?>">
                                             <?php echo $gain_loss >= 0 ? '+' : '-'; ?>$<?php echo number_format(abs($gain_loss), 2); ?>
                                             (<?php echo number_format(abs($gain_loss_percent), 2); ?>%)
@@ -447,16 +447,16 @@ require_once 'includes/header.php';
                         </div>
                         
                         <?php if (isset($report_data['investment_summary']['by_type'])): ?>
-                            <h6 class="mb-3"><i class="fas fa-table"></i> Investment Breakdown by Type</h6>
+                            <h6 class="mb-3"><i class="fas fa-table"></i> <?php echo __('investment_breakdown_by_type'); ?></h6>
                             <div class="table-responsive">
                                 <table class="table report-table">
                                     <thead>
                                         <tr>
-                                            <th>Investment Type</th>
-                                            <th>Invested Amount</th>
-                                            <th>Current Value</th>
-                                            <th>Gain/Loss</th>
-                                            <th>Allocation</th>
+                                            <th><?php echo __('investment_type'); ?></th>
+                                            <th><?php echo __('invested_amount'); ?></th>
+                                            <th><?php echo __('current_value'); ?></th>
+                                            <th><?php echo __('gain_loss'); ?></th>
+                                            <th><?php echo __('allocation'); ?></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -485,8 +485,8 @@ require_once 'includes/header.php';
                     <?php else: ?>
                         <div class="no-data-message">
                             <i class="fas fa-chart-bar"></i>
-                            <h4>No Data Available</h4>
-                            <p>No investment data found.</p>
+                            <h4><?php echo __('no_data_available'); ?></h4>
+                            <p><?php echo __('no_investment_data'); ?></p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -496,11 +496,11 @@ require_once 'includes/header.php';
             <!-- Comprehensive Financial Report -->
             <div class="card report-content-card financial-report">
                 <div class="card-header">
-                    <h6><i class="fas fa-chart-bar"></i> Financial Summary</h6>
+                    <h6><i class="fas fa-chart-bar"></i> <?php echo __('financial_summary'); ?></h6>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
-                        <i class="fas fa-calendar-alt"></i> <strong>Period:</strong> <?php echo date('M j, Y', strtotime($start_date)); ?> - <?php echo date('M j, Y', strtotime($end_date)); ?>
+                        <i class="fas fa-calendar-alt"></i> <strong><?php echo __('period'); ?>:</strong> <?php echo date('M j, Y', strtotime($start_date)); ?> - <?php echo date('M j, Y', strtotime($end_date)); ?>
                     </div>
                     
                     <?php if (isset($report_data['summary'])): ?>
@@ -508,18 +508,18 @@ require_once 'includes/header.php';
                             <div class="col-lg-6">
                                 <div class="summary-card">
                                     <div class="summary-item">
-                                        <span class="summary-label">Total Income:</span> 
+                                        <span class="summary-label"><?php echo __('total_income'); ?>:</span> 
                                         <span class="summary-value">$<?php echo number_format($report_data['summary']['total_income'], 2); ?></span>
                                     </div>
                                     <div class="summary-item">
-                                        <span class="summary-label">Total Expenses:</span> 
+                                        <span class="summary-label"><?php echo __('total_expenses'); ?>:</span> 
                                         <span class="summary-value">$<?php echo number_format($report_data['summary']['total_expenses'], 2); ?></span>
                                     </div>
                                     <div class="summary-item">
                                         <?php 
                                         $net_savings = $report_data['summary']['net_savings'];
                                         ?>
-                                        <span class="summary-label">Net Savings:</span> 
+                                        <span class="summary-label"><?php echo __('net_savings'); ?>:</span> 
                                         <span class="summary-value <?php echo $net_savings >= 0 ? 'positive' : 'negative'; ?>">
                                             <?php echo $net_savings >= 0 ? '+' : '-'; ?>$<?php echo number_format(abs($net_savings), 2); ?>
                                         </span>
@@ -528,7 +528,7 @@ require_once 'includes/header.php';
                                         <?php 
                                         $saving_rate = $report_data['summary']['saving_rate'];
                                         ?>
-                                        <span class="summary-label">Saving Rate:</span> 
+                                        <span class="summary-label"><?php echo __('saving_rate'); ?>:</span> 
                                         <span class="summary-value <?php echo $saving_rate >= 10 ? 'positive' : ($saving_rate > 0 ? 'warning' : 'negative'); ?>">
                                             <?php echo number_format($saving_rate, 2); ?>%
                                         </span>
@@ -545,22 +545,22 @@ require_once 'includes/header.php';
                         </div>
                         
                         <?php if (isset($chart_data['monthly_trends'])): ?>
-                            <h6 class="mb-3"><i class="fas fa-chart-line"></i> Monthly Trends</h6>
+                            <h6 class="mb-3"><i class="fas fa-chart-line"></i> <?php echo __('monthly_trends'); ?></h6>
                             <div class="report-chart-container">
                                 <canvas id="monthlyTrendsChart"></canvas>
                             </div>
                         <?php endif; ?>
                         
                         <?php if (isset($report_data['cash_flow_data']['monthly_cash_flow']) && !empty($report_data['cash_flow_data']['monthly_cash_flow'])): ?>
-                            <h6 class="mt-4 mb-3"><i class="fas fa-table"></i> Monthly Cash Flow Details</h6>
+                            <h6 class="mt-4 mb-3"><i class="fas fa-table"></i> <?php echo __('monthly_cash_flow_details'); ?></h6>
                             <div class="table-responsive">
                                 <table class="table report-table">
                                     <thead>
                                         <tr>
-                                            <th>Month</th>
-                                            <th>Income</th>
-                                            <th>Expenses</th>
-                                            <th>Net Cash Flow</th>
+                                            <th><?php echo __('month'); ?></th>
+                                            <th><?php echo __('income'); ?></th>
+                                            <th><?php echo __('expenses'); ?></th>
+                                            <th><?php echo __('net_cash_flow'); ?></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -588,8 +588,8 @@ require_once 'includes/header.php';
                     <?php else: ?>
                         <div class="no-data-message">
                             <i class="fas fa-chart-bar"></i>
-                            <h4>No Data Available</h4>
-                            <p>No financial data found for the selected period.</p>
+                            <h4><?php echo __('no_data_available'); ?></h4>
+                            <p><?php echo __('no_financial_data'); ?></p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -630,7 +630,7 @@ if (isset($chart_data['income_trend']) && !empty($chart_data['income_trend']['la
             data: {
                 labels: " . json_encode($chart_data['income_trend']['labels']) . ",
                 datasets: [{
-                    label: 'Monthly Income',
+                    label: '" . __('monthly_income') . "',
                     data: " . json_encode($chart_data['income_trend']['data']) . ",
                     backgroundColor: 'rgba(67, 97, 238, 0.2)',
                     borderColor: 'rgba(67, 97, 238, 1)',
@@ -686,7 +686,7 @@ if (isset($chart_data['income_trend']) && !empty($chart_data['income_trend']['la
                         },
                         callbacks: {
                             label: function(context) {
-                                return 'Income: $' + context.raw.toLocaleString();
+                                return '" . __('income') . ": $' + context.raw.toLocaleString();
                             }
                         }
                     },
@@ -806,7 +806,7 @@ if (isset($chart_data['expense_trend']) && !empty($chart_data['expense_trend']['
             data: {
                 labels: " . json_encode($chart_data['expense_trend']['labels']) . ",
                 datasets: [{
-                    label: 'Monthly Expenses',
+                    label: '" . __('monthly_expenses') . "',
                     data: " . json_encode($chart_data['expense_trend']['data']) . ",
                     backgroundColor: 'rgba(231, 76, 60, 0.2)',
                     borderColor: 'rgba(231, 76, 60, 1)',
@@ -862,7 +862,7 @@ if (isset($chart_data['expense_trend']) && !empty($chart_data['expense_trend']['
                         },
                         callbacks: {
                             label: function(context) {
-                                return 'Expenses: $' + context.raw.toLocaleString();
+                                return '" . __('expenses') . ": $' + context.raw.toLocaleString();
                             }
                         }
                     },
@@ -896,7 +896,7 @@ if (isset($chart_data['budget_vs_actual']) && !empty($chart_data['budget_vs_actu
                 labels: " . json_encode($chart_data['budget_vs_actual']['labels']) . ",
                 datasets: [
                     {
-                        label: 'Budget',
+                        label: '" . __('budget') . "',
                         data: " . json_encode($chart_data['budget_vs_actual']['budget_data']) . ",
                         backgroundColor: 'rgba(67, 97, 238, 0.7)',
                         borderColor: 'rgba(67, 97, 238, 1)',
@@ -904,7 +904,7 @@ if (isset($chart_data['budget_vs_actual']) && !empty($chart_data['budget_vs_actu
                         borderRadius: 4
                     },
                     {
-                        label: 'Actual',
+                        label: '" . __('actual') . "',
                         data: " . json_encode($chart_data['budget_vs_actual']['actual_data']) . ",
                         backgroundColor: 'rgba(231, 76, 60, 0.7)',
                         borderColor: 'rgba(231, 76, 60, 1)',
@@ -990,7 +990,7 @@ if (isset($chart_data['monthly_cash_flow']) && !empty($chart_data['monthly_cash_
                 labels: " . json_encode($chart_data['monthly_cash_flow']['labels']) . ",
                 datasets: [
                     {
-                        label: 'Income',
+                        label: '" . __('income') . "',
                         data: " . json_encode($chart_data['monthly_cash_flow']['income_data']) . ",
                         backgroundColor: 'rgba(46, 204, 113, 0.7)',
                         borderColor: 'rgba(46, 204, 113, 1)',
@@ -998,7 +998,7 @@ if (isset($chart_data['monthly_cash_flow']) && !empty($chart_data['monthly_cash_
                         borderRadius: 4
                     },
                     {
-                        label: 'Expenses',
+                        label: '" . __('expenses') . "',
                         data: " . json_encode($chart_data['monthly_cash_flow']['expense_data']) . ",
                         backgroundColor: 'rgba(231, 76, 60, 0.7)',
                         borderColor: 'rgba(231, 76, 60, 1)',
@@ -1006,7 +1006,7 @@ if (isset($chart_data['monthly_cash_flow']) && !empty($chart_data['monthly_cash_
                         borderRadius: 4
                     },
                     {
-                        label: 'Net Cash Flow',
+                        label: '" . __('net_cash_flow') . "',
                         data: " . json_encode($chart_data['monthly_cash_flow']['net_data']) . ",
                         type: 'line',
                         backgroundColor: 'rgba(67, 97, 238, 0.2)',
@@ -1256,7 +1256,7 @@ if (isset($chart_data['monthly_trends']) && !empty($chart_data['monthly_trends']
                 labels: " . json_encode($chart_data['monthly_trends']['labels']) . ",
                 datasets: [
                     {
-                        label: 'Income',
+                        label: '" . __('income') . "',
                         data: " . json_encode($chart_data['monthly_trends']['income_data']) . ",
                         backgroundColor: 'rgba(46, 204, 113, 0.2)',
                         borderColor: 'rgba(46, 204, 113, 1)',
@@ -1270,7 +1270,7 @@ if (isset($chart_data['monthly_trends']) && !empty($chart_data['monthly_trends']
                         pointHoverRadius: 6
                     },
                     {
-                        label: 'Expenses',
+                        label: '" . __('expenses') . "',
                         data: " . json_encode($chart_data['monthly_trends']['expense_data']) . ",
                         backgroundColor: 'rgba(231, 76, 60, 0.2)',
                         borderColor: 'rgba(231, 76, 60, 1)',
@@ -1284,7 +1284,7 @@ if (isset($chart_data['monthly_trends']) && !empty($chart_data['monthly_trends']
                         pointHoverRadius: 6
                     },
                     {
-                        label: 'Net',
+                        label: '" . __('net') . "',
                         data: " . json_encode($chart_data['monthly_trends']['net_data']) . ",
                         backgroundColor: 'rgba(67, 97, 238, 0.2)',
                         borderColor: 'rgba(67, 97, 238, 1)',
@@ -1378,4 +1378,3 @@ $page_scripts .= "
 // Include footer
 require_once 'includes/footer.php';
 ?>
-</div> <!-- End of reports-page -->
