@@ -1,0 +1,95 @@
+/* 
+ * iGotMoney - Font Settings
+ * Handles proper font loading for multilingual support
+ */
+
+/* Import Noto Sans Thai from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap');
+
+/* Import Inter for Latin text */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Base font settings */
+:root {
+  --font-primary: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  --font-thai: 'Noto Sans Thai', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  --line-height-normal: 1.5;
+  --line-height-thai: 1.7; /* Thai script needs more line height */
+  --letter-spacing-normal: 0;
+  --letter-spacing-thai: 0.01em;
+}
+
+/* Base typography */
+body {
+  font-family: var(--font-primary);
+  line-height: var(--line-height-normal);
+  letter-spacing: var(--letter-spacing-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Language-specific typography */
+html[lang="th"] body {
+  font-family: var(--font-thai);
+  line-height: var(--line-height-thai);
+  letter-spacing: var(--letter-spacing-thai);
+}
+
+/* Font weight mappings for Thai fonts */
+html[lang="th"] .font-normal {
+  font-weight: 400;
+}
+
+html[lang="th"] .font-medium {
+  font-weight: 500;
+}
+
+html[lang="th"] .font-semibold,
+html[lang="th"] .font-bold {
+  font-weight: 700;
+}
+
+/* Prevent text from overflowing in Thai */
+html[lang="th"] p, 
+html[lang="th"] h1, 
+html[lang="th"] h2, 
+html[lang="th"] h3, 
+html[lang="th"] h4, 
+html[lang="th"] h5, 
+html[lang="th"] h6,
+html[lang="th"] .nav-link,
+html[lang="th"] .btn,
+html[lang="th"] .card-title,
+html[lang="th"] .dropdown-item {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* Additional padding for Thai buttons and navigation */
+html[lang="th"] .btn,
+html[lang="th"] .nav-link {
+  padding-left: calc(var(--bs-btn-padding-x) * 1.1);
+  padding-right: calc(var(--bs-btn-padding-x) * 1.1);
+}
+
+/* Preserve spacing and alignment for Thai content */
+html[lang="th"] .form-label,
+html[lang="th"] .page-title,
+html[lang="th"] .chart-title {
+  margin-bottom: 0.5rem;
+}
+
+/* Optimize table display for Thai */
+html[lang="th"] table {
+  font-size: 0.95em; /* Slightly smaller to accommodate longer Thai words */
+}
+
+/* Optimization for dashboard cards in Thai */
+html[lang="th"] .card-value {
+  font-family: var(--font-primary); /* Use primary font for numbers */
+}
+
+html[lang="th"] .card-label,
+html[lang="th"] .card-trend {
+  font-family: var(--font-thai); /* Use Thai font for labels */
+}
