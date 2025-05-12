@@ -11,9 +11,25 @@ $user_language = 'en';
 if (isset($_SESSION['user_id'])) {
     require_once 'models/UserSettings.php';
     $userSettings = new UserSettings();
-    if ($userSettings->getSettings($_SESSION['user_id'])) {
-        $user_language = $userSettings->language;
+    try {
+        if ($userSettings->getSettings($_SESSION['user_id'])) {
+            $user_language = $userSettings->language;
+        }
+    } catch (Exception $e) {
+        error_log("Error getting user language settings: " . $e->getMessage());
+        // Default to session language if available
+        if (isset($_SESSION['temp_lang'])) {
+            $user_language = $_SESSION['temp_lang'];
+        }
     }
+} else if (isset($_SESSION['temp_lang'])) {
+    // For non-logged-in users, use session temporary language
+    $user_language = $_SESSION['temp_lang'];
+}
+
+// Ensure language is valid
+if (!in_array($user_language, ['en', 'th'])) {
+    $user_language = 'en';
 }
 
 $language = Language::getInstance($user_language);

@@ -48,10 +48,17 @@
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
                                 <?php foreach ($language->getSupportedLanguages() as $code => $name): ?>
                                 <li>
-                                    <a class="dropdown-item <?php echo $language->getCurrentLanguage() === $code ? 'active' : ''; ?>" 
-                                       href="<?php echo BASE_PATH; ?>/settings?quick_lang=<?php echo $code; ?>">
-                                        <?php echo $name; ?>
-                                    </a>
+                                    <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true): ?>
+                                        <a class="dropdown-item <?php echo $language->getCurrentLanguage() === $code ? 'active' : ''; ?>" 
+                                        href="<?php echo BASE_PATH; ?>/?quick_lang=<?php echo $code; ?>">
+                                            <?php echo $name; ?>
+                                        </a>
+                                    <?php else: ?>
+                                        <a class="dropdown-item <?php echo $language->getCurrentLanguage() === $code ? 'active' : ''; ?>" 
+                                        href="<?php echo BASE_PATH . $current_url . $separator; ?>lang=<?php echo $code; ?>">
+                                            <?php echo $name; ?>
+                                        </a>
+                                    <?php endif; ?>
                                 </li>
                                 <?php endforeach; ?>
                             </ul>

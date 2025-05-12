@@ -43,40 +43,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
     if ($action === 'update_settings') {
-        // Set settings properties
-        $settings->currency = $_POST['currency'] ?? 'USD';
-        $settings->language = $_POST['language'] ?? 'en';
-        $settings->theme = $_POST['theme'] ?? 'system';
-        $settings->notification_enabled = isset($_POST['notification_enabled']) ? true : false;
-        $settings->email_notification_enabled = isset($_POST['email_notification_enabled']) ? true : false;
-        $settings->budget_alert_threshold = intval($_POST['budget_alert_threshold'] ?? 80);
-        $settings->user_id = $user_id;
-        
-        // Update settings
-        if ($settings->update()) {
-            $success = __('settings_updated');
+        try {
+            // Validate language
+            $valid_languages = ['en', 'th'];
+            $requested_lang = $_POST['language'] ?? 'en';
             
-            // If language changed, redirect to refresh the page with new language
-            if ($_POST['language'] !== $language->getCurrentLanguage()) {
-                header('Location: ' . BASE_PATH . '/settings?success=1');
-                exit;
+            if (!in_array($requested_lang, $valid_languages)) {
+                $requested_lang = 'en';
             }
-        } else {
-            $error = 'Failed to update settings.';
+            
+            // Set settings properties
+            $settings->currency = $_POST['currency'] ?? 'USD';
+            $settings->language = $requested_lang;
+            $settings->theme = $_POST['theme'] ?? 'system';
+            $settings->notification_enabled = isset($_POST['notification_enabled']) ? true : false;
+            $settings->email_notification_enabled = isset($_POST['email_notification_enabled']) ? true : false;
+            $settings->budget_alert_threshold = intval($_POST['budget_alert_threshold'] ?? 80);
+            $settings->user_id = $user_id;
+            
+            // Update settings
+            if ($settings->update()) {
+                // Set session language for immediate effect
+                $_SESSION['temp_lang'] = $requested_lang;
+                
+                $success = __('settings_updated');
+                
+                // If language changed, redirect to refresh the page with new language
+                if ($requested_lang !== $language->getCurrentLanguage()) {
+                    header('Location: ' . BASE_PATH . '/settings?success=1');
+                    exit;
+                }
+            } else {
+                $error = 'Failed to update settings.';
+                error_log("Failed to update user settings. User ID: " . $user_id);
+            }
+        } catch (Exception $e) {
+            $error = 'An error occurred while updating settings.';
+            error_log("Exception in settings update: " . $e->getMessage());
         }
     } elseif ($action === 'reset_settings') {
         // Reset settings to default
-        $settings->user_id = $user_id;
-        if ($settings->resetToDefault()) {
-            $success = 'Settings reset to default values!';
-            
-            // If current language is not English, redirect to refresh with English
-            if ($language->getCurrentLanguage() !== 'en') {
-                header('Location: ' . BASE_PATH . '/settings?success=2');
-                exit;
+        try {
+            $settings->user_id = $user_id;
+            if ($settings->resetToDefault()) {
+                // Also update session language
+                $_SESSION['temp_lang'] = 'en';
+                
+                $success = 'Settings reset to default values!';
+                
+                // If current language is not English, redirect to refresh with English
+                if ($language->getCurrentLanguage() !== 'en') {
+                    header('Location: ' . BASE_PATH . '/settings?success=2');
+                    exit;
+                }
+            } else {
+                $error = 'Failed to reset settings.';
+                error_log("Failed to reset settings for user ID: " . $user_id);
             }
-        } else {
-            $error = 'Failed to reset settings.';
+        } catch (Exception $e) {
+            $error = 'An error occurred while resetting settings.';
+            error_log("Exception in reset settings: " . $e->getMessage());
         }
     } elseif ($action === 'update_profile') {
         // Set user properties
@@ -123,6 +149,13 @@ if (isset($_GET['success'])) {
         $success = __('settings_updated');
     } elseif ($success_code === 2) {
         $success = 'Settings reset to default values!';
+    }
+}
+
+// Handle error messages from redirects
+if (isset($_GET['error'])) {
+    if ($_GET['error'] === 'language_switch_failed') {
+        $error = 'Language switch encountered an error. Some features may be using your previous language setting.';
     }
 }
 

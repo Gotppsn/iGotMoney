@@ -65,22 +65,44 @@ class Language {
      * @return void
      */
     private function loadTranslations() {
-        $langFile = dirname(__DIR__) . '/lang/' . $this->lang . '.php';
-        
-        if (file_exists($langFile)) {
-            $translations = include($langFile);
-            if (is_array($translations)) {
-                $this->translations = $translations;
+        try {
+            $langFile = dirname(__DIR__) . '/lang/' . $this->lang . '.php';
+            
+            if (file_exists($langFile)) {
+                $translations = include($langFile);
+                if (is_array($translations)) {
+                    $this->translations = $translations;
+                } else {
+                    error_log("Language file {$langFile} did not return an array");
+                    // Try to use English as fallback
+                    $this->loadEnglishFallback();
+                }
+            } else {
+                // If language file doesn't exist, try to use English
+                error_log("Language file {$langFile} does not exist");
+                $this->loadEnglishFallback();
             }
-        } else {
-            // If language file doesn't exist, try to use English
-            if ($this->lang !== 'en') {
-                $langFile = dirname(__DIR__) . '/lang/en.php';
-                if (file_exists($langFile)) {
-                    $translations = include($langFile);
-                    if (is_array($translations)) {
-                        $this->translations = $translations;
-                    }
+        } catch (Exception $e) {
+            error_log("Error loading language file: " . $e->getMessage());
+            // Set empty translations array to avoid further errors
+            $this->translations = [];
+        }
+    }
+    
+    /**
+     * Load English translations as fallback
+     * 
+     * @return void
+     */
+    private function loadEnglishFallback() {
+        if ($this->lang !== 'en') {
+            $langFile = dirname(__DIR__) . '/lang/en.php';
+            if (file_exists($langFile)) {
+                $translations = include($langFile);
+                if (is_array($translations)) {
+                    $this->translations = $translations;
+                } else {
+                    $this->translations = [];  // Empty array as last resort
                 }
             }
         }
@@ -129,6 +151,16 @@ class Language {
         $languages = $this->getSupportedLanguages();
         return isset($languages[$code]) ? $languages[$code] : 'Unknown';
     }
+    
+    /**
+     * Check if a language is supported
+     * 
+     * @param string $code Language code
+     * @return bool
+     */
+    public function isSupported($code) {
+        return isset($this->getSupportedLanguages()[$code]);
+    }
 }
 
 /**
@@ -139,6 +171,13 @@ class Language {
  * @return string
  */
 function __($key, $params = []) {
-    return Language::getInstance()->get($key, $params);
+    if (!$key) return '';
+    
+    try {
+        return Language::getInstance()->get($key, $params);
+    } catch (Exception $e) {
+        error_log("Translation error: " . $e->getMessage());
+        return $key; // Return the key as fallback
+    }
 }
 ?>

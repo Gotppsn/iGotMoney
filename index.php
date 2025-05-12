@@ -39,17 +39,47 @@ $language = Language::getInstance($language_code);
 
 // Handle quick language change from dropdown
 if (isset($_GET['quick_lang']) && isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
-    // Update user settings
-    require_once 'models/UserSettings.php';
-    $userSettings = new UserSettings();
-    if ($userSettings->getSettings($_SESSION['user_id'])) {
-        $userSettings->language = $_GET['quick_lang'];
-        $userSettings->update();
+    try {
+        // Validate the language code
+        $valid_languages = ['en', 'th'];
+        $requested_lang = $_GET['quick_lang'];
+        
+        if (!in_array($requested_lang, $valid_languages)) {
+            // Invalid language code, set default
+            $requested_lang = 'en';
+        }
+        
+        // Update user settings
+        require_once 'models/UserSettings.php';
+        $userSettings = new UserSettings();
+        
+        if ($userSettings->getSettings($_SESSION['user_id'])) {
+            $userSettings->language = $requested_lang;
+            
+            if (!$userSettings->update()) {
+                error_log("Failed to update user language setting to: " . $requested_lang);
+                // Continue anyway, just set session language
+            }
+        }
+        
+        // Set session language as well, for redundancy
+        $_SESSION['temp_lang'] = $requested_lang;
+        
+        // Redirect back to settings page or previous page
+        if (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], $_SERVER['HTTP_HOST']) !== false) {
+            header('Location: ' . htmlspecialchars($_SERVER['HTTP_REFERER']));
+        } else {
+            header('Location: ' . BASE_PATH . '/settings?lang_updated=1');
+        }
+        exit;
+    } catch (Exception $e) {
+        error_log("Exception in language switching: " . $e->getMessage());
+        // Save language in session at minimum
+        $_SESSION['temp_lang'] = $_GET['quick_lang'];
+        // Redirect to settings page with error
+        header('Location: ' . BASE_PATH . '/settings?error=language_switch_failed');
+        exit;
     }
-    
-    // Redirect back to settings page
-    header('Location: ' . BASE_PATH . '/settings?lang_updated=1');
-    exit;
 }
 
 // Define routes
