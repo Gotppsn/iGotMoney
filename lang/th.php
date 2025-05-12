@@ -586,6 +586,86 @@ return [
     'strategic_entry_point' => 'จุดเข้าซื้อเชิงกลยุทธ์ (ต่ำกว่าราคาปัจจุบัน 15%)',
     'conservative_entry_point' => 'จุดเข้าซื้อแบบอนุรักษ์นิยม (ต่ำกว่าราคาปัจจุบัน 10%)',
     'strategic_exit_point' => 'จุดออกขายเชิงกลยุทธ์ (สูงกว่าราคาปัจจุบัน 15%)',
-    'conservative_exit_point' => 'จุดออกขายแบบอนุรักษ์นิยม (สูงกว่าราคาปัจจุบัน 10%)'
+    'conservative_exit_point' => 'จุดออกขายแบบอนุรักษ์นิยม (สูงกว่าราคาปัจจุบัน 10%)',
+    
+    // Tax Planning Page
+    'tax_planning' => 'วางแผนภาษี',
+    'tax_management' => 'การจัดการภาษี',
+    'tax_planning_subtitle' => 'จัดการข้อมูลภาษีของคุณและรับคำแนะนำส่วนบุคคล',
+    'auto_fill' => 'กรอกอัตโนมัติ',
+    'tax_information' => 'ข้อมูลภาษี',
+    'filing_status' => 'สถานะการยื่นภาษี',
+    'single' => 'โสด',
+    'married_joint' => 'สมรสยื่นร่วมกัน',
+    'married_separate' => 'สมรสยื่นแยกกัน',
+    'head_of_household' => 'หัวหน้าครัวเรือน',
+    'estimated_annual_income' => 'รายได้ประจำปีโดยประมาณ',
+    'total_estimated_gross_income' => 'รายได้รวมโดยประมาณทั้งหมดของคุณสำหรับ',
+    'tax_paid_to_date' => 'ภาษีที่จ่ายแล้วจนถึงปัจจุบัน',
+    'tax_paid_description' => 'ภาษีทั้งหมดที่คุณได้จ่ายแล้วผ่านการหักภาษี ณ ที่จ่ายหรือการชำระภาษีล่วงหน้า',
+    'total_deductions' => 'การลดหย่อนทั้งหมด',
+    'deductions_description' => 'การลดหย่อนมาตรฐานหรือผลรวมของรายการลดหย่อนของคุณ',
+    'total_tax_credits' => 'เครดิตภาษีทั้งหมด',
+    'tax_credits_description' => 'ผลรวมของเครดิตภาษีทั้งหมดที่คุณมีสิทธิ์ได้รับ',
+    'update_tax_information' => 'อัปเดตข้อมูลภาษี',
+    'add_tax_information' => 'เพิ่มข้อมูลภาษี',
+    'tax_saving_tips' => 'เคล็ดลับการประหยัดภาษี',
+    'no_tips_available' => 'ยังไม่มีเคล็ดลับพร้อมใช้งาน',
+    'add_tax_info_for_tips' => 'เพิ่มข้อมูลภาษีของคุณเพื่อดูเคล็ดลับการประหยัดภาษีส่วนบุคคล',
+    'auto_fill_tax_information' => 'กรอกข้อมูลภาษีอัตโนมัติ',
+    'tax_breakdown_analysis' => 'การวิเคราะห์ภาษีโดยละเอียด',
+    'gross_income' => 'รายได้รวม',
+    'taxable_income' => 'รายได้ที่ต้องเสียภาษี',
+    'tax_before_credits' => 'ภาษีก่อนหักเครดิต',
+    'tax_credits' => 'เครดิตภาษี',
+    'final_tax_liability' => 'ความรับผิดทางภาษีสุดท้าย',
+    'tax_still_owed' => 'ภาษีที่ยังต้องชำระ',
+    'tax_refund_expected' => 'คาดว่าจะได้รับคืนภาษี',
+    'no_tax_data' => 'ไม่มีข้อมูลภาษี',
+    'add_tax_info_to_see_breakdown' => 'เพิ่มข้อมูลภาษีของคุณเพื่อดูการวิเคราะห์โดยละเอียด',
+
+    // Tax Stats
+    'estimated_income' => 'รายได้โดยประมาณ',
+    'tax_liability' => 'ความรับผิดทางภาษี',
+    'remaining_tax' => 'ภาษีที่เหลือ',
+    'effective_tax_rate' => 'อัตราภาษีที่แท้จริง',
+    'estimated_for' => 'ประมาณการสำหรับ',
+    'still_owed' => 'ยังเป็นหนี้',
+    'of_gross_income' => 'ของรายได้รวม',
+
+    // Modals
+    'auto_fill_tax_info' => 'กรอกข้อมูลภาษีอัตโนมัติ',
+    'auto_fill_description' => 'นี่จะกรอกข้อมูลภาษีของคุณโดยอัตโนมัติตามแหล่งรายได้ของคุณ ข้อมูลภาษีที่มีอยู่สำหรับปีที่เลือกจะถูกอัปเดต',
+    'make_sure_income_sources' => 'ตรวจสอบให้แน่ใจว่าคุณมีแหล่งรายได้ที่กำหนดไว้สำหรับข้อมูลที่ถูกต้อง',
+    'delete_tax_information' => 'ลบข้อมูลภาษี',
+    'confirm_delete_tax' => 'คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลภาษีสำหรับ',
+    'this_action_cannot_be_undone' => 'การกระทำนี้ไม่สามารถยกเลิกได้',
+    'delete' => 'ลบ',
+
+    // Success/Error messages
+    'tax_info_updated_success' => 'อัปเดตข้อมูลภาษีเรียบร้อยแล้ว!',
+    'failed_to_update_tax_info' => 'ล้มเหลวในการอัปเดตข้อมูลภาษี',
+    'tax_info_added_success' => 'เพิ่มข้อมูลภาษีเรียบร้อยแล้ว!',
+    'failed_to_add_tax_info' => 'ล้มเหลวในการเพิ่มข้อมูลภาษี',
+    'tax_info_deleted_success' => 'ลบข้อมูลภาษีเรียบร้อยแล้ว!',
+    'failed_to_delete_tax_info' => 'ล้มเหลวในการลบข้อมูลภาษี',
+    'tax_info_auto_filled_success' => 'กรอกข้อมูลภาษีอัตโนมัติเรียบร้อยแล้ว!',
+    'failed_to_auto_fill_tax_info' => 'ล้มเหลวในการกรอกข้อมูลภาษีอัตโนมัติ กรุณาตรวจสอบว่าคุณมีแหล่งรายได้ที่กำหนดไว้',
+
+    // Tax calculation breakdown
+    'item' => 'รายการ',
+    'amount' => 'จำนวน',
+    'percentage' => 'เปอร์เซ็นต์',
+    'net_income_after_tax' => 'รายได้สุทธิหลังหักภาษี',
+    'total_tax' => 'ภาษีทั้งหมด',
+
+    // Other
+    'savings_info' => 'ข้อมูลการประหยัด',
+    'potential_savings' => 'การประหยัดที่เป็นไปได้',
+    'standard_deduction' => 'การลดหย่อนมาตรฐาน',
+    'loading' => 'กำลังโหลด...',
+    'processing' => 'กำลังประมวลผล...',
+    'auto_filling' => 'กำลังกรอกอัตโนมัติ...',
+    'deleting' => 'กำลังลบ...'
 ];
 ?>

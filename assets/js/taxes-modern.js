@@ -174,7 +174,12 @@ function initializeEventListeners() {
             const submitButton = this.querySelector('button[type="submit"]');
             const originalText = submitButton.innerHTML;
             submitButton.disabled = true;
-            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+            
+            // Get loading text from translation data attribute or use fallback
+            const loadingText = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + 
+                                (document.documentElement.getAttribute('data-loading-text') || 'Processing...');
+            
+            submitButton.innerHTML = loadingText;
             
             // Reset button state after 30 seconds (failsafe)
             setTimeout(() => {
@@ -191,7 +196,12 @@ function initializeEventListeners() {
             const submitButton = document.querySelector('button[form="autoFillForm"]');
             const originalText = submitButton.innerHTML;
             submitButton.disabled = true;
-            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Auto-Filling...';
+            
+            // Get loading text from translation data attribute or use fallback
+            const autoFillingText = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + 
+                                   (document.documentElement.getAttribute('data-auto-filling-text') || 'Auto-Filling...');
+            
+            submitButton.innerHTML = autoFillingText;
             
             // Reset button state after 30 seconds (failsafe)
             setTimeout(() => {
@@ -208,7 +218,12 @@ function initializeEventListeners() {
             const submitButton = document.querySelector('button[form="deleteTaxInfoForm"]');
             const originalText = submitButton.innerHTML;
             submitButton.disabled = true;
-            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+            
+            // Get loading text from translation data attribute or use fallback
+            const deletingText = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + 
+                                (document.documentElement.getAttribute('data-deleting-text') || 'Deleting...');
+            
+            submitButton.innerHTML = deletingText;
             
             // Reset button state after 30 seconds (failsafe)
             setTimeout(() => {
@@ -402,7 +417,10 @@ function initializeAnimations() {
         }
         
         // Show success notification
-        showNotification('Tax information auto-filled successfully!', 'success');
+        // Get translated message or use fallback
+        const successMessage = document.documentElement.getAttribute('data-success-auto-fill-message') || 
+                              'Tax information auto-filled successfully!';
+        showNotification(successMessage, 'success');
         
         // Clean URL
         const url = new URL(window.location.href);

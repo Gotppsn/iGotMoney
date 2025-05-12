@@ -1,6 +1,6 @@
 <?php
 // Set page title and current page for menu highlighting
-$page_title = 'Tax Planning - iGotMoney';
+$page_title = __('tax_planning') . ' - ' . __('app_name');
 $current_page = 'taxes';
 
 // Additional CSS and JS
@@ -17,8 +17,8 @@ require_once 'includes/header.php';
     <div class="page-header-section">
         <div class="page-header-content">
             <div class="page-title-group">
-                <h1 class="page-title">Tax Planning</h1>
-                <p class="page-subtitle">Manage your tax information and get personalized advice</p>
+                <h1 class="page-title"><?php echo __('tax_planning'); ?></h1>
+                <p class="page-subtitle"><?php echo __('tax_planning_subtitle'); ?></p>
             </div>
             <div class="header-actions">
                 <div class="tax-year-dropdown">
@@ -57,7 +57,7 @@ require_once 'includes/header.php';
                 </div>
                 <button type="button" class="btn-auto-fill" id="autoFillTaxInfo">
                     <i class="fas fa-magic"></i>
-                    <span>Auto-Fill</span>
+                    <span><?php echo __('auto_fill'); ?></span>
                 </button>
             </div>
         </div>
@@ -71,7 +71,7 @@ require_once 'includes/header.php';
                     <i class="fas fa-dollar-sign"></i>
                 </div>
                 <div class="stat-content">
-                    <h3 class="stat-label">Estimated Income</h3>
+                    <h3 class="stat-label"><?php echo __('estimated_income'); ?></h3>
                     <p class="stat-value">$<?php echo number_format($has_tax_info ? $tax->estimated_income : 0, 2); ?></p>
                     <div class="stat-info">
                         <i class="fas fa-calendar"></i>
@@ -85,11 +85,11 @@ require_once 'includes/header.php';
                     <i class="fas fa-file-invoice-dollar"></i>
                 </div>
                 <div class="stat-content">
-                    <h3 class="stat-label">Tax Liability</h3>
+                    <h3 class="stat-label"><?php echo __('tax_liability'); ?></h3>
                     <p class="stat-value">$<?php echo number_format($tax_liability, 2); ?></p>
                     <div class="stat-info">
                         <i class="fas fa-calculator"></i>
-                        <span>Estimated for <?php echo $selected_year; ?></span>
+                        <span><?php echo __('estimated_for'); ?> <?php echo $selected_year; ?></span>
                     </div>
                 </div>
             </div>
@@ -99,11 +99,11 @@ require_once 'includes/header.php';
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
                 <div class="stat-content">
-                    <h3 class="stat-label">Remaining Tax</h3>
+                    <h3 class="stat-label"><?php echo __('remaining_tax'); ?></h3>
                     <p class="stat-value">$<?php echo number_format($remaining_tax, 2); ?></p>
                     <div class="stat-info">
                         <i class="fas fa-clock"></i>
-                        <span>Still owed</span>
+                        <span><?php echo __('still_owed'); ?></span>
                     </div>
                 </div>
             </div>
@@ -113,11 +113,11 @@ require_once 'includes/header.php';
                     <i class="fas fa-percentage"></i>
                 </div>
                 <div class="stat-content">
-                    <h3 class="stat-label">Effective Tax Rate</h3>
+                    <h3 class="stat-label"><?php echo __('effective_tax_rate'); ?></h3>
                     <p class="stat-value"><?php echo number_format($effective_tax_rate, 2); ?>%</p>
                     <div class="stat-info">
                         <i class="fas fa-chart-pie"></i>
-                        <span>Of gross income</span>
+                        <span><?php echo __('of_gross_income'); ?></span>
                     </div>
                 </div>
             </div>
@@ -132,11 +132,11 @@ require_once 'includes/header.php';
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fas fa-edit"></i>
-                        <h3>Tax Information (<?php echo $selected_year; ?>)</h3>
+                        <h3><?php echo __('tax_information'); ?> (<?php echo $selected_year; ?>)</h3>
                     </div>
                     <?php if ($has_tax_info): ?>
                         <div class="card-actions">
-                            <button class="btn-action delete" id="deleteTaxInfo" data-tax-id="<?php echo $tax->tax_id; ?>" title="Delete">
+                            <button class="btn-action delete" id="deleteTaxInfo" data-tax-id="<?php echo $tax->tax_id; ?>" title="<?php echo __('delete'); ?>">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </div>
@@ -152,63 +152,63 @@ require_once 'includes/header.php';
                         
                         <div class="form-grid">
                             <div class="form-field">
-                                <label for="filing_status">Filing Status</label>
+                                <label for="filing_status"><?php echo __('filing_status'); ?></label>
                                 <select class="modern-select" id="filing_status" name="filing_status" required>
-                                    <option value="single" <?php echo ($has_tax_info && $tax->filing_status == 'single') ? 'selected' : ''; ?>>Single</option>
-                                    <option value="married_joint" <?php echo ($has_tax_info && $tax->filing_status == 'married_joint') ? 'selected' : ''; ?>>Married Filing Jointly</option>
-                                    <option value="married_separate" <?php echo ($has_tax_info && $tax->filing_status == 'married_separate') ? 'selected' : ''; ?>>Married Filing Separately</option>
-                                    <option value="head_of_household" <?php echo ($has_tax_info && $tax->filing_status == 'head_of_household') ? 'selected' : ''; ?>>Head of Household</option>
+                                    <option value="single" <?php echo ($has_tax_info && $tax->filing_status == 'single') ? 'selected' : ''; ?>><?php echo __('single'); ?></option>
+                                    <option value="married_joint" <?php echo ($has_tax_info && $tax->filing_status == 'married_joint') ? 'selected' : ''; ?>><?php echo __('married_joint'); ?></option>
+                                    <option value="married_separate" <?php echo ($has_tax_info && $tax->filing_status == 'married_separate') ? 'selected' : ''; ?>><?php echo __('married_separate'); ?></option>
+                                    <option value="head_of_household" <?php echo ($has_tax_info && $tax->filing_status == 'head_of_household') ? 'selected' : ''; ?>><?php echo __('head_of_household'); ?></option>
                                 </select>
                             </div>
                             
                             <div class="form-field">
-                                <label for="estimated_income">Estimated Annual Income</label>
+                                <label for="estimated_income"><?php echo __('estimated_annual_income'); ?></label>
                                 <div class="amount-input">
                                     <span class="currency-symbol">$</span>
                                     <input type="number" id="estimated_income" name="estimated_income" 
                                            value="<?php echo $has_tax_info ? $tax->estimated_income : $yearly_income; ?>" 
                                            min="0" step="0.01" required>
                                 </div>
-                                <small class="form-help">Your total estimated gross income for <?php echo $selected_year; ?>.</small>
+                                <small class="form-help"><?php echo __('total_estimated_gross_income'); ?> <?php echo $selected_year; ?>.</small>
                             </div>
                             
                             <div class="form-field">
-                                <label for="tax_paid_to_date">Tax Paid to Date</label>
+                                <label for="tax_paid_to_date"><?php echo __('tax_paid_to_date'); ?></label>
                                 <div class="amount-input">
                                     <span class="currency-symbol">$</span>
                                     <input type="number" id="tax_paid_to_date" name="tax_paid_to_date" 
                                            value="<?php echo $has_tax_info ? $tax->tax_paid_to_date : 0; ?>" 
                                            min="0" step="0.01" required>
                                 </div>
-                                <small class="form-help">Total tax you've already paid through withholding or estimated payments.</small>
+                                <small class="form-help"><?php echo __('tax_paid_description'); ?>.</small>
                             </div>
                             
                             <div class="form-field">
-                                <label for="deductions">Total Deductions</label>
+                                <label for="deductions"><?php echo __('total_deductions'); ?></label>
                                 <div class="amount-input">
                                     <span class="currency-symbol">$</span>
                                     <input type="number" id="deductions" name="deductions" 
                                            value="<?php echo $has_tax_info ? $tax->deductions : 12950; ?>" 
                                            min="0" step="0.01" required>
                                 </div>
-                                <small class="form-help">Standard deduction or the sum of your itemized deductions.</small>
+                                <small class="form-help"><?php echo __('deductions_description'); ?>.</small>
                             </div>
                             
                             <div class="form-field">
-                                <label for="credits">Total Tax Credits</label>
+                                <label for="credits"><?php echo __('total_tax_credits'); ?></label>
                                 <div class="amount-input">
                                     <span class="currency-symbol">$</span>
                                     <input type="number" id="credits" name="credits" 
                                            value="<?php echo $has_tax_info ? $tax->credits : 0; ?>" 
                                            min="0" step="0.01" required>
                                 </div>
-                                <small class="form-help">Sum of all tax credits you qualify for.</small>
+                                <small class="form-help"><?php echo __('tax_credits_description'); ?>.</small>
                             </div>
                             
                             <div class="form-field full-width">
                                 <button type="submit" class="btn-submit">
                                     <i class="fas fa-save"></i>
-                                    <?php echo $has_tax_info ? 'Update Tax Information' : 'Add Tax Information'; ?>
+                                    <?php echo $has_tax_info ? __('update_tax_information') : __('add_tax_information'); ?>
                                 </button>
                             </div>
                         </div>
@@ -221,7 +221,7 @@ require_once 'includes/header.php';
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fas fa-lightbulb"></i>
-                        <h3>Tax Saving Tips</h3>
+                        <h3><?php echo __('tax_saving_tips'); ?></h3>
                     </div>
                 </div>
                 <div class="card-body">
@@ -236,7 +236,7 @@ require_once 'includes/header.php';
                                     <div class="tip-content <?php echo $index === 0 ? 'active' : ''; ?>" id="tipContent<?php echo $index; ?>">
                                         <p><?php echo htmlspecialchars($tip['description']); ?></p>
                                         <div class="savings-info">
-                                            <strong>Potential Savings:</strong> 
+                                            <strong><?php echo __('potential_savings'); ?>:</strong> 
                                             <span><?php echo htmlspecialchars($tip['potential_savings']); ?></span>
                                         </div>
                                     </div>
@@ -246,11 +246,11 @@ require_once 'includes/header.php';
                     <?php else: ?>
                         <div class="empty-tips">
                             <i class="fas fa-lightbulb"></i>
-                            <h4>No tips available yet</h4>
-                            <p>Add your tax information to see personalized tax saving tips.</p>
+                            <h4><?php echo __('no_tips_available'); ?></h4>
+                            <p><?php echo __('add_tax_info_for_tips'); ?></p>
                             <button type="button" class="btn-primary" id="autoFillEmpty">
                                 <i class="fas fa-magic"></i>
-                                Auto-Fill Tax Information
+                                <?php echo __('auto_fill_tax_information'); ?>
                             </button>
                         </div>
                     <?php endif; ?>
@@ -265,7 +265,7 @@ require_once 'includes/header.php';
             <div class="card-header">
                 <div class="card-title">
                     <i class="fas fa-chart-pie"></i>
-                    <h3>Tax Breakdown Analysis</h3>
+                    <h3><?php echo __('tax_breakdown_analysis'); ?></h3>
                 </div>
             </div>
             <div class="card-body">
@@ -278,49 +278,49 @@ require_once 'includes/header.php';
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Item</th>
-                                        <th>Amount</th>
-                                        <th>Percentage</th>
+                                        <th><?php echo __('item'); ?></th>
+                                        <th><?php echo __('amount'); ?></th>
+                                        <th><?php echo __('percentage'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Gross Income</td>
+                                        <td><?php echo __('gross_income'); ?></td>
                                         <td>$<?php echo number_format($tax->estimated_income, 2); ?></td>
                                         <td>100%</td>
                                     </tr>
                                     <tr>
-                                        <td>Deductions</td>
+                                        <td><?php echo __('deductions'); ?></td>
                                         <td>$<?php echo number_format($tax->deductions, 2); ?></td>
                                         <td><?php echo number_format(($tax->deductions / $tax->estimated_income) * 100, 2); ?>%</td>
                                     </tr>
                                     <tr>
-                                        <td>Taxable Income</td>
+                                        <td><?php echo __('taxable_income'); ?></td>
                                         <td>$<?php echo number_format(max(0, $tax->estimated_income - $tax->deductions), 2); ?></td>
                                         <td><?php echo number_format((max(0, $tax->estimated_income - $tax->deductions) / $tax->estimated_income) * 100, 2); ?>%</td>
                                     </tr>
                                     <tr>
-                                        <td>Tax Before Credits</td>
+                                        <td><?php echo __('tax_before_credits'); ?></td>
                                         <td>$<?php echo number_format($tax_liability + $tax->credits, 2); ?></td>
                                         <td><?php echo number_format((($tax_liability + $tax->credits) / $tax->estimated_income) * 100, 2); ?>%</td>
                                     </tr>
                                     <tr>
-                                        <td>Tax Credits</td>
+                                        <td><?php echo __('tax_credits'); ?></td>
                                         <td>$<?php echo number_format($tax->credits, 2); ?></td>
                                         <td><?php echo number_format(($tax->credits / $tax->estimated_income) * 100, 2); ?>%</td>
                                     </tr>
                                     <tr class="highlight">
-                                        <td><strong>Final Tax Liability</strong></td>
+                                        <td><strong><?php echo __('final_tax_liability'); ?></strong></td>
                                         <td><strong>$<?php echo number_format($tax_liability, 2); ?></strong></td>
                                         <td><strong><?php echo number_format($effective_tax_rate, 2); ?>%</strong></td>
                                     </tr>
                                     <tr>
-                                        <td>Tax Paid to Date</td>
+                                        <td><?php echo __('tax_paid_to_date'); ?></td>
                                         <td>$<?php echo number_format($tax->tax_paid_to_date, 2); ?></td>
                                         <td><?php echo number_format(($tax->tax_paid_to_date / max(0.01, $tax_liability)) * 100, 2); ?>%</td>
                                     </tr>
                                     <tr class="<?php echo $remaining_tax > 0 ? 'negative' : 'positive'; ?>">
-                                        <td><strong><?php echo $remaining_tax > 0 ? 'Tax Still Owed' : 'Tax Refund Expected'; ?></strong></td>
+                                        <td><strong><?php echo $remaining_tax > 0 ? __('tax_still_owed') : __('tax_refund_expected'); ?></strong></td>
                                         <td><strong>$<?php echo number_format(abs($remaining_tax), 2); ?></strong></td>
                                         <td><strong><?php echo number_format((abs($remaining_tax) / max(0.01, $tax_liability)) * 100, 2); ?>%</strong></td>
                                     </tr>
@@ -331,11 +331,11 @@ require_once 'includes/header.php';
                 <?php else: ?>
                     <div class="empty-analysis">
                         <i class="fas fa-chart-bar"></i>
-                        <h4>No tax data available</h4>
-                        <p>Add your tax information to see the breakdown analysis.</p>
+                        <h4><?php echo __('no_tax_data'); ?></h4>
+                        <p><?php echo __('add_tax_info_to_see_breakdown'); ?></p>
                         <button type="button" class="btn-primary" id="scrollToForm">
                             <i class="fas fa-edit"></i>
-                            Add Tax Information
+                            <?php echo __('add_tax_information'); ?>
                         </button>
                     </div>
                 <?php endif; ?>
@@ -352,26 +352,26 @@ require_once 'includes/header.php';
                 <div class="modal-icon">
                     <i class="fas fa-magic"></i>
                 </div>
-                <h5 class="modal-title">Auto-Fill Tax Information</h5>
+                <h5 class="modal-title"><?php echo __('auto_fill_tax_info'); ?></h5>
                 <button type="button" class="modal-close" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <p>This will auto-fill your tax information based on your income sources. Any existing tax information for the selected year will be updated.</p>
+                <p><?php echo __('auto_fill_description'); ?></p>
                 <div class="warning-message">
                     <i class="fas fa-info-circle"></i>
-                    <span>Make sure you have income sources defined for accurate data.</span>
+                    <span><?php echo __('make_sure_income_sources'); ?></span>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-cancel" data-bs-dismiss="modal"><?php echo __('cancel'); ?></button>
                 <form id="autoFillForm" action="<?php echo BASE_PATH; ?>/taxes" method="post">
                     <input type="hidden" name="action" value="auto_fill">
                     <input type="hidden" name="tax_year" value="<?php echo $selected_year; ?>">
                     <button type="submit" class="btn-submit">
                         <i class="fas fa-magic"></i>
-                        Auto-Fill
+                        <?php echo __('auto_fill'); ?>
                     </button>
                 </form>
             </div>
@@ -387,23 +387,23 @@ require_once 'includes/header.php';
                 <div class="modal-icon delete">
                     <i class="fas fa-trash-alt"></i>
                 </div>
-                <h5 class="modal-title">Delete Tax Information</h5>
+                <h5 class="modal-title"><?php echo __('delete_tax_information'); ?></h5>
                 <button type="button" class="modal-close" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body text-center">
-                <p>Are you sure you want to delete the tax information for <?php echo $selected_year; ?>?</p>
-                <p class="text-muted">This action cannot be undone.</p>
+                <p><?php echo __('confirm_delete_tax'); ?> <?php echo $selected_year; ?>?</p>
+                <p class="text-muted"><?php echo __('this_action_cannot_be_undone'); ?></p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-cancel" data-bs-dismiss="modal"><?php echo __('cancel'); ?></button>
                 <form action="<?php echo BASE_PATH; ?>/taxes" method="post" id="deleteTaxInfoForm">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="tax_id" id="delete_tax_id">
                     <button type="submit" class="btn-submit danger">
                         <i class="fas fa-trash-alt"></i>
-                        Delete
+                        <?php echo __('delete'); ?>
                     </button>
                 </form>
             </div>
@@ -414,7 +414,7 @@ require_once 'includes/header.php';
 <?php
 // Chart data
 if ($has_tax_info) {
-    $chart_labels = ['Net Income After Tax', 'Total Tax'];
+    $chart_labels = [__('net_income_after_tax'), __('total_tax')];
     $chart_data = [
         $tax->estimated_income - $tax_liability,
         $tax_liability
