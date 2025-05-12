@@ -1,6 +1,6 @@
 <?php
 // Set page title and current page for menu highlighting
-$page_title = 'Profile - iGotMoney';
+$page_title = __('financial_profile') . ' - ' . __('app_name');
 $current_page = 'profile';
 
 // Additional CSS and JS
@@ -16,12 +16,12 @@ require_once 'includes/header.php';
     <div class="page-header-section">
         <div class="page-header-content">
             <div class="page-title-group">
-                <h1 class="page-title">Financial Profile</h1>
-                <p class="page-subtitle">Your comprehensive financial overview and health status</p>
+                <h1 class="page-title"><?php echo __('financial_profile'); ?></h1>
+                <p class="page-subtitle"><?php echo __('your_comprehensive_financial_overview'); ?></p>
             </div>
             <button type="button" class="btn-print" onclick="window.print()">
                 <i class="fas fa-print"></i>
-                <span>Print Report</span>
+                <span><?php echo __('print_report'); ?></span>
             </button>
         </div>
     </div>
@@ -32,7 +32,7 @@ require_once 'includes/header.php';
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="stat-info">
-                        <div class="stat-label">Monthly Income</div>
+                        <div class="stat-label"><?php echo __('monthly_income'); ?></div>
                         <div class="stat-value">$<?php echo number_format($monthly_income, 2); ?></div>
                     </div>
                     <div class="stat-icon income">
@@ -46,7 +46,7 @@ require_once 'includes/header.php';
                     <div class="stat-footer">
                         <div class="stat-trend <?php echo $income_change >= 0 ? 'positive' : 'negative'; ?>">
                             <i class="fas fa-<?php echo $income_change >= 0 ? 'arrow-up' : 'arrow-down'; ?>"></i>
-                            <span><?php echo number_format(abs($income_change), 1); ?>% from last month</span>
+                            <span><?php echo number_format(abs($income_change), 1); ?>% <?php echo __('from_last_month'); ?></span>
                         </div>
                     </div>
                 <?php endif; ?>
@@ -55,7 +55,7 @@ require_once 'includes/header.php';
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="stat-info">
-                        <div class="stat-label">Monthly Expenses</div>
+                        <div class="stat-label"><?php echo __('monthly_expenses'); ?></div>
                         <div class="stat-value">$<?php echo number_format($monthly_expenses, 2); ?></div>
                     </div>
                     <div class="stat-icon expenses">
@@ -69,7 +69,7 @@ require_once 'includes/header.php';
                     <div class="stat-footer">
                         <div class="stat-trend <?php echo $expense_change <= 0 ? 'positive' : 'negative'; ?>">
                             <i class="fas fa-<?php echo $expense_change <= 0 ? 'arrow-down' : 'arrow-up'; ?>"></i>
-                            <span><?php echo number_format(abs($expense_change), 1); ?>% from last month</span>
+                            <span><?php echo number_format(abs($expense_change), 1); ?>% <?php echo __('from_last_month'); ?></span>
                         </div>
                     </div>
                 <?php endif; ?>
@@ -78,7 +78,7 @@ require_once 'includes/header.php';
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="stat-info">
-                        <div class="stat-label">Monthly Net</div>
+                        <div class="stat-label"><?php echo __('monthly_net'); ?></div>
                         <div class="stat-value <?php echo $monthly_net >= 0 ? 'positive' : 'negative'; ?>">
                             <?php echo $monthly_net >= 0 ? '+' : '-'; ?>$<?php echo number_format(abs($monthly_net), 2); ?>
                         </div>
@@ -89,7 +89,7 @@ require_once 'includes/header.php';
                 </div>
                 <div class="stat-footer">
                     <div class="stat-trend">
-                        <span><?php echo $monthly_net >= 0 ? 'Surplus' : 'Deficit'; ?> this month</span>
+                        <span><?php echo $monthly_net >= 0 ? __('surplus') : __('deficit'); ?> <?php echo __('this_month'); ?></span>
                     </div>
                 </div>
             </div>
@@ -97,7 +97,7 @@ require_once 'includes/header.php';
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="stat-info">
-                        <div class="stat-label">Saving Rate</div>
+                        <div class="stat-label"><?php echo __('savings_rate'); ?></div>
                         <div class="stat-value <?php echo getScoreColorClass($saving_rate); ?>">
                             <?php echo number_format($saving_rate, 1); ?>%
                         </div>
@@ -108,7 +108,7 @@ require_once 'includes/header.php';
                 </div>
                 <div class="stat-footer">
                     <div class="stat-trend">
-                        <span>Of monthly income saved</span>
+                        <span><?php echo __('of_monthly_income_saved'); ?></span>
                     </div>
                 </div>
             </div>
@@ -123,59 +123,59 @@ require_once 'includes/header.php';
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fas fa-user-circle"></i>
-                        <h3>Profile Overview</h3>
+                        <h3><?php echo __('profile_overview'); ?></h3>
                     </div>
                 </div>
                 <div class="card-body">
                     <div class="profile-content">
                         <!-- Personal Information -->
                         <div class="profile-section">
-                            <h4 class="section-title">Personal Information</h4>
+                            <h4 class="section-title"><?php echo __('personal_information'); ?></h4>
                             <div class="info-item">
                                 <i class="fas fa-user"></i>
-                                <span class="info-label">Name:</span>
+                                <span class="info-label"><?php echo __('name'); ?>:</span>
                                 <span class="info-value"><?php echo htmlspecialchars($user->first_name . ' ' . $user->last_name); ?></span>
                             </div>
                             <div class="info-item">
                                 <i class="fas fa-at"></i>
-                                <span class="info-label">Username:</span>
+                                <span class="info-label"><?php echo __('username'); ?>:</span>
                                 <span class="info-value"><?php echo htmlspecialchars($user->username); ?></span>
                             </div>
                             <div class="info-item">
                                 <i class="fas fa-envelope"></i>
-                                <span class="info-label">Email:</span>
+                                <span class="info-label"><?php echo __('email'); ?>:</span>
                                 <span class="info-value"><?php echo htmlspecialchars($user->email); ?></span>
                             </div>
                             <div class="info-item">
                                 <i class="fas fa-calendar-alt"></i>
-                                <span class="info-label">Member Since:</span>
+                                <span class="info-label"><?php echo __('member_since'); ?>:</span>
                                 <span class="info-value"><?php echo date('F j, Y', strtotime($user->created_at)); ?></span>
                             </div>
                         </div>
 
                         <!-- Financial Summary -->
                         <div class="profile-section">
-                            <h4 class="section-title">Financial Summary</h4>
+                            <h4 class="section-title"><?php echo __('financial_summary'); ?></h4>
                             <div class="info-item">
                                 <i class="fas fa-dollar-sign"></i>
-                                <span class="info-label">Annual Income:</span>
+                                <span class="info-label"><?php echo __('annual_income'); ?>:</span>
                                 <span class="info-value">$<?php echo number_format($yearly_income, 2); ?></span>
                             </div>
                             <div class="info-item">
                                 <i class="fas fa-shopping-cart"></i>
-                                <span class="info-label">Annual Expenses:</span>
+                                <span class="info-label"><?php echo __('annual_expenses'); ?>:</span>
                                 <span class="info-value">$<?php echo number_format($yearly_expenses, 2); ?></span>
                             </div>
                             <div class="info-item">
                                 <i class="fas fa-chart-line"></i>
-                                <span class="info-label">Annual Net:</span>
+                                <span class="info-label"><?php echo __('annual_net'); ?>:</span>
                                 <span class="info-value <?php echo $yearly_net >= 0 ? 'positive' : 'negative'; ?>">
                                     <?php echo $yearly_net >= 0 ? '+' : '-'; ?>$<?php echo number_format(abs($yearly_net), 2); ?>
                                 </span>
                             </div>
                             <div class="info-item">
                                 <i class="fas fa-percentage"></i>
-                                <span class="info-label">Annual Saving Rate:</span>
+                                <span class="info-label"><?php echo __('annual_saving_rate'); ?>:</span>
                                 <span class="info-value <?php echo ($yearly_income > 0 ? (($yearly_net / $yearly_income) * 100) : 0) >= 10 ? 'positive' : ''; ?>">
                                     <?php echo number_format($yearly_income > 0 ? (($yearly_net / $yearly_income) * 100) : 0, 1); ?>%
                                 </span>
@@ -190,7 +190,7 @@ require_once 'includes/header.php';
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fas fa-heartbeat"></i>
-                        <h3>Financial Health Score</h3>
+                        <h3><?php echo __('financial_health_score'); ?></h3>
                     </div>
                 </div>
                 <div class="card-body">
@@ -201,14 +201,14 @@ require_once 'includes/header.php';
                             </div>
                             <div class="score-max">/100</div>
                         </div>
-                        <div class="score-status"><?php echo $financial_health['status']; ?></div>
+                        <div class="score-status"><?php echo __($financial_health['status']); ?></div>
                     </div>
 
                     <div class="health-breakdown">
                         <?php foreach ($financial_health['breakdown'] as $key => $item): ?>
                             <div class="breakdown-item">
                                 <div class="breakdown-header">
-                                    <span class="breakdown-label"><?php echo $item['label']; ?></span>
+                                    <span class="breakdown-label"><?php echo __($item['label']); ?></span>
                                     <span class="breakdown-score"><?php echo $item['score']; ?>/<?php echo $item['max']; ?></span>
                                 </div>
                                 <div class="progress-bar-container">
@@ -240,7 +240,7 @@ require_once 'includes/header.php';
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fas fa-chart-pie"></i>
-                        <h3>Income vs. Expenses</h3>
+                        <h3><?php echo __('income_vs_expenses'); ?></h3>
                     </div>
                 </div>
                 <div class="card-body">
@@ -251,9 +251,9 @@ require_once 'includes/header.php';
                         <p class="mb-0">
                             <?php
                             if ($monthly_net > 0) {
-                                echo 'You are saving ' . number_format($saving_rate, 1) . '% of your income each month.';
+                                echo __('saving_percent', ['percent' => number_format($saving_rate, 1)]);
                             } else {
-                                echo 'You are spending more than you earn each month.';
+                                echo __('spending_more');
                             }
                             ?>
                         </p>
@@ -267,7 +267,7 @@ require_once 'includes/header.php';
                 <div class="card-header">
                     <div class="card-title">
                         <i class="fas fa-list-ol"></i>
-                        <h3>Top Expense Categories</h3>
+                        <h3><?php echo __('top_expense_categories'); ?></h3>
                     </div>
                 </div>
                 <div class="card-body">
@@ -309,31 +309,31 @@ require_once 'includes/header.php';
             <div class="card-header">
                 <div class="card-title">
                     <i class="fas fa-chart-line"></i>
-                    <h3>Investment Overview</h3>
+                    <h3><?php echo __('investment_overview'); ?></h3>
                 </div>
             </div>
             <div class="card-body">
                 <?php if ($total_invested > 0): ?>
                     <div class="investment-stats">
                         <div class="investment-metric">
-                            <div class="metric-label">Total Invested</div>
+                            <div class="metric-label"><?php echo __('total_invested'); ?></div>
                             <div class="metric-value">$<?php echo number_format($total_invested, 2); ?></div>
                         </div>
                         <div class="investment-metric">
-                            <div class="metric-label">Current Value</div>
+                            <div class="metric-label"><?php echo __('current_value'); ?></div>
                             <div class="metric-value">$<?php echo number_format($current_investment_value, 2); ?></div>
                         </div>
                         <div class="investment-metric">
-                            <div class="metric-label">Total Gain/Loss</div>
+                            <div class="metric-label"><?php echo __('total_gain_loss'); ?></div>
                             <div class="metric-value <?php echo $investment_gain_loss >= 0 ? 'positive' : 'negative'; ?>">
                                 <?php echo $investment_gain_loss >= 0 ? '+' : '-'; ?>$<?php echo number_format(abs($investment_gain_loss), 2); ?>
                             </div>
                             <div class="metric-subtext"><?php echo number_format(abs($investment_gain_loss_percent), 2); ?>%</div>
                         </div>
                         <div class="investment-metric">
-                            <div class="metric-label">Portfolio Diversity</div>
+                            <div class="metric-label"><?php echo __('portfolio_diversity'); ?></div>
                             <div class="metric-value"><?php echo isset($investment_summary['by_type']) ? count($investment_summary['by_type']) : 0; ?></div>
-                            <div class="metric-subtext">Asset Types</div>
+                            <div class="metric-subtext"><?php echo __('asset_types'); ?></div>
                         </div>
                     </div>
 
@@ -345,11 +345,11 @@ require_once 'includes/header.php';
                 <?php else: ?>
                     <div class="empty-state">
                         <i class="fas fa-chart-line"></i>
-                        <h4>No Investments Yet</h4>
-                        <p>Start tracking your investments to see portfolio performance</p>
+                        <h4><?php echo __('no_investments_yet'); ?></h4>
+                        <p><?php echo __('start_tracking_investments'); ?></p>
                         <a href="<?php echo BASE_PATH; ?>/investments" class="btn-add-data">
                             <i class="fas fa-plus"></i>
-                            Add Investment
+                            <?php echo __('add_investment'); ?>
                         </a>
                     </div>
                 <?php endif; ?>
@@ -361,14 +361,14 @@ require_once 'includes/header.php';
             <div class="card-header">
                 <div class="card-title">
                     <i class="fas fa-chart-bar"></i>
-                    <h3>Budget Status</h3>
+                    <h3><?php echo __('budget_status'); ?></h3>
                 </div>
             </div>
             <div class="card-body">
                 <?php if (!empty($budget_status)): ?>
                     <div class="budget-overview">
                         <div class="budget-header">
-                            <span class="budget-title">Overall Budget Utilization</span>
+                            <span class="budget-title"><?php echo __('overall_budget_utilization'); ?></span>
                             <?php 
                             $total_budget = 0;
                             $total_spent = 0;
@@ -388,7 +388,7 @@ require_once 'includes/header.php';
                     </div>
 
                     <div class="budget-categories">
-                        <h4 class="section-title">Budget Categories</h4>
+                        <h4 class="section-title"><?php echo __('budget_categories'); ?></h4>
                         <?php foreach ($budget_status as $budget_item): ?>
                             <div class="budget-category">
                                 <div class="category-header">
@@ -406,11 +406,11 @@ require_once 'includes/header.php';
                 <?php else: ?>
                     <div class="empty-state">
                         <i class="fas fa-chart-bar"></i>
-                        <h4>No Budget Set</h4>
-                        <p>Create a budget to track your spending limits</p>
+                        <h4><?php echo __('no_budget_set'); ?></h4>
+                        <p><?php echo __('create_budget_track'); ?></p>
                         <a href="<?php echo BASE_PATH; ?>/budget" class="btn-add-data">
                             <i class="fas fa-plus"></i>
-                            Create Budget
+                            <?php echo __('create_budget'); ?>
                         </a>
                     </div>
                 <?php endif; ?>
@@ -442,17 +442,18 @@ function getBudgetProgressClass($percentage) {
     return 'progress-bar-bg-success';
 }
 
+// Updated to use translated messages based on score
 function getFinancialHealthAdvice($score) {
     if ($score >= 85) {
-        return 'Excellent financial health! You\'re saving consistently and have a strong financial foundation. Consider optimizing your investments for even better returns.';
+        return __('financial_health_advice_excellent');
     } elseif ($score >= 70) {
-        return 'Good financial health. You\'re on the right track. Focus on increasing your savings rate and diversifying your investments.';
+        return __('financial_health_advice_good');
     } elseif ($score >= 50) {
-        return 'Average financial health. Look for ways to reduce expenses and increase your savings rate to improve your financial position.';
+        return __('financial_health_advice_average');
     } elseif ($score >= 35) {
-        return 'Below average financial health. Work on reducing your expense to income ratio and start building emergency savings.';
+        return __('financial_health_advice_below_average');
     } else {
-        return 'Your financial health needs attention. Focus on reducing expenses and debt, while finding ways to increase income.';
+        return __('financial_health_advice_poor');
     }
 }
 

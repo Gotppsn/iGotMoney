@@ -26,8 +26,12 @@ function initializeIncomeExpensesChart() {
     const monthlyIncome = parseFloat(monthlyIncomeEl.getAttribute('content'));
     const monthlyExpenses = parseFloat(monthlyExpensesEl.getAttribute('content'));
     
+    // Get language-specific labels
+    const incomeLabel = document.documentElement.lang === 'th' ? 'รายได้' : 'Income';
+    const expensesLabel = document.documentElement.lang === 'th' ? 'ค่าใช้จ่าย' : 'Expenses';
+    
     const data = {
-        labels: ['Income', 'Expenses'],
+        labels: [incomeLabel, expensesLabel],
         datasets: [{
             data: [monthlyIncome, monthlyExpenses],
             backgroundColor: [
@@ -56,7 +60,9 @@ function initializeIncomeExpensesChart() {
                         padding: 15,
                         font: {
                             size: 14,
-                            weight: 500
+                            weight: 500,
+                            family: document.documentElement.lang === 'th' ? 
+                                   "'Noto Sans Thai', sans-serif" : "'Inter', sans-serif"
                         },
                         usePointStyle: true
                     }
@@ -69,10 +75,14 @@ function initializeIncomeExpensesChart() {
                     cornerRadius: 12,
                     titleFont: {
                         size: 16,
-                        weight: 600
+                        weight: 600,
+                        family: document.documentElement.lang === 'th' ? 
+                               "'Noto Sans Thai', sans-serif" : "'Inter', sans-serif"
                     },
                     bodyFont: {
-                        size: 14
+                        size: 14,
+                        family: document.documentElement.lang === 'th' ? 
+                               "'Noto Sans Thai', sans-serif" : "'Inter', sans-serif"
                     },
                     displayColors: true,
                     usePointStyle: true,
@@ -140,7 +150,9 @@ function initializeInvestmentChart() {
                         padding: 12,
                         font: {
                             size: 13,
-                            weight: 500
+                            weight: 500,
+                            family: document.documentElement.lang === 'th' ? 
+                                   "'Noto Sans Thai', sans-serif" : "'Inter', sans-serif"
                         },
                         usePointStyle: true
                     }
@@ -153,10 +165,14 @@ function initializeInvestmentChart() {
                     cornerRadius: 12,
                     titleFont: {
                         size: 16,
-                        weight: 600
+                        weight: 600,
+                        family: document.documentElement.lang === 'th' ? 
+                               "'Noto Sans Thai', sans-serif" : "'Inter', sans-serif"
                     },
                     bodyFont: {
-                        size: 14
+                        size: 14,
+                        family: document.documentElement.lang === 'th' ? 
+                               "'Noto Sans Thai', sans-serif" : "'Inter', sans-serif"
                     },
                     displayColors: true,
                     usePointStyle: true,
@@ -267,7 +283,7 @@ function initializeEventListeners() {
         });
     });
     
-    // Smooth scroll for internal links - FIXED
+    // Smooth scroll for internal links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
             e.preventDefault();
