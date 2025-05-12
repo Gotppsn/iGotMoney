@@ -1,6 +1,6 @@
 <?php
 // Set page title and current page for menu highlighting
-$page_title = 'Budget Management - iGotMoney';
+$page_title = __('budget_management') . ' - ' . __('app_name');
 $current_page = 'budget';
 
 // Additional CSS for modern design
@@ -16,17 +16,17 @@ require_once 'includes/header.php';
     <div class="page-header-section">
         <div class="page-header-content">
             <div class="page-title-group">
-                <h1 class="page-title">Budget Management</h1>
-                <p class="page-subtitle">Plan, track, and optimize your financial future with smart budgeting</p>
+                <h1 class="page-title"><?php echo __('budget_management'); ?></h1>
+                <p class="page-subtitle"><?php echo __('budget_subtitle'); ?></p>
             </div>
             <div class="page-actions">
                 <button type="button" class="btn-generate-budget" data-bs-toggle="modal" data-bs-target="#generateBudgetModal">
                     <i class="fas fa-magic"></i>
-                    <span>Auto-Generate</span>
+                    <span><?php echo __('auto_generate'); ?></span>
                 </button>
                 <button type="button" class="btn-add-budget" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
                     <i class="fas fa-plus-circle"></i>
-                    <span>Add Budget</span>
+                    <span><?php echo __('add_budget'); ?></span>
                 </button>
             </div>
         </div>
@@ -63,11 +63,11 @@ require_once 'includes/header.php';
                     <i class="fas fa-wallet"></i>
                 </div>
                 <div class="stat-content">
-                    <h3 class="stat-label">Total Budget</h3>
+                    <h3 class="stat-label"><?php echo __('total_budget'); ?></h3>
                     <p class="stat-value">$<?php echo number_format($total_budget, 2); ?></p>
                     <div class="stat-info">
                         <i class="fas fa-calendar"></i>
-                        <span>This Month</span>
+                        <span><?php echo __('this_month'); ?></span>
                     </div>
                 </div>
             </div>
@@ -77,11 +77,11 @@ require_once 'includes/header.php';
                     <i class="fas fa-heartbeat"></i>
                 </div>
                 <div class="stat-content">
-                    <h3 class="stat-label">Budget Health</h3>
+                    <h3 class="stat-label"><?php echo __('budget_health'); ?></h3>
                     <p class="stat-value"><?php echo number_format($budget_health, 0); ?>%</p>
                     <div class="stat-trend <?php echo $budget_health >= 50 ? 'positive' : ($budget_health >= 30 ? 'warning' : 'negative'); ?>">
                         <i class="fas fa-<?php echo $budget_health >= 50 ? 'check-circle' : ($budget_health >= 30 ? 'exclamation-triangle' : 'exclamation-circle'); ?>"></i>
-                        <span><?php echo $budget_health >= 50 ? 'Healthy' : ($budget_health >= 30 ? 'Needs Attention' : 'Critical'); ?></span>
+                        <span><?php echo $budget_health >= 50 ? __('healthy') : ($budget_health >= 30 ? __('needs_attention') : __('critical')); ?></span>
                     </div>
                 </div>
             </div>
@@ -91,17 +91,17 @@ require_once 'includes/header.php';
                     <i class="fas fa-chart-line"></i>
                 </div>
                 <div class="stat-content">
-                    <h3 class="stat-label">Investment Budget</h3>
+                    <h3 class="stat-label"><?php echo __('investment_budget'); ?></h3>
                     <p class="stat-value">$<?php echo number_format($investment_budget, 2); ?></p>
                     <?php if ($investment_budget > 0): ?>
                         <div class="stat-trend <?php echo $investment_spent >= $investment_budget ? 'positive' : 'warning'; ?>">
                             <i class="fas fa-<?php echo $investment_spent >= $investment_budget ? 'check' : 'arrow-up'; ?>"></i>
-                            <span><?php echo $investment_spent >= $investment_budget ? 'Goal Reached' : '$' . number_format($investment_budget - $investment_spent, 2) . ' remaining'; ?></span>
+                            <span><?php echo $investment_spent >= $investment_budget ? __('goal_reached') : '$' . number_format($investment_budget - $investment_spent, 2) . ' ' . __('remaining'); ?></span>
                         </div>
                     <?php else: ?>
                         <div class="stat-info">
                             <i class="fas fa-info-circle"></i>
-                            <span>Not set</span>
+                            <span><?php echo __('not_set'); ?></span>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -117,7 +117,7 @@ require_once 'includes/header.php';
                 <div class="chart-header">
                     <div class="chart-title">
                         <i class="fas fa-chart-pie"></i>
-                        <h3>Budget Overview</h3>
+                        <h3><?php echo __('budget_overview'); ?></h3>
                     </div>
                 </div>
                 <div class="chart-body">
@@ -132,21 +132,21 @@ require_once 'includes/header.php';
                                 </svg>
                                 <div class="gauge-center">
                                     <span class="gauge-value"><?php echo number_format($budget_health, 0); ?>%</span>
-                                    <span class="gauge-label">Remaining</span>
+                                    <span class="gauge-label"><?php echo __('remaining'); ?></span>
                                 </div>
                             </div>
                         </div>
                         <div class="budget-breakdown">
                             <div class="breakdown-item">
-                                <span class="breakdown-label">Total Budget</span>
+                                <span class="breakdown-label"><?php echo __('total_budget'); ?></span>
                                 <span class="breakdown-value">$<?php echo number_format($total_budget, 2); ?></span>
                             </div>
                             <div class="breakdown-item">
-                                <span class="breakdown-label">Spent</span>
+                                <span class="breakdown-label"><?php echo __('spent'); ?></span>
                                 <span class="breakdown-value text-danger">$<?php echo number_format($total_spent, 2); ?></span>
                             </div>
                             <div class="breakdown-item">
-                                <span class="breakdown-label">Remaining</span>
+                                <span class="breakdown-label"><?php echo __('remaining'); ?></span>
                                 <span class="breakdown-value text-success">$<?php echo number_format($total_remaining, 2); ?></span>
                             </div>
                         </div>
@@ -159,7 +159,7 @@ require_once 'includes/header.php';
                 <div class="chart-header">
                     <div class="chart-title">
                         <i class="fas fa-list-ol"></i>
-                        <h3>Top Budget Categories</h3>
+                        <h3><?php echo __('top_budget_categories'); ?></h3>
                     </div>
                 </div>
                 <div class="chart-body">
@@ -194,14 +194,14 @@ require_once 'includes/header.php';
                                     </div>
                                     <div class="category-amount">
                                         <span class="amount">$<?php echo number_format($budget['budget_amount'], 2); ?></span>
-                                        <span class="spent">$<?php echo number_format($budget['spent'], 2); ?> spent</span>
+                                        <span class="spent">$<?php echo number_format($budget['spent'], 2); ?> <?php echo __('spent'); ?></span>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <div class="empty-categories">
                                 <i class="fas fa-folder-open"></i>
-                                <p>No budgets created yet</p>
+                                <p><?php echo __('no_budgets_created_yet'); ?></p>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -216,12 +216,12 @@ require_once 'includes/header.php';
             <div class="table-header">
                 <div class="table-title">
                     <i class="fas fa-tasks"></i>
-                    <h3>Budget Categories</h3>
+                    <h3><?php echo __('budget_categories'); ?></h3>
                 </div>
                 <div class="table-controls">
                     <div class="search-box">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="categorySearch" placeholder="Search categories..." data-table-search="budgetTable">
+                        <input type="text" id="categorySearch" placeholder="<?php echo __('search_categories'); ?>" data-table-search="budgetTable">
                     </div>
                 </div>
             </div>
@@ -231,17 +231,17 @@ require_once 'includes/header.php';
                         <div class="empty-icon">
                             <i class="fas fa-chart-pie"></i>
                         </div>
-                        <h4>No budgets defined yet</h4>
-                        <p>Start by creating a budget for each expense category.</p>
+                        <h4><?php echo __('no_budgets_defined_yet'); ?></h4>
+                        <p><?php echo __('start_by_creating_budget'); ?></p>
                         <div class="empty-actions">
                             <button type="button" class="btn-add-first" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
                                 <i class="fas fa-plus"></i>
-                                Add Your First Budget
+                                <?php echo __('add_your_first_budget'); ?>
                             </button>
-                            <span class="action-separator">or</span>
+                            <span class="action-separator"><?php echo __('or'); ?></span>
                             <button type="button" class="btn-generate-first" data-bs-toggle="modal" data-bs-target="#generateBudgetModal">
                                 <i class="fas fa-magic"></i>
-                                Auto-Generate Budget
+                                <?php echo __('auto_generate_budget'); ?>
                             </button>
                         </div>
                     </div>
@@ -250,13 +250,13 @@ require_once 'includes/header.php';
                         <table class="budget-table" id="budgetTable">
                             <thead>
                                 <tr>
-                                    <th>Category</th>
-                                    <th>Budget</th>
-                                    <th>Spent</th>
-                                    <th>Remaining</th>
-                                    <th>Progress</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th><?php echo __('category'); ?></th>
+                                    <th><?php echo __('budget'); ?></th>
+                                    <th><?php echo __('spent'); ?></th>
+                                    <th><?php echo __('remaining'); ?></th>
+                                    <th><?php echo __('progress'); ?></th>
+                                    <th><?php echo __('status'); ?></th>
+                                    <th><?php echo __('actions'); ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -300,26 +300,26 @@ require_once 'includes/header.php';
                                             <?php
                                             if ($budget['is_investment']) {
                                                 if ($budget['percentage'] >= 100) {
-                                                    echo '<span class="status-badge success">On Track</span>';
+                                                    echo '<span class="status-badge success">' . __('on_track') . '</span>';
                                                 } else {
-                                                    echo '<span class="status-badge warning">Invest More</span>';
+                                                    echo '<span class="status-badge warning">' . __('invest_more') . '</span>';
                                                 }
                                             } else {
                                                 if ($budget['percentage'] >= 90) {
-                                                    echo '<span class="status-badge danger">Critical</span>';
+                                                    echo '<span class="status-badge danger">' . __('critical') . '</span>';
                                                 } elseif ($budget['percentage'] >= 70) {
-                                                    echo '<span class="status-badge warning">Warning</span>';
+                                                    echo '<span class="status-badge warning">' . __('warning') . '</span>';
                                                 } else {
-                                                    echo '<span class="status-badge success">Good</span>';
+                                                    echo '<span class="status-badge success">' . __('good') . '</span>';
                                                 }
                                             }
                                             ?>
                                         </td>
                                         <td class="actions-cell">
-                                            <button class="btn-action edit" data-budget-id="<?php echo $budget['budget_id']; ?>" title="Edit">
+                                            <button class="btn-action edit" data-budget-id="<?php echo $budget['budget_id']; ?>" title="<?php echo __('edit'); ?>">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button class="btn-action delete" data-budget-id="<?php echo $budget['budget_id']; ?>" title="Delete">
+                                            <button class="btn-action delete" data-budget-id="<?php echo $budget['budget_id']; ?>" title="<?php echo __('delete'); ?>">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </td>
@@ -340,17 +340,17 @@ require_once 'includes/header.php';
             <div class="card-header">
                 <div class="card-title">
                     <i class="fas fa-lightbulb"></i>
-                    <h3>Smart Budget Recommendations</h3>
+                    <h3><?php echo __('smart_budget_recommendations'); ?></h3>
                 </div>
                 <button class="btn-adopt-all" id="adoptAllRecommendations">
                     <i class="fas fa-check"></i>
-                    Adopt All
+                    <?php echo __('adopt_all'); ?>
                 </button>
             </div>
             <div class="card-body">
                 <div class="recommendation-info">
                     <i class="fas fa-info-circle"></i>
-                    <p>Based on your income of <strong>$<?php echo number_format($monthly_income, 2); ?></strong> per month, we recommend prioritizing <strong>investments</strong> and optimizing your budget allocation.</p>
+                    <p><?php echo __('based_on_your_income'); ?> <strong>$<?php echo number_format($monthly_income, 2); ?></strong> <?php echo __('per_month'); ?>, <?php echo __('we_recommend'); ?> <strong><?php echo __('investments'); ?></strong> <?php echo __('optimizing_budget'); ?>.</p>
                 </div>
                 
                 <div class="recommendations-grid">
@@ -373,7 +373,7 @@ require_once 'includes/header.php';
                                     data-category-id="<?php echo $recommendation['category_id']; ?>"
                                     data-amount="<?php echo $recommendation['allocated_amount']; ?>">
                                 <i class="fas fa-check"></i>
-                                Adopt
+                                <?php echo __('adopt'); ?>
                             </button>
                         </div>
                     <?php endforeach; ?>
@@ -393,7 +393,7 @@ require_once 'includes/header.php';
                 <div class="modal-icon">
                     <i class="fas fa-plus-circle"></i>
                 </div>
-                <h5 class="modal-title">Add New Budget</h5>
+                <h5 class="modal-title"><?php echo __('add_new_budget'); ?></h5>
                 <button type="button" class="modal-close" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i>
                 </button>
@@ -404,9 +404,9 @@ require_once 'includes/header.php';
                 <div class="modal-body">
                     <div class="form-grid">
                         <div class="form-field">
-                            <label for="category_id">Category</label>
+                            <label for="category_id"><?php echo __('category'); ?></label>
                             <select class="modern-select" id="category_id" name="category_id" required>
-                                <option value="">Select a category</option>
+                                <option value=""><?php echo __('please_select_category'); ?></option>
                                 <?php 
                                 if (isset($categories) && $categories->num_rows > 0) {
                                     $categories->data_seek(0);
@@ -425,7 +425,7 @@ require_once 'includes/header.php';
                         </div>
                         
                         <div class="form-field">
-                            <label for="amount">Budget Amount</label>
+                            <label for="amount"><?php echo __('budget_amount'); ?></label>
                             <div class="amount-input">
                                 <span class="currency-symbol">$</span>
                                 <input type="number" id="amount" name="amount" step="0.01" min="0.01" required>
@@ -433,22 +433,22 @@ require_once 'includes/header.php';
                         </div>
                         
                         <div class="form-field">
-                            <label for="start_date">Start Date</label>
+                            <label for="start_date"><?php echo __('start_date'); ?></label>
                             <input type="date" id="start_date" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
                         </div>
                         
                         <div class="form-field">
-                            <label for="end_date">End Date</label>
+                            <label for="end_date"><?php echo __('end_date'); ?></label>
                             <input type="date" id="end_date" name="end_date" value="<?php echo date('Y-m-d', strtotime('+1 month')); ?>" required>
                         </div>
                     </div>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal"><?php echo __('cancel'); ?></button>
                     <button type="submit" class="btn-submit">
                         <i class="fas fa-plus"></i>
-                        Add Budget
+                        <?php echo __('add_budget'); ?>
                     </button>
                 </div>
             </form>
@@ -464,7 +464,7 @@ require_once 'includes/header.php';
                 <div class="modal-icon edit">
                     <i class="fas fa-edit"></i>
                 </div>
-                <h5 class="modal-title">Edit Budget</h5>
+                <h5 class="modal-title"><?php echo __('edit_budget'); ?></h5>
                 <button type="button" class="modal-close" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i>
                 </button>
@@ -476,9 +476,9 @@ require_once 'includes/header.php';
                 <div class="modal-body">
                     <div class="form-grid">
                         <div class="form-field">
-                            <label for="edit_category_id">Category</label>
+                            <label for="edit_category_id"><?php echo __('category'); ?></label>
                             <select class="modern-select" id="edit_category_id" name="category_id" required>
-                                <option value="">Select a category</option>
+                                <option value=""><?php echo __('please_select_category'); ?></option>
                                 <?php 
                                 if (isset($categories) && $categories->num_rows > 0) {
                                     $categories->data_seek(0);
@@ -497,7 +497,7 @@ require_once 'includes/header.php';
                         </div>
                         
                         <div class="form-field">
-                            <label for="edit_amount">Budget Amount</label>
+                            <label for="edit_amount"><?php echo __('budget_amount'); ?></label>
                             <div class="amount-input">
                                 <span class="currency-symbol">$</span>
                                 <input type="number" id="edit_amount" name="amount" step="0.01" min="0.01" required>
@@ -505,22 +505,22 @@ require_once 'includes/header.php';
                         </div>
                         
                         <div class="form-field">
-                            <label for="edit_start_date">Start Date</label>
+                            <label for="edit_start_date"><?php echo __('start_date'); ?></label>
                             <input type="date" id="edit_start_date" name="start_date" required>
                         </div>
                         
                         <div class="form-field">
-                            <label for="edit_end_date">End Date</label>
+                            <label for="edit_end_date"><?php echo __('end_date'); ?></label>
                             <input type="date" id="edit_end_date" name="end_date" required>
                         </div>
                     </div>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal"><?php echo __('cancel'); ?></button>
                     <button type="submit" class="btn-submit">
                         <i class="fas fa-save"></i>
-                        Save Changes
+                        <?php echo __('save_changes'); ?>
                     </button>
                 </div>
             </form>
@@ -536,23 +536,23 @@ require_once 'includes/header.php';
                 <div class="modal-icon delete">
                     <i class="fas fa-trash-alt"></i>
                 </div>
-                <h5 class="modal-title">Delete Budget</h5>
+                <h5 class="modal-title"><?php echo __('delete_budget'); ?></h5>
                 <button type="button" class="modal-close" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body text-center">
-                <p>Are you sure you want to delete this budget?</p>
-                <p class="text-muted">This action cannot be undone.</p>
+                <p><?php echo __('are_you_sure_delete_budget'); ?></p>
+                <p class="text-muted"><?php echo __('action_cannot_be_undone'); ?></p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-cancel" data-bs-dismiss="modal"><?php echo __('cancel'); ?></button>
                 <form action="<?php echo BASE_PATH; ?>/budget" method="post" id="deleteBudgetForm">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="budget_id" id="delete_budget_id">
                     <button type="submit" class="btn-submit danger">
                         <i class="fas fa-trash-alt"></i>
-                        Delete
+                        <?php echo __('delete'); ?>
                     </button>
                 </form>
             </div>
@@ -568,7 +568,7 @@ require_once 'includes/header.php';
                 <div class="modal-icon generate">
                     <i class="fas fa-magic"></i>
                 </div>
-                <h5 class="modal-title">Auto-Generate Budget</h5>
+                <h5 class="modal-title"><?php echo __('auto_generate_budget'); ?></h5>
                 <button type="button" class="modal-close" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i>
                 </button>
@@ -581,41 +581,41 @@ require_once 'includes/header.php';
                     <?php if (isset($monthly_income) && $monthly_income > 0): ?>
                         <div class="alert-info">
                             <i class="fas fa-info-circle"></i>
-                            <p>The system will generate a budget optimized for your financial growth, prioritizing investments.</p>
+                            <p><?php echo __('budget_info'); ?></p>
                         </div>
                         
                         <div class="income-display">
-                            <span class="income-label">Your current monthly income:</span>
+                            <span class="income-label"><?php echo __('your_current_monthly_income'); ?></span>
                             <span class="income-amount">$<?php echo number_format($monthly_income, 2); ?></span>
                         </div>
                         
                         <div class="generation-info">
-                            <h6>Budget will be created with:</h6>
+                            <h6><?php echo __('budget_will_be_created_with'); ?></h6>
                             <ul>
-                                <li><strong>10% minimum for investments</strong></li>
-                                <li>Smart allocation based on spending patterns</li>
-                                <li>Optimal financial ratios for wealth building</li>
+                                <li><strong><?php echo __('minimum_for_investments'); ?></strong></li>
+                                <li><?php echo __('smart_allocation'); ?></li>
+                                <li><?php echo __('optimal_financial_ratios'); ?></li>
                             </ul>
                         </div>
                         
                         <div class="alert-warning">
                             <i class="fas fa-exclamation-triangle"></i>
-                            <p>This will replace any existing budgets for the current month.</p>
+                            <p><?php echo __('replace_existing_budgets'); ?></p>
                         </div>
                     <?php else: ?>
                         <div class="alert-danger">
                             <i class="fas fa-exclamation-triangle"></i>
-                            <p>You need to add income sources before generating a budget plan.
-                               <a href="<?php echo BASE_PATH; ?>/income" class="alert-link">Go to Income Management</a> to add your income sources.</p>
+                            <p><?php echo __('need_to_add_income'); ?>
+                               <a href="<?php echo BASE_PATH; ?>/income" class="alert-link"><?php echo __('go_to_income_management'); ?></a> <?php echo __('to_add_your_income_sources'); ?></p>
                         </div>
                     <?php endif; ?>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal"><?php echo __('cancel'); ?></button>
                     <button type="submit" class="btn-submit" <?php echo (isset($monthly_income) && $monthly_income > 0) ? '' : 'disabled'; ?>>
                         <i class="fas fa-magic"></i>
-                        Generate Budget
+                        <?php echo __('generate_budget'); ?>
                     </button>
                 </div>
             </form>

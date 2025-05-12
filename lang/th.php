@@ -264,5 +264,75 @@ return [
     // Expense Stats
     'from_last_month' => 'จากเดือนที่แล้ว',
     'projected_for_year' => 'คาดการณ์สำหรับปี',
+    
+    // Budget page specific translations
+    'budget_management' => 'จัดการงบประมาณ',
+    'budget_subtitle' => 'วางแผน ติดตาม และเพิ่มประสิทธิภาพอนาคตทางการเงินของคุณด้วยการจัดงบประมาณอย่างชาญฉลาด',
+    'auto_generate' => 'สร้างอัตโนมัติ',
+    'add_budget' => 'เพิ่มงบประมาณ',
+    'total_budget' => 'งบประมาณรวม',
+    'budget_health' => 'สุขภาพงบประมาณ',
+    'investment_budget' => 'งบประมาณการลงทุน',
+    'healthy' => 'สุขภาพดี',
+    'needs_attention' => 'ต้องการความสนใจ',
+    'critical' => 'วิกฤติ',
+    'goal_reached' => 'ถึงเป้าหมายแล้ว',
+    'remaining' => 'ที่เหลือ',
+    'not_set' => 'ยังไม่ได้ตั้งค่า',
+    'budget_overview' => 'ภาพรวมงบประมาณ',
+    'spent' => 'ใช้จ่ายไปแล้ว',
+    'top_budget_categories' => 'หมวดหมู่งบประมาณยอดนิยม',
+    'no_budgets_created_yet' => 'ยังไม่ได้สร้างงบประมาณ',
+    'budget_categories' => 'หมวดหมู่งบประมาณ',
+    'search_categories' => 'ค้นหาหมวดหมู่...',
+    'no_budgets_defined_yet' => 'ยังไม่ได้กำหนดงบประมาณ',
+    'start_by_creating_budget' => 'เริ่มด้วยการสร้างงบประมาณสำหรับแต่ละหมวดหมู่ค่าใช้จ่าย',
+    'add_your_first_budget' => 'เพิ่มงบประมาณแรกของคุณ',
+    'auto_generate_budget' => 'สร้างงบประมาณอัตโนมัติ',
+    'or' => 'หรือ',
+    'progress' => 'ความคืบหน้า',
+    'good' => 'ดี',
+    'warning' => 'เตือน',
+    'critical' => 'วิกฤติ',
+    'on_track' => 'เป็นไปตามแผน',
+    'invest_more' => 'ลงทุนเพิ่ม',
+    'smart_budget_recommendations' => 'คำแนะนำงบประมาณอัจฉริยะ',
+    'adopt_all' => 'นำไปใช้ทั้งหมด',
+    'budget_recommendation_info' => 'จากรายได้ของคุณ {amount} ต่อเดือน เราแนะนำให้ให้ความสำคัญกับ <strong>การลงทุน</strong> และปรับการจัดสรรงบประมาณของคุณให้เหมาะสม',
+    'based_on_your_income' => 'จากรายได้ของคุณจำนวน',
+    'per_month' => 'ต่อเดือน',
+    'we_recommend' => 'เราแนะนำให้ให้ความสำคัญกับ',
+    'investments' => 'การลงทุน',
+    'optimizing_budget' => 'และปรับการจัดสรรงบประมาณของคุณให้เหมาะสม',
+    'adopt' => 'นำไปใช้',
+    
+    // Add Budget Modal
+    'add_new_budget' => 'เพิ่มงบประมาณใหม่',
+    'please_select_category' => 'กรุณาเลือกหมวดหมู่',
+    'budget_amount' => 'จำนวนงบประมาณ',
+    
+    // Edit Budget Modal
+    'edit_budget' => 'แก้ไขงบประมาณ',
+    
+    // Delete Budget Modal
+    'delete_budget' => 'ลบงบประมาณ',
+    'are_you_sure_delete_budget' => 'คุณแน่ใจหรือไม่ว่าต้องการลบงบประมาณนี้?',
+    
+    // Generate Budget Modal
+    'auto_generate_budget' => 'สร้างงบประมาณอัตโนมัติ',
+    'budget_info' => 'ระบบจะสร้างงบประมาณที่เหมาะสมสำหรับการเติบโตทางการเงินของคุณ โดยให้ความสำคัญกับการลงทุน',
+    'your_current_monthly_income' => 'รายได้รายเดือนปัจจุบันของคุณ:',
+    'budget_will_be_created_with' => 'งบประมาณจะถูกสร้างด้วย:',
+    'minimum_for_investments' => 'ขั้นต่ำ 10% สำหรับการลงทุน',
+    'smart_allocation' => 'การจัดสรรอย่างชาญฉลาดตามรูปแบบการใช้จ่าย',
+    'optimal_financial_ratios' => 'อัตราส่วนทางการเงินที่เหมาะสมสำหรับการสร้างความมั่งคั่ง',
+    'replace_existing_budgets' => 'นี่จะแทนที่งบประมาณที่มีอยู่สำหรับเดือนปัจจุบัน',
+    'need_to_add_income' => 'คุณต้องเพิ่มแหล่งรายได้ก่อนสร้างแผนงบประมาณ',
+    'go_to_income_management' => 'ไปที่การจัดการรายได้',
+    'generate_budget' => 'สร้างงบประมาณ',
+    
+    // No matching results for budget
+    'no_matching_budgets_found' => 'ไม่พบงบประมาณที่ตรงกัน',
+    'try_adjusting_your_search' => 'ลองปรับคำค้นหาของคุณ',
 ];
 ?>

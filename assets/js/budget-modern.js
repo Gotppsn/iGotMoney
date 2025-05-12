@@ -89,7 +89,10 @@ function initializeEventListeners() {
     const adoptAllBtn = document.getElementById('adoptAllRecommendations');
     if (adoptAllBtn) {
         adoptAllBtn.addEventListener('click', function() {
-            if (confirm('Are you sure you want to adopt all budget recommendations? This will create budget entries for all recommended categories.')) {
+            const confirmMessage = document.querySelector('meta[name="confirm-adopt-all"]')?.getAttribute('content') || 
+                'Are you sure you want to adopt all budget recommendations? This will create budget entries for all recommended categories.';
+            
+            if (confirm(confirmMessage)) {
                 document.getElementById('generateBudgetForm').submit();
             }
         });
@@ -118,12 +121,16 @@ function loadBudgetForEdit(budgetId) {
             const editModal = new bootstrap.Modal(document.getElementById('editBudgetModal'));
             editModal.show();
         } else {
-            showNotification('Failed to load budget data', 'error');
+            const errorMsg = document.querySelector('meta[name="error-load-budget"]')?.getAttribute('content') || 
+                'Failed to load budget data';
+            showNotification(errorMsg, 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('An error occurred while loading budget data', 'error');
+        const errorMsg = document.querySelector('meta[name="error-load-budget-general"]')?.getAttribute('content') || 
+            'An error occurred while loading budget data';
+        showNotification(errorMsg, 'error');
     });
 }
 
@@ -182,8 +189,15 @@ function initializeSearch() {
                 if (tableBody) tableBody.style.display = 'none';
                 if (noDataMessage) {
                     noDataMessage.style.display = 'block';
-                    noDataMessage.querySelector('h4').textContent = 'No matching budgets found';
-                    noDataMessage.querySelector('p').textContent = 'Try adjusting your search term';
+                    
+                    // Get translation from meta tags
+                    const noMatchingBudgetsText = document.querySelector('meta[name="no-matching-budgets"]')?.getAttribute('content') || 
+                        'No matching budgets found';
+                    const tryAdjustingText = document.querySelector('meta[name="try-adjusting-search"]')?.getAttribute('content') || 
+                        'Try adjusting your search term';
+                        
+                    noDataMessage.querySelector('h4').textContent = noMatchingBudgetsText;
+                    noDataMessage.querySelector('p').textContent = tryAdjustingText;
                     const emptyActions = noDataMessage.querySelector('.empty-actions');
                     if (emptyActions) emptyActions.style.display = 'none';
                 }
