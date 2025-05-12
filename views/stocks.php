@@ -1,6 +1,6 @@
 <?php
 // Set page title and current page for menu highlighting
-$page_title = 'Stock Analysis - iGotMoney';
+$page_title = __('stocks_page_title') . ' - ' . __('app_name');
 $current_page = 'stocks';
 
 // Additional CSS and JS
@@ -17,12 +17,12 @@ require_once 'includes/header.php';
     <div class="page-header-section">
         <div class="page-header-content">
             <div class="page-title-group">
-                <h1 class="page-title">Stock Analysis</h1>
-                <p class="page-subtitle">Track, analyze, and discover investment opportunities</p>
+                <h1 class="page-title"><?php echo __('stocks_page_title'); ?></h1>
+                <p class="page-subtitle"><?php echo __('stocks_subtitle'); ?></p>
             </div>
             <button type="button" class="btn-add-watchlist" data-bs-toggle="modal" data-bs-target="#addToWatchlistModal">
                 <i class="fas fa-plus-circle"></i>
-                <span>Add to Watchlist</span>
+                <span><?php echo __('add_to_watchlist'); ?></span>
             </button>
         </div>
     </div>
@@ -33,10 +33,10 @@ require_once 'includes/header.php';
             <div class="analysis-header">
                 <div class="analysis-title">
                     <i class="fas fa-chart-line"></i>
-                    <h3>Stock Analysis</h3>
+                    <h3><?php echo __('stock_analysis'); ?></h3>
                 </div>
                 <?php if (isset($stock_analysis) && isset($stock_analysis['is_demo_data'])): ?>
-                <span class="badge bg-primary">Demo Data</span>
+                <span class="badge bg-primary"><?php echo __('demo_data'); ?></span>
                 <?php endif; ?>
             </div>
             <div class="analysis-body">
@@ -46,10 +46,10 @@ require_once 'includes/header.php';
                     <div class="search-input-wrapper">
                         <i class="fas fa-search search-icon"></i>
                         <input type="text" class="search-input" id="ticker_symbol" name="ticker_symbol" 
-                               placeholder="Enter stock ticker (e.g., AAPL, MSFT, GOOG)" required>
-                        <button class="search-btn" type="submit">Analyze</button>
+                               placeholder="<?php echo __('enter_stock_ticker'); ?>" required>
+                        <button class="search-btn" type="submit"><?php echo __('analyze'); ?></button>
                     </div>
-                    <div class="form-text">Enter the ticker symbol of the stock you want to analyze</div>
+                    <div class="form-text"><?php echo __('ticker_symbol_description'); ?></div>
                 </form>
                 
                 <!-- Analysis Results -->
@@ -88,32 +88,32 @@ require_once 'includes/header.php';
                                                 $<span id="priceChange"><?php echo number_format($stock_analysis['price_change'], 2); ?></span>
                                                 (<span id="priceChangePercent"><?php echo number_format($stock_analysis['price_change_percent'], 2); ?>%</span>)
                                             </div>
-                                            <div class="price-update-time">Auto-updates every minute</div>
+                                            <div class="price-update-time"><?php echo __('auto_updates_every_minute'); ?></div>
                                         </div>
                                     </div>
                                     
                                     <!-- Technical Indicators Card -->
                                     <div class="indicators-card">
-                                        <h4>Technical Indicators</h4>
+                                        <h4><?php echo __('technical_indicators'); ?></h4>
                                         <div class="indicator-list">
                                             <div class="indicator-item">
-                                                <span class="indicator-label">Short MA (20-day)</span>
+                                                <span class="indicator-label"><?php echo __('short_ma'); ?></span>
                                                 <span class="indicator-value">$<?php echo number_format($stock_analysis['short_ma'], 2); ?></span>
                                             </div>
                                             <div class="indicator-item">
-                                                <span class="indicator-label">Long MA (50-day)</span>
+                                                <span class="indicator-label"><?php echo __('long_ma'); ?></span>
                                                 <span class="indicator-value">$<?php echo number_format($stock_analysis['long_ma'], 2); ?></span>
                                             </div>
                                             <div class="indicator-item">
-                                                <span class="indicator-label">RSI (14-day)</span>
+                                                <span class="indicator-label"><?php echo __('rsi'); ?></span>
                                                 <span class="indicator-value"><?php echo number_format($stock_analysis['rsi'], 2); ?></span>
                                             </div>
                                             <div class="indicator-item">
-                                                <span class="indicator-label">Bollinger Upper</span>
+                                                <span class="indicator-label"><?php echo __('bollinger_upper'); ?></span>
                                                 <span class="indicator-value">$<?php echo number_format($stock_analysis['bollinger_upper'], 2); ?></span>
                                             </div>
                                             <div class="indicator-item">
-                                                <span class="indicator-label">Bollinger Lower</span>
+                                                <span class="indicator-label"><?php echo __('bollinger_lower'); ?></span>
                                                 <span class="indicator-value">$<?php echo number_format($stock_analysis['bollinger_lower'], 2); ?></span>
                                             </div>
                                         </div>
@@ -123,23 +123,27 @@ require_once 'includes/header.php';
                                     <?php
                                     $rec_class = $stock_analysis['recommendation'];
                                     $rec_icon = '';
+                                    $rec_text = '';
                                     
                                     switch ($stock_analysis['recommendation']) {
                                         case 'buy':
                                             $rec_icon = 'arrow-up';
+                                            $rec_text = __('buy_recommendation');
                                             break;
                                         case 'sell':
                                             $rec_icon = 'arrow-down';
+                                            $rec_text = __('sell_recommendation');
                                             break;
                                         default:
                                             $rec_icon = 'minus';
+                                            $rec_text = __('hold_recommendation');
                                     }
                                     ?>
                                     
                                     <div class="recommendation-card <?php echo $rec_class; ?>">
                                         <div class="recommendation-header <?php echo $rec_class; ?>">
                                             <i class="fas fa-<?php echo $rec_icon; ?>"></i>
-                                            <h4><?php echo ucfirst($stock_analysis['recommendation']); ?> Recommendation</h4>
+                                            <h4><?php echo $rec_text; ?></h4>
                                         </div>
                                         
                                         <div class="recommendation-content">
@@ -154,7 +158,7 @@ require_once 'includes/header.php';
                                         
                                         <div class="recommendation-points">
                                             <?php if (!empty($stock_analysis['buy_points'])): ?>
-                                                <h5>Buy Points:</h5>
+                                                <h5><?php echo __('buy_points'); ?></h5>
                                                 <ul class="price-points">
                                                     <?php foreach ($stock_analysis['buy_points'] as $point): ?>
                                                         <li class="price-point">
@@ -166,7 +170,7 @@ require_once 'includes/header.php';
                                             <?php endif; ?>
                                             
                                             <?php if (!empty($stock_analysis['sell_points'])): ?>
-                                                <h5>Sell Points:</h5>
+                                                <h5><?php echo __('sell_points'); ?></h5>
                                                 <ul class="price-points">
                                                     <?php foreach ($stock_analysis['sell_points'] as $point): ?>
                                                         <li class="price-point">
@@ -182,7 +186,7 @@ require_once 'includes/header.php';
                                                 data-ticker="<?php echo htmlspecialchars($stock_analysis['ticker']); ?>" 
                                                 data-price="<?php echo $stock_analysis['current_price']; ?>"
                                                 data-company="<?php echo htmlspecialchars($stock_analysis['company_name']); ?>">
-                                            <i class="fas fa-plus"></i> Add to Watchlist
+                                            <i class="fas fa-plus"></i> <?php echo __('add_to_watchlist'); ?>
                                         </button>
                                     </div>
                                 </div>
@@ -192,7 +196,7 @@ require_once 'includes/header.php';
                                     <!-- Price Chart -->
                                     <div class="chart-card">
                                         <div class="chart-header">
-                                            <h4 class="chart-title">Price History</h4>
+                                            <h4 class="chart-title"><?php echo __('price_history'); ?></h4>
                                             <div class="chart-period">
                                                 <button type="button" class="chart-period-btn active" data-period="1m">1M</button>
                                                 <button type="button" class="chart-period-btn" data-period="3m">3M</button>
@@ -208,7 +212,7 @@ require_once 'includes/header.php';
                                     <?php if (!empty($stockPriceData['volumes'])): ?>
                                     <div class="chart-card volume-chart">
                                         <div class="chart-header">
-                                            <h4 class="chart-title">Trading Volume</h4>
+                                            <h4 class="chart-title"><?php echo __('trading_volume'); ?></h4>
                                         </div>
                                         <div class="chart-body">
                                             <canvas id="stockVolumeChart"></canvas>
@@ -230,12 +234,12 @@ require_once 'includes/header.php';
             <div class="watchlist-header">
                 <div class="watchlist-title">
                     <i class="fas fa-star"></i>
-                    <h3>Stock Watchlist</h3>
+                    <h3><?php echo __('stock_watchlist'); ?></h3>
                 </div>
                 <div class="watchlist-controls">
                     <div class="watchlist-search">
                         <i class="fas fa-search"></i>
-                        <input type="text" placeholder="Search watchlist..." id="watchlistSearch">
+                        <input type="text" placeholder="<?php echo __('search_watchlist'); ?>" id="watchlistSearch">
                     </div>
                 </div>
             </div>
@@ -244,12 +248,12 @@ require_once 'includes/header.php';
                     <table class="watchlist-table" id="watchlistTable">
                         <thead>
                             <tr>
-                                <th>Symbol</th>
-                                <th>Company</th>
-                                <th>Current Price</th>
-                                <th>Target Buy</th>
-                                <th>Target Sell</th>
-                                <th>Actions</th>
+                                <th><?php echo __('symbol'); ?></th>
+                                <th><?php echo __('company'); ?></th>
+                                <th><?php echo __('current_price_label'); ?></th>
+                                <th><?php echo __('target_buy'); ?></th>
+                                <th><?php echo __('target_sell'); ?></th>
+                                <th><?php echo __('actions'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -282,17 +286,17 @@ require_once 'includes/header.php';
                                         <div class="action-buttons">
                                             <button type="button" class="btn-action analyze" 
                                                     data-ticker="<?php echo htmlspecialchars($stock['ticker_symbol']); ?>" 
-                                                    title="Analyze">
+                                                    title="<?php echo __('analyze'); ?>">
                                                 <i class="fas fa-chart-line"></i>
                                             </button>
                                             <button type="button" class="btn-action edit" 
                                                     data-watchlist-id="<?php echo $stock['watchlist_id']; ?>" 
-                                                    title="Edit">
+                                                    title="<?php echo __('edit'); ?>">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                             <button type="button" class="btn-action delete" 
                                                     data-watchlist-id="<?php echo $stock['watchlist_id']; ?>" 
-                                                    title="Delete">
+                                                    title="<?php echo __('delete'); ?>">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </div>
@@ -306,10 +310,10 @@ require_once 'includes/header.php';
                         <div class="empty-icon">
                             <i class="fas fa-star"></i>
                         </div>
-                        <h4>Your watchlist is empty</h4>
-                        <p>Track stocks you're interested in by adding them to your watchlist.</p>
+                        <h4><?php echo __('watchlist_empty'); ?></h4>
+                        <p><?php echo __('track_stocks_message'); ?></p>
                         <button type="button" class="btn-add-first" data-bs-toggle="modal" data-bs-target="#addToWatchlistModal">
-                            <i class="fas fa-plus"></i> Add Your First Stock
+                            <i class="fas fa-plus"></i> <?php echo __('add_your_first_stock'); ?>
                         </button>
                     </div>
                 <?php endif; ?>
@@ -324,17 +328,17 @@ require_once 'includes/header.php';
                 <div class="insight-header">
                     <h4 class="insight-title">
                         <i class="fas fa-chart-line"></i>
-                        Technical Analysis
+                        <?php echo __('technical_analysis'); ?>
                     </h4>
                 </div>
                 <div class="insight-body">
-                    <p>Technical analysis uses charts and historical data patterns to forecast future stock price movements.</p>
-                    <p><strong>Key Indicators:</strong></p>
+                    <p><?php echo __('technical_analysis_description'); ?></p>
+                    <p><strong><?php echo __('key_indicators'); ?></strong></p>
                     <ul class="insight-list">
-                        <li>Moving Averages (MA) - Short vs Long term trends</li>
-                        <li>Relative Strength Index (RSI) - Overbought/Oversold conditions</li>
-                        <li>Bollinger Bands - Volatility and price levels</li>
-                        <li>MACD - Momentum and trend direction</li>
+                        <li><?php echo __('moving_averages'); ?></li>
+                        <li><?php echo __('rsi_description'); ?></li>
+                        <li><?php echo __('bollinger_bands'); ?></li>
+                        <li><?php echo __('macd'); ?></li>
                     </ul>
                 </div>
             </div>
@@ -343,17 +347,17 @@ require_once 'includes/header.php';
                 <div class="insight-header">
                     <h4 class="insight-title">
                         <i class="fas fa-balance-scale"></i>
-                        Fundamental Analysis
+                        <?php echo __('fundamental_analysis'); ?>
                     </h4>
                 </div>
                 <div class="insight-body">
-                    <p>Fundamental analysis evaluates a company's intrinsic value through financial statements and economic factors.</p>
-                    <p><strong>Key Metrics:</strong></p>
+                    <p><?php echo __('fundamental_analysis_description'); ?></p>
+                    <p><strong><?php echo __('key_metrics'); ?></strong></p>
                     <ul class="insight-list">
-                        <li>P/E Ratio - Price relative to earnings</li>
-                        <li>Debt-to-Equity Ratio - Financial leverage</li>
-                        <li>Revenue Growth - Sales trend over time</li>
-                        <li>Profit Margins - Efficiency of operations</li>
+                        <li><?php echo __('pe_ratio'); ?></li>
+                        <li><?php echo __('debt_equity_ratio'); ?></li>
+                        <li><?php echo __('revenue_growth'); ?></li>
+                        <li><?php echo __('profit_margins'); ?></li>
                     </ul>
                 </div>
             </div>
@@ -362,17 +366,17 @@ require_once 'includes/header.php';
                 <div class="insight-header">
                     <h4 class="insight-title">
                         <i class="fas fa-chess"></i>
-                        Investment Strategies
+                        <?php echo __('investment_strategies'); ?>
                     </h4>
                 </div>
                 <div class="insight-body">
-                    <p>Different approaches to stock investing based on your goals and risk tolerance.</p>
-                    <p><strong>Common Strategies:</strong></p>
+                    <p><?php echo __('investment_strategies_description'); ?></p>
+                    <p><strong><?php echo __('common_strategies'); ?></strong></p>
                     <ul class="insight-list">
-                        <li>Value Investing - Finding undervalued stocks</li>
-                        <li>Growth Investing - Focus on expansion potential</li>
-                        <li>Dividend Investing - Income generation</li>
-                        <li>Dollar-Cost Averaging - Regular investments</li>
+                        <li><?php echo __('value_investing'); ?></li>
+                        <li><?php echo __('growth_investing'); ?></li>
+                        <li><?php echo __('dividend_investing'); ?></li>
+                        <li><?php echo __('dollar_cost_averaging'); ?></li>
                     </ul>
                 </div>
             </div>
@@ -388,7 +392,7 @@ require_once 'includes/header.php';
                 <div class="modal-icon">
                     <i class="fas fa-plus-circle"></i>
                 </div>
-                <h5 class="modal-title">Add Stock to Watchlist</h5>
+                <h5 class="modal-title"><?php echo __('add_stock_to_watchlist'); ?></h5>
                 <button type="button" class="modal-close" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i>
                 </button>
@@ -399,49 +403,49 @@ require_once 'includes/header.php';
                 <div class="modal-body">
                     <div class="form-grid">
                         <div class="form-field">
-                            <label for="ticker_symbol_watchlist">Ticker Symbol</label>
+                            <label for="ticker_symbol_watchlist"><?php echo __('ticker_symbol_label'); ?></label>
                             <input type="text" class="form-control" id="ticker_symbol_watchlist" name="ticker_symbol" 
                                    required pattern="[A-Za-z0-9.]{1,10}" maxlength="10">
-                            <div class="invalid-feedback">Please enter a valid ticker symbol.</div>
+                            <div class="invalid-feedback"><?php echo __('ticker_symbol_invalid'); ?></div>
                         </div>
                         
                         <div class="form-field">
-                            <label for="company_name">Company Name</label>
+                            <label for="company_name"><?php echo __('company_name'); ?></label>
                             <input type="text" class="form-control" id="company_name" name="company_name" 
                                    required maxlength="100">
-                            <div class="invalid-feedback">Please enter the company name.</div>
+                            <div class="invalid-feedback"><?php echo __('company_name_required'); ?></div>
                         </div>
                         
                         <div class="form-field">
-                            <label for="current_price_watchlist">Current Price</label>
+                            <label for="current_price_watchlist"><?php echo __('current_price_label'); ?></label>
                             <input type="number" class="form-control" id="current_price_watchlist" name="current_price" 
                                    step="0.01" min="0.01" required>
-                            <div class="invalid-feedback">Please enter a valid price.</div>
+                            <div class="invalid-feedback"><?php echo __('current_price_invalid'); ?></div>
                         </div>
                         
                         <div class="form-field">
-                            <label for="target_buy_price">Target Buy Price</label>
+                            <label for="target_buy_price"><?php echo __('target_buy_price'); ?></label>
                             <input type="number" class="form-control" id="target_buy_price" name="target_buy_price" 
                                    step="0.01" min="0.01">
                         </div>
                         
                         <div class="form-field">
-                            <label for="target_sell_price">Target Sell Price</label>
+                            <label for="target_sell_price"><?php echo __('target_sell_price'); ?></label>
                             <input type="number" class="form-control" id="target_sell_price" name="target_sell_price" 
                                    step="0.01" min="0.01">
                         </div>
                         
                         <div class="form-field full-width">
-                            <label for="notes_watchlist">Notes</label>
+                            <label for="notes_watchlist"><?php echo __('notes_label'); ?></label>
                             <textarea class="form-control" id="notes_watchlist" name="notes" rows="3"></textarea>
                         </div>
                     </div>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal"><?php echo __('cancel'); ?></button>
                     <button type="submit" class="btn-submit">
-                        <i class="fas fa-plus"></i> Add to Watchlist
+                        <i class="fas fa-plus"></i> <?php echo __('add_to_watchlist'); ?>
                     </button>
                 </div>
             </form>
@@ -457,7 +461,7 @@ require_once 'includes/header.php';
                 <div class="modal-icon edit">
                     <i class="fas fa-edit"></i>
                 </div>
-                <h5 class="modal-title">Edit Watchlist Item</h5>
+                <h5 class="modal-title"><?php echo __('edit_watchlist_item'); ?></h5>
                 <button type="button" class="modal-close" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i>
                 </button>
@@ -469,46 +473,46 @@ require_once 'includes/header.php';
                 <div class="modal-body">
                     <div class="form-grid">
                         <div class="form-field">
-                            <label for="edit_ticker_symbol">Ticker Symbol</label>
+                            <label for="edit_ticker_symbol"><?php echo __('ticker_symbol_label'); ?></label>
                             <input type="text" class="form-control" id="edit_ticker_symbol" name="ticker_symbol" 
                                    required pattern="[A-Za-z0-9.]{1,10}" maxlength="10" readonly>
                         </div>
                         
                         <div class="form-field">
-                            <label for="edit_company_name">Company Name</label>
+                            <label for="edit_company_name"><?php echo __('company_name'); ?></label>
                             <input type="text" class="form-control" id="edit_company_name" name="company_name" 
                                    required maxlength="100">
                         </div>
                         
                         <div class="form-field">
-                            <label for="edit_current_price">Current Price</label>
+                            <label for="edit_current_price"><?php echo __('current_price_label'); ?></label>
                             <input type="number" class="form-control" id="edit_current_price" name="current_price" 
                                    step="0.01" min="0.01" required>
                         </div>
                         
                         <div class="form-field">
-                            <label for="edit_target_buy_price">Target Buy Price</label>
+                            <label for="edit_target_buy_price"><?php echo __('target_buy_price'); ?></label>
                             <input type="number" class="form-control" id="edit_target_buy_price" name="target_buy_price" 
                                    step="0.01" min="0.01">
                         </div>
                         
                         <div class="form-field">
-                            <label for="edit_target_sell_price">Target Sell Price</label>
+                            <label for="edit_target_sell_price"><?php echo __('target_sell_price'); ?></label>
                             <input type="number" class="form-control" id="edit_target_sell_price" name="target_sell_price" 
                                    step="0.01" min="0.01">
                         </div>
                         
                         <div class="form-field full-width">
-                            <label for="edit_notes">Notes</label>
+                            <label for="edit_notes"><?php echo __('notes_label'); ?></label>
                             <textarea class="form-control" id="edit_notes" name="notes" rows="3"></textarea>
                         </div>
                     </div>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal"><?php echo __('cancel'); ?></button>
                     <button type="submit" class="btn-submit">
-                        <i class="fas fa-save"></i> Save Changes
+                        <i class="fas fa-save"></i> <?php echo __('save_changes'); ?>
                     </button>
                 </div>
             </form>
@@ -524,22 +528,22 @@ require_once 'includes/header.php';
                 <div class="modal-icon delete">
                     <i class="fas fa-trash-alt"></i>
                 </div>
-                <h5 class="modal-title">Remove from Watchlist</h5>
+                <h5 class="modal-title"><?php echo __('remove_from_watchlist'); ?></h5>
                 <button type="button" class="modal-close" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body text-center">
-                <p>Are you sure you want to remove this stock from your watchlist?</p>
-                <p class="text-muted">This action cannot be undone.</p>
+                <p><?php echo __('confirm_remove_watchlist'); ?></p>
+                <p class="text-muted"><?php echo __('this_action_cannot_be_undone'); ?></p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-cancel" data-bs-dismiss="modal"><?php echo __('cancel'); ?></button>
                 <form action="<?php echo BASE_PATH; ?>/stocks" method="post" id="deleteWatchlistForm">
                     <input type="hidden" name="action" value="remove_from_watchlist">
                     <input type="hidden" name="watchlist_id" id="remove_watchlist_id">
                     <button type="submit" class="btn-submit danger">
-                        <i class="fas fa-trash-alt"></i> Remove
+                        <i class="fas fa-trash-alt"></i> <?php echo __('remove'); ?>
                     </button>
                 </form>
             </div>

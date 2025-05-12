@@ -28,7 +28,7 @@ define('CACHE_EXPIRATION_ANALYSIS', 3600); // 1 hour for full analysis data
 define('MAX_API_CALLS_PER_MINUTE', 60); // Finnhub free tier limit
 
 // Set default page layout variables
-$page_title = 'Stock Analysis - iGotMoney';
+$page_title = __('stocks_page_title') . ' - ' . __('app_name');
 $current_page = 'stocks';
 $additional_js = ['/assets/js/stocks-modern.js'];
 $additional_css = ['/assets/css/stocks-modern.css'];
@@ -58,9 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Add to watchlist
         if ($investment->addToWatchlist()) {
-            $success = 'Stock added to watchlist successfully!';
+            $success = __('stock_added_to_watchlist_success');
         } else {
-            $error = 'Failed to add stock to watchlist.';
+            $error = __('failed_to_add_stock_to_watchlist');
         }
     } elseif ($action === 'remove_from_watchlist') {
         // Get watchlist ID
@@ -68,9 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Remove from watchlist
         if ($investment->removeFromWatchlist($watchlist_id, $user_id)) {
-            $success = 'Stock removed from watchlist successfully!';
+            $success = __('stock_removed_from_watchlist_success');
         } else {
-            $error = 'Failed to remove stock from watchlist.';
+            $error = __('failed_to_remove_stock_from_watchlist');
         }
     } elseif ($action === 'analyze_stock') {
         // Get stock ticker
@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($ticker)) {
             // Check for valid ticker format
             if (!preg_match('/^[A-Z0-9.]{1,10}$/', $ticker)) {
-                $error = 'Please enter a valid stock ticker symbol (e.g., AAPL, MSFT, GOOG).';
+                $error = __('enter_valid_ticker_symbol');
             } else {
                 // Get real stock data from API
                 $stock_data = getStockData($ticker);
@@ -94,11 +94,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'volumes' => $stock_data['historical_volumes'] ?? []
                     ];
                 } else {
-                    $error = $stock_data['message'] ?? 'Failed to retrieve stock data. Please try again.';
+                    $error = $stock_data['message'] ?? __('failed_to_retrieve_stock_data');
                 }
             }
         } else {
-            $error = 'Please enter a valid stock ticker.';
+            $error = __('please_enter_valid_stock_ticker');
         }
     } elseif ($action === 'update_watchlist_item') {
         // Get watchlist ID
@@ -116,9 +116,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Update watchlist item
         if ($investment->updateWatchlistItem($watchlist_id, $user_id, $data)) {
-            $success = 'Watchlist item updated successfully!';
+            $success = __('watchlist_item_updated_success');
         } else {
-            $error = 'Failed to update watchlist item.';
+            $error = __('failed_to_update_watchlist_item');
         }
     }
 }
@@ -136,7 +136,7 @@ if (isset($_GET['action'])) {
         } else {
             echo json_encode([
                 'status' => 'error',
-                'message' => 'Invalid ticker symbol.'
+                'message' => __('invalid_ticker_symbol')
             ]);
         }
         
@@ -155,7 +155,7 @@ if (isset($_GET['action'])) {
         } else {
             echo json_encode([
                 'status' => 'error',
-                'message' => 'Invalid ticker symbol.'
+                'message' => __('invalid_ticker_symbol')
             ]);
         }
         
@@ -169,7 +169,7 @@ if (isset($_GET['action'])) {
         } else {
             echo json_encode([
                 'status' => 'error',
-                'message' => 'No valid ticker symbols provided.'
+                'message' => __('no_valid_ticker_symbols_provided')
             ]);
         }
         
@@ -435,7 +435,7 @@ function getBatchStockQuotes($symbols) {
     if (empty($symbols)) {
         return [
             'status' => 'error',
-            'message' => 'No valid ticker symbols provided.'
+            'message' => __('no_valid_ticker_symbols_provided')
         ];
     }
     
@@ -496,7 +496,7 @@ function getBatchStockQuotes($symbols) {
         error_log("Error fetching batch stock quotes: " . $e->getMessage());
         return [
             'status' => 'error',
-            'message' => 'Failed to retrieve stock quotes.'
+            'message' => __('failed_to_retrieve_stock_quotes')
         ];
     }
 }
@@ -539,7 +539,7 @@ function getStockData($ticker) {
             
             return [
                 'status' => 'error',
-                'message' => 'API rate limit reached. Please try again later.'
+                'message' => __('api_rate_limit_reached')
             ];
         }
         
@@ -564,7 +564,7 @@ function getStockData($ticker) {
             
             return [
                 'status' => 'error',
-                'message' => 'Failed to connect to stock data API. Please try again later.'
+                'message' => __('failed_to_connect_to_stock_data_api')
             ];
         }
         
@@ -578,7 +578,7 @@ function getStockData($ticker) {
             
             return [
                 'status' => 'error',
-                'message' => 'Invalid ticker symbol or data not available.'
+                'message' => __('invalid_ticker_or_data_not_available')
             ];
         }
         
@@ -731,7 +731,7 @@ function getStockData($ticker) {
         
         return [
             'status' => 'error',
-            'message' => 'An error occurred while analyzing the stock. Please try again.'
+            'message' => __('error_analyzing_stock')
         ];
     }
 }
@@ -1181,52 +1181,52 @@ function generateRecommendation($current_price, $short_ma, $long_ma, $rsi, $macd
     // RSI analysis
     if ($rsi < 30) {
         $buy_score += 3;
-        $reasons[] = "RSI is oversold at " . round($rsi, 2);
+        $reasons[] = __('rsi_oversold_at', ['value' => round($rsi, 2)]);
     } elseif ($rsi < 40) {
         $buy_score += 1;
-        $reasons[] = "RSI is approaching oversold territory at " . round($rsi, 2);
+        $reasons[] = __('rsi_approaching_oversold_at', ['value' => round($rsi, 2)]);
     } elseif ($rsi > 70) {
         $sell_score += 3;
-        $reasons[] = "RSI is overbought at " . round($rsi, 2);
+        $reasons[] = __('rsi_overbought_at', ['value' => round($rsi, 2)]);
     } elseif ($rsi > 60) {
         $sell_score += 1;
-        $reasons[] = "RSI is approaching overbought territory at " . round($rsi, 2);
+        $reasons[] = __('rsi_approaching_overbought_at', ['value' => round($rsi, 2)]);
     }
     
     // Moving average analysis
     if ($short_ma > $long_ma) {
         $buy_score += 2;
-        $reasons[] = "Short-term MA (" . round($short_ma, 2) . ") is above long-term MA (" . round($long_ma, 2) . ")";
+        $reasons[] = __('short_ma_above_long_ma', ['short' => round($short_ma, 2), 'long' => round($long_ma, 2)]);
     } else {
         $sell_score += 2;
-        $reasons[] = "Short-term MA (" . round($short_ma, 2) . ") is below long-term MA (" . round($long_ma, 2) . ")";
+        $reasons[] = __('short_ma_below_long_ma', ['short' => round($short_ma, 2), 'long' => round($long_ma, 2)]);
     }
     
     // Price vs Moving Average
     if ($current_price < $short_ma) {
         $buy_score += 1;
-        $reasons[] = "Price (" . round($current_price, 2) . ") is below short-term MA (" . round($short_ma, 2) . ")";
+        $reasons[] = __('price_below_short_ma', ['price' => round($current_price, 2), 'ma' => round($short_ma, 2)]);
     } else {
         $sell_score += 1;
-        $reasons[] = "Price (" . round($current_price, 2) . ") is above short-term MA (" . round($short_ma, 2) . ")";
+        $reasons[] = __('price_above_short_ma', ['price' => round($current_price, 2), 'ma' => round($short_ma, 2)]);
     }
     
     // MACD analysis
     if ($macd['line'] > $macd['signal']) {
         $buy_score += 2;
-        $reasons[] = "MACD line is above signal line";
+        $reasons[] = __('macd_above_signal');
     } else {
         $sell_score += 2;
-        $reasons[] = "MACD line is below signal line";
+        $reasons[] = __('macd_below_signal');
     }
     
     // Bollinger Bands analysis
     if ($current_price < $bollinger['lower']) {
         $buy_score += 3;
-        $reasons[] = "Price is below lower Bollinger Band";
+        $reasons[] = __('price_below_lower_bollinger');
     } elseif ($current_price > $bollinger['upper']) {
         $sell_score += 3;
-        $reasons[] = "Price is above upper Bollinger Band";
+        $reasons[] = __('price_above_upper_bollinger');
     }
     
     // Determine recommendation
@@ -1252,12 +1252,12 @@ function generateRecommendation($current_price, $short_ma, $long_ma, $rsi, $macd
     if ($recommendation === 'buy' || $recommendation === 'hold') {
         $buy_points[] = [
             'price' => round($buy_point1, 2),
-            'reason' => 'Strategic entry point (15% below current price)'
+            'reason' => __('strategic_entry_point')
         ];
         
         $buy_points[] = [
             'price' => round($buy_point2, 2),
-            'reason' => 'Conservative entry point (10% below current price)'
+            'reason' => __('conservative_entry_point')
         ];
     }
     
@@ -1265,12 +1265,12 @@ function generateRecommendation($current_price, $short_ma, $long_ma, $rsi, $macd
     if ($recommendation === 'sell' || $recommendation === 'hold') {
         $sell_points[] = [
             'price' => round($sell_point1, 2),
-            'reason' => 'Strategic exit point (15% above current price)'
+            'reason' => __('strategic_exit_point')
         ];
         
         $sell_points[] = [
             'price' => round($sell_point2, 2),
-            'reason' => 'Conservative exit point (10% above current price)'
+            'reason' => __('conservative_exit_point')
         ];
     }
     
