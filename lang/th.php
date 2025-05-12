@@ -214,6 +214,55 @@ return [
     
     // No matching results
     'no_matching_income_sources' => 'ไม่พบแหล่งรายได้ที่ตรงกัน',
-    'try_adjusting_search' => 'ลองปรับคำค้นหาของคุณ'
+    'try_adjusting_search' => 'ลองปรับคำค้นหาของคุณ',
+
+    // Expenses page specific translations
+    'expense_management' => 'จัดการค่าใช้จ่าย',
+    'track_manage_expenses' => 'ติดตามและจัดการค่าใช้จ่ายของคุณอย่างมีประสิทธิภาพ',
+    'add_expense' => 'เพิ่มค่าใช้จ่าย',
+    'annual_expenses' => 'ค่าใช้จ่ายรายปี',
+    'daily_average' => 'ค่าเฉลี่ยรายวัน',
+    'based_on_current_month' => 'อ้างอิงจากเดือนปัจจุบัน',
+    'expense_categories' => 'หมวดหมู่ค่าใช้จ่าย',
+    'no_expense_data_available' => 'ไม่มีข้อมูลค่าใช้จ่ายที่พร้อมใช้งาน',
+    'top_categories' => 'หมวดหมู่ยอดนิยม',
+    'no_expenses_recorded_yet' => 'ยังไม่มีการบันทึกค่าใช้จ่าย',
+    'start_tracking_expenses' => 'เริ่มติดตามค่าใช้จ่ายของคุณเพื่อรับข้อมูลเชิงลึกเกี่ยวกับนิสัยการใช้จ่ายของคุณ',
+    'add_your_first_expense' => 'เพิ่มค่าใช้จ่ายแรกของคุณ',
+    'recent_expenses' => 'ค่าใช้จ่ายล่าสุด',
+    'search_expenses' => 'ค้นหาค่าใช้จ่าย...',
+    'filter' => 'ตัวกรอง',
+    'month' => 'เดือน',
+    'year' => 'ปี',
+    'category' => 'หมวดหมู่',
+    'all_months' => 'ทุกเดือน',
+    'all_years' => 'ทุกปี',
+    'all_categories' => 'ทุกหมวดหมู่',
+    'apply_filter' => 'ใช้ตัวกรอง',
+    'reset' => 'รีเซ็ต',
+    'description' => 'คำอธิบาย',
+    'date' => 'วันที่',
+    'type' => 'ประเภท',
+    'recurring' => 'ประจำ',
+    'one_time' => 'ครั้งเดียว',
+    'no_matching_expenses_found' => 'ไม่พบค่าใช้จ่ายที่ตรงกัน',
+    'try_adjusting_your_search_term' => 'ลองปรับเงื่อนไขการค้นหาของคุณ',
+    
+    // Add Expense Modal
+    'add_new_expense' => 'เพิ่มค่าใช้จ่ายใหม่',
+    'select_category' => 'เลือกหมวดหมู่',
+    'recurring_expense' => 'ค่าใช้จ่ายประจำ',
+    
+    // Edit Expense Modal
+    'edit_expense' => 'แก้ไขค่าใช้จ่าย',
+    'update_expense' => 'อัปเดตค่าใช้จ่าย',
+    
+    // Delete Expense Modal
+    'delete_expense' => 'ลบค่าใช้จ่าย',
+    'are_you_sure_delete_expense' => 'คุณแน่ใจหรือไม่ว่าต้องการลบค่าใช้จ่ายนี้? การกระทำนี้ไม่สามารถยกเลิกได้',
+    
+    // Expense Stats
+    'from_last_month' => 'จากเดือนที่แล้ว',
+    'projected_for_year' => 'คาดการณ์สำหรับปี',
 ];
 ?>
