@@ -630,6 +630,55 @@ return [
     'financial_health_advice_good' => 'Good financial health. You\'re on the right track. Focus on increasing your savings rate and diversifying your investments.',
     'financial_health_advice_average' => 'Average financial health. Look for ways to reduce expenses and increase your savings rate to improve your financial status.',
     'financial_health_advice_below_average' => 'Below average financial health. Try to reduce your expense-to-income ratio and start building an emergency fund.',
-    'financial_health_advice_poor' => 'Your financial health needs attention. Focus on reducing expenses and debt while finding ways to increase income.'
+    'financial_health_advice_poor' => 'Your financial health needs attention. Focus on reducing expenses and debt while finding ways to increase income.',
+
+    // Login/Register translations
+    'invalid_username_or_password' => 'Invalid username or password',
+    'username_is_required' => 'Username is required',
+    'username_min_length' => 'Username must be at least 3 characters',
+    'email_is_required' => 'Email is required',
+    'email_is_invalid' => 'Email is invalid',
+    'password_is_required' => 'Password is required',
+    'password_min_length' => 'Password must be at least 6 characters',
+    'passwords_dont_match' => 'Passwords do not match',
+    'registration_success' => 'Registration successful! You can now login',
+    'registration_failed' => 'Registration failed. Please try again',
+
+    // Financial advice translations
+    'expenses_too_high' => 'Expenses Too High',
+    'expenses_vs_income_warning' => 'Your monthly expenses are {percent}% of your income. Consider reducing non-essential expenses to improve your financial health.',
+    'emergency_fund_needed' => 'Emergency Fund Needed',
+    'emergency_fund_advice' => 'Consider establishing an emergency fund of {amount} (6 months of expenses) to protect against financial emergencies.',
+    'budget_overspending_category' => 'Budget Overspending: {category}',
+    'budget_overspending_details' => 'You\'ve spent {amount} on {category}, which is {percent}% of your budget. Consider adjusting your spending or increasing your budget.',
+    'investment_diversification_needed' => 'Investment Diversification Needed',
+    'investment_concentration_warning' => 'Your investments are heavily concentrated in {type} ({percent}%). Consider diversifying your portfolio to reduce risk.',
+    'consider_growth_investments' => 'Consider Growth Investments',
+    'growth_investments_advice' => 'Only {percent}% of your portfolio is in high-risk growth investments. If you are in an early career stage, you might consider increasing allocation to growth assets.',
+    'start_investing' => 'Start Investing',
+    'start_investment_advice' => 'Consider starting an investment portfolio to grow your wealth. Even small regular contributions can grow significantly over time.',
+    'increase_savings_rate' => 'Increase Savings Rate',
+    'savings_rate_advice' => 'Your current saving rate is {percent}%. Try to increase this to at least 15-20% of your income for long-term financial security.',
+    'tax_advantaged_accounts' => 'Tax-Advantaged Accounts',
+    'tax_accounts_advice' => 'Consider maximizing contributions to tax-advantaged accounts like 401(k), IRA, or HSA to reduce your tax burden.',
+
+    // General advice translations
+    'review_subscriptions' => 'Review Subscriptions',
+    'subscriptions_advice' => 'Regularly review your recurring subscriptions and cancel those you don\'t use frequently.',
+    'automate_savings' => 'Automate Savings',
+    'automated_savings_advice' => 'Set up automatic transfers to your savings account on payday to build savings without thinking about it.',
+    'check_credit_report' => 'Check Credit Report',
+    'credit_report_advice' => 'Review your credit report annually for errors and to monitor your overall credit health.',
+    'insurance_review' => 'Insurance Review',
+    'insurance_review_advice' => 'Periodically review your insurance policies to ensure adequate coverage at competitive rates.',
+
+    // 404 error page
+    'page_not_found' => 'Page Not Found',
+    'the_page_you_are_looking_for_does_not_exist' => 'The page you are looking for does not exist',
+    'return_to_home' => 'Return to Home',
+
+    'create_account' => 'Create Account',
+    'confirm_password' => 'Confirm Password',
+    'create_a_password' => 'Create a password'
 ];
 ?>

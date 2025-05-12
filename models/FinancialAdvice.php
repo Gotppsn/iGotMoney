@@ -182,9 +182,10 @@ class FinancialAdvice {
         if ($monthly_expenses > $monthly_income * 0.9) {
             $this->user_id = $user_id;
             $this->type = 'budgeting';
-            $this->title = 'Expenses Too High';
-            $this->content = 'Your monthly expenses are ' . number_format(($monthly_expenses / $monthly_income) * 100, 2) . 
-                            '% of your income. Consider reducing non-essential expenses to improve your financial health.';
+            $this->title = __('expenses_too_high');
+            $this->content = __('expenses_vs_income_warning', [
+                'percent' => number_format(($monthly_expenses / $monthly_income) * 100, 2)
+            ]);
             $this->importance_level = 'high';
             
             if ($this->create()) {
@@ -206,10 +207,10 @@ class FinancialAdvice {
         if (!$has_emergency_fund) {
             $this->user_id = $user_id;
             $this->type = 'saving';
-            $this->title = 'Emergency Fund Needed';
-            $this->content = 'Consider establishing an emergency fund of ' . 
-                            number_format($emergency_fund_target, 2) . 
-                            ' (6 months of expenses) to protect against financial emergencies.';
+            $this->title = __('emergency_fund_needed');
+            $this->content = __('emergency_fund_advice', [
+                'amount' => number_format($emergency_fund_target, 2)
+            ]);
             $this->importance_level = 'high';
             
             if ($this->create()) {
@@ -228,11 +229,14 @@ class FinancialAdvice {
             if ($category['percentage'] > 100) {
                 $this->user_id = $user_id;
                 $this->type = 'budgeting';
-                $this->title = 'Budget Overspending: ' . $category['category_name'];
-                $this->content = 'You\'ve spent ' . number_format($category['spent'], 2) . 
-                                ' on ' . $category['category_name'] . 
-                                ', which is ' . number_format($category['percentage'], 2) . 
-                                '% of your budget. Consider adjusting your spending or increasing your budget.';
+                $this->title = __('budget_overspending_category', [
+                    'category' => $category['category_name']
+                ]);
+                $this->content = __('budget_overspending_details', [
+                    'amount' => number_format($category['spent'], 2),
+                    'category' => $category['category_name'],
+                    'percent' => number_format($category['percentage'], 2)
+                ]);
                 $this->importance_level = 'medium';
                 
                 if ($this->create()) {
@@ -254,10 +258,11 @@ class FinancialAdvice {
                 if ($data['percent'] > 50) {
                     $this->user_id = $user_id;
                     $this->type = 'investment';
-                    $this->title = 'Investment Diversification Needed';
-                    $this->content = 'Your investments are heavily concentrated in ' . $type . 
-                                    ' (' . number_format($data['percent'], 2) . 
-                                    '%). Consider diversifying your portfolio to reduce risk.';
+                    $this->title = __('investment_diversification_needed');
+                    $this->content = __('investment_concentration_warning', [
+                        'type' => $type,
+                        'percent' => number_format($data['percent'], 2)
+                    ]);
                     $this->importance_level = 'medium';
                     
                     if ($this->create()) {
@@ -285,11 +290,10 @@ class FinancialAdvice {
             if ($high_risk_percent < 20) {
                 $this->user_id = $user_id;
                 $this->type = 'investment';
-                $this->title = 'Consider Growth Investments';
-                $this->content = 'Only ' . number_format($high_risk_percent, 2) . 
-                                '% of your portfolio is in high-risk growth investments. ' . 
-                                'If you are in an early career stage, you might consider ' . 
-                                'increasing allocation to growth assets.';
+                $this->title = __('consider_growth_investments');
+                $this->content = __('growth_investments_advice', [
+                    'percent' => number_format($high_risk_percent, 2)
+                ]);
                 $this->importance_level = 'low';
                 
                 if ($this->create()) {
@@ -306,9 +310,8 @@ class FinancialAdvice {
             // No investments
             $this->user_id = $user_id;
             $this->type = 'investment';
-            $this->title = 'Start Investing';
-            $this->content = 'Consider starting an investment portfolio to grow your wealth. ' . 
-                            'Even small regular contributions can grow significantly over time.';
+            $this->title = __('start_investing');
+            $this->content = __('start_investment_advice');
             $this->importance_level = 'medium';
             
             if ($this->create()) {
@@ -327,10 +330,10 @@ class FinancialAdvice {
         if ($saving_rate < 0.1) { // Less than 10% savings
             $this->user_id = $user_id;
             $this->type = 'saving';
-            $this->title = 'Increase Savings Rate';
-            $this->content = 'Your current saving rate is ' . number_format($saving_rate * 100, 2) . 
-                            '%. Try to increase this to at least 15-20% of your income for ' . 
-                            'long-term financial security.';
+            $this->title = __('increase_savings_rate');
+            $this->content = __('savings_rate_advice', [
+                'percent' => number_format($saving_rate * 100, 2)
+            ]);
             $this->importance_level = 'medium';
             
             if ($this->create()) {
@@ -348,9 +351,8 @@ class FinancialAdvice {
         if ($yearly_income > 50000) {
             $this->user_id = $user_id;
             $this->type = 'tax';
-            $this->title = 'Tax-Advantaged Accounts';
-            $this->content = 'Consider maximizing contributions to tax-advantaged accounts ' . 
-                            'like 401(k), IRA, or HSA to reduce your tax burden.';
+            $this->title = __('tax_advantaged_accounts');
+            $this->content = __('tax_accounts_advice');
             $this->importance_level = 'medium';
             
             if ($this->create()) {
@@ -367,23 +369,23 @@ class FinancialAdvice {
         // General advice
         $general_advice = [
             [
-                'title' => 'Review Subscriptions',
-                'content' => 'Regularly review your recurring subscriptions and cancel those you don\'t use frequently.',
+                'title' => 'review_subscriptions',
+                'content' => 'subscriptions_advice',
                 'type' => 'budgeting'
             ],
             [
-                'title' => 'Automate Savings',
-                'content' => 'Set up automatic transfers to your savings account on payday to build savings without thinking about it.',
+                'title' => 'automate_savings',
+                'content' => 'automated_savings_advice',
                 'type' => 'saving'
             ],
             [
-                'title' => 'Check Credit Report',
-                'content' => 'Review your credit report annually for errors and to monitor your overall credit health.',
+                'title' => 'check_credit_report',
+                'content' => 'credit_report_advice',
                 'type' => 'general'
             ],
             [
-                'title' => 'Insurance Review',
-                'content' => 'Periodically review your insurance policies to ensure adequate coverage at competitive rates.',
+                'title' => 'insurance_review',
+                'content' => 'insurance_review_advice',
                 'type' => 'general'
             ]
         ];
@@ -393,8 +395,8 @@ class FinancialAdvice {
         
         $this->user_id = $user_id;
         $this->type = $random_advice['type'];
-        $this->title = $random_advice['title'];
-        $this->content = $random_advice['content'];
+        $this->title = __($random_advice['title']);
+        $this->content = __($random_advice['content']);
         $this->importance_level = 'low';
         
         if ($this->create()) {

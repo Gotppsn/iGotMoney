@@ -8,49 +8,65 @@
 // Include required files
 require_once 'models/User.php';
 
+// Initialize variables
+$errors = [];
+$success = false;
+
 // Check if form is submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Instantiate user object
-    $user = new User();
-    
     // Get form data
-    $user->username = $_POST['username'] ?? '';
-    $user->password = $_POST['password'] ?? '';
-    $user->email = $_POST['email'] ?? '';
-    $user->first_name = $_POST['first_name'] ?? '';
-    $user->last_name = $_POST['last_name'] ?? '';
+    $username = $_POST['username'] ?? '';
+    $email = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
+    $password_confirm = $_POST['password_confirm'] ?? '';
+    $first_name = $_POST['first_name'] ?? '';
+    $last_name = $_POST['last_name'] ?? '';
     
-    // Validate data
-    $errors = [];
-    
-    if (empty($user->username)) {
-        $errors[] = 'Username is required';
-    } else if (strlen($user->username) < 3) {
-        $errors[] = 'Username must be at least 3 characters';
+    // Validate username
+    if (empty($username)) {
+        $errors[] = __('username_is_required');
+    } elseif (strlen($username) < 3) {
+        $errors[] = __('username_min_length');
     }
     
-    if (empty($user->password)) {
-        $errors[] = 'Password is required';
-    } else if (strlen($user->password) < 6) {
-        $errors[] = 'Password must be at least 6 characters';
+    // Validate email
+    if (empty($email)) {
+        $errors[] = __('email_is_required');
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = __('email_is_invalid');
     }
     
-    if (empty($user->email)) {
-        $errors[] = 'Email is required';
-    } else if (!filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = 'Email is invalid';
+    // Validate password
+    if (empty($password)) {
+        $errors[] = __('password_is_required');
+    } elseif (strlen($password) < 6) {
+        $errors[] = __('password_min_length');
     }
     
-    // Register user if no errors
+    // Validate password confirmation
+    if ($password !== $password_confirm) {
+        $errors[] = __('passwords_dont_match');
+    }
+    
+    // If no errors, proceed with registration
     if (empty($errors)) {
+        // Instantiate user object
+        $user = new User();
+        
+        // Set user properties
+        $user->username = $username;
+        $user->email = $email;
+        $user->password = $password;
+        $user->first_name = $first_name;
+        $user->last_name = $last_name;
+        
+        // Register user
         if ($user->register()) {
-            // Set success message
-            $success = 'Registration successful! You can now login.';
-            
-            // Redirect to login page after a delay
-            header('Refresh: 3; URL=' . BASE_PATH . '/login');
+            // Registration successful
+            $success = __('registration_success');
         } else {
-            $errors[] = 'Registration failed. Username or email may already exist.';
+            // Registration failed
+            $errors[] = __('registration_failed');
         }
     }
 }

@@ -28,8 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: ' . BASE_PATH . '/dashboard');
         exit();
     } else {
-        // Set error message
-        $error = 'Invalid username or password';
+        // Set error message - Updated to use translation function
+        $error = __('invalid_username_or_password');
     }
 }
 
