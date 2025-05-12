@@ -46,6 +46,9 @@ $budget_status = $budget->getCurrentStatus($user_id);
 // Get investment summary
 $investment_summary = $investment->getSummary($user_id);
 
+// Get top expense categories - Added this line to fix the undefined variable error
+$top_expenses = $expense->getTopCategories($user_id);
+
 // Calculate statistics
 $total_invested = isset($investment_summary['total_invested']) ? $investment_summary['total_invested'] : 0;
 $current_investment_value = isset($investment_summary['current_value']) ? $investment_summary['current_value'] : 0;
