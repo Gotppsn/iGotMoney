@@ -239,10 +239,13 @@ function initializeRiskChart() {
 function showNoDataMessage(chartId) {
     const chartContainer = document.getElementById(chartId)?.parentElement;
     if (chartContainer) {
+        // Get translated message from the page
+        const noDataMessage = document.querySelector('.empty-state p')?.textContent || 'No investment data available';
+        
         chartContainer.innerHTML = `
             <div class="no-data-message">
                 <i class="fas fa-chart-pie"></i>
-                <p>No investment data available</p>
+                <p>${noDataMessage}</p>
             </div>
         `;
     }
@@ -321,12 +324,16 @@ function loadInvestmentForEdit(investmentId) {
             const editModal = new bootstrap.Modal(document.getElementById('editInvestmentModal'));
             editModal.show();
         } else {
-            showNotification('Failed to load investment data', 'error');
+            // Get error message element text or fallback
+            const errorMessage = document.querySelector('.alert-danger')?.textContent || 'Failed to load investment data';
+            showNotification(errorMessage, 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('An error occurred while loading investment data', 'error');
+        // Get error message from the page or fallback
+        const errorMessage = document.querySelector('.alert-danger')?.textContent || 'An error occurred while loading investment data';
+        showNotification(errorMessage, 'error');
     });
 }
 
@@ -433,13 +440,24 @@ function initializeSearch() {
             // Show/hide no results message
             const noDataMessage = document.getElementById('tableNoData');
             const tableBody = document.querySelector('.table-responsive');
+
+            // Get translated messages from hidden elements or data attributes in the DOM
+            let noMatchingInvestments = 'No matching investments found';
+            let tryAdjustingSearch = 'Try adjusting your search term';
+            
+            // Try to get translations from page elements that might have them
+            const noMatchingEl = document.querySelector('[data-translation="no_matching_investments"]');
+            const adjustingSearchEl = document.querySelector('[data-translation="try_adjusting_search"]');
+            
+            if (noMatchingEl) noMatchingInvestments = noMatchingEl.textContent;
+            if (adjustingSearchEl) tryAdjustingSearch = adjustingSearchEl.textContent;
             
             if (visibleRows === 0 && tableRows.length > 0) {
                 if (tableBody) tableBody.style.display = 'none';
                 if (noDataMessage) {
                     noDataMessage.style.display = 'block';
-                    noDataMessage.querySelector('h4').textContent = 'No matching investments found';
-                    noDataMessage.querySelector('p').textContent = 'Try adjusting your search term';
+                    noDataMessage.querySelector('h4').textContent = noMatchingInvestments;
+                    noDataMessage.querySelector('p').textContent = tryAdjustingSearch;
                 }
             } else {
                 if (tableBody) tableBody.style.display = 'block';
