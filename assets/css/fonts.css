@@ -1,95 +1,226 @@
-/* 
- * iGotMoney - Font Settings
- * Handles proper font loading for multilingual support
+/**
+ * iGotMoney - Typography and Font System
+ * Optimized for both Latin and Thai scripts
  */
 
-/* Import Noto Sans Thai from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap');
+/* Inter for Latin and Noto Sans Thai for Thai text */
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: url('https://fonts.googleapis.com/css2?family=Inter:wght@300&display=swap');
+}
 
-/* Import Inter for Latin text */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap');
+}
 
-/* Base font settings */
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('https://fonts.googleapis.com/css2?family=Inter:wght@500&display=swap');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap');
+}
+
+@font-face {
+    font-family: 'Noto Sans Thai';
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300&display=swap');
+}
+
+@font-face {
+    font-family: 'Noto Sans Thai';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400&display=swap');
+}
+
+@font-face {
+    font-family: 'Noto Sans Thai';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@500&display=swap');
+}
+
+@font-face {
+    font-family: 'Noto Sans Thai';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@600&display=swap');
+}
+
+@font-face {
+    font-family: 'Noto Sans Thai';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@700&display=swap');
+}
+
+/* Base typography settings */
 :root {
-  --font-primary: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  --font-thai: 'Noto Sans Thai', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  --line-height-normal: 1.5;
-  --line-height-thai: 1.7; /* Thai script needs more line height */
-  --letter-spacing-normal: 0;
-  --letter-spacing-thai: 0.01em;
+    --font-primary: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    --font-thai: 'Noto Sans Thai', var(--font-primary);
+    --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    
+    /* Font sizes using modular scale */
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
+    --text-3xl: 1.875rem;
+    --text-4xl: 2.25rem;
+    --text-5xl: 3rem;
+    
+    /* Line heights */
+    --leading-none: 1;
+    --leading-tight: 1.25;
+    --leading-snug: 1.375;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.625;
+    --leading-loose: 2;
+    
+    /* Font weights */
+    --font-light: 300;
+    --font-normal: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
 }
 
-/* Base typography */
+/* Default typography */
 body {
-  font-family: var(--font-primary);
-  line-height: var(--line-height-normal);
-  letter-spacing: var(--letter-spacing-normal);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    font-family: var(--font-primary);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+    color: var(--text-primary);
 }
 
-/* Language-specific typography */
+/* Thai specific adjustments */
 html[lang="th"] body {
-  font-family: var(--font-thai);
-  line-height: var(--line-height-thai);
-  letter-spacing: var(--letter-spacing-thai);
+    font-family: var(--font-thai);
+    line-height: var(--leading-relaxed);
 }
 
-/* Font weight mappings for Thai fonts */
-html[lang="th"] .font-normal {
-  font-weight: 400;
-}
-
-html[lang="th"] .font-medium {
-  font-weight: 500;
-}
-
-html[lang="th"] .font-semibold,
-html[lang="th"] .font-bold {
-  font-weight: 700;
-}
-
-/* Prevent text from overflowing in Thai */
-html[lang="th"] p, 
 html[lang="th"] h1, 
 html[lang="th"] h2, 
 html[lang="th"] h3, 
 html[lang="th"] h4, 
 html[lang="th"] h5, 
-html[lang="th"] h6,
-html[lang="th"] .nav-link,
-html[lang="th"] .btn,
-html[lang="th"] .card-title,
-html[lang="th"] .dropdown-item {
-  word-break: keep-all;
-  overflow-wrap: break-word;
+html[lang="th"] h6 {
+    font-family: var(--font-thai);
+    line-height: 1.3; /* Tighter line height for Thai headings */
 }
 
-/* Additional padding for Thai buttons and navigation */
-html[lang="th"] .btn,
-html[lang="th"] .nav-link {
-  padding-left: calc(var(--bs-btn-padding-x) * 1.1);
-  padding-right: calc(var(--bs-btn-padding-x) * 1.1);
+/* Typography scale */
+h1, .h1 {
+    font-size: var(--text-4xl);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-tight);
 }
 
-/* Preserve spacing and alignment for Thai content */
-html[lang="th"] .form-label,
-html[lang="th"] .page-title,
-html[lang="th"] .chart-title {
-  margin-bottom: 0.5rem;
+h2, .h2 {
+    font-size: var(--text-3xl);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-tight);
 }
 
-/* Optimize table display for Thai */
-html[lang="th"] table {
-  font-size: 0.95em; /* Slightly smaller to accommodate longer Thai words */
+h3, .h3 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-semibold);
 }
 
-/* Optimization for dashboard cards in Thai */
-html[lang="th"] .card-value {
-  font-family: var(--font-primary); /* Use primary font for numbers */
+h4, .h4 {
+    font-size: var(--text-xl);
+    font-weight: var(--font-medium);
 }
 
-html[lang="th"] .card-label,
-html[lang="th"] .card-trend {
-  font-family: var(--font-thai); /* Use Thai font for labels */
+h5, .h5 {
+    font-size: var(--text-lg);
+    font-weight: var(--font-medium);
+}
+
+h6, .h6 {
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+}
+
+/* Utility text classes */
+.text-xs { font-size: var(--text-xs); }
+.text-sm { font-size: var(--text-sm); }
+.text-base { font-size: var(--text-base); }
+.text-lg { font-size: var(--text-lg); }
+.text-xl { font-size: var(--text-xl); }
+.text-2xl { font-size: var(--text-2xl); }
+.text-3xl { font-size: var(--text-3xl); }
+.text-4xl { font-size: var(--text-4xl); }
+.text-5xl { font-size: var(--text-5xl); }
+
+.font-light { font-weight: var(--font-light); }
+.font-normal { font-weight: var(--font-normal); }
+.font-medium { font-weight: var(--font-medium); }
+.font-semibold { font-weight: var(--font-semibold); }
+.font-bold { font-weight: var(--font-bold); }
+
+.leading-none { line-height: var(--leading-none); }
+.leading-tight { line-height: var(--leading-tight); }
+.leading-snug { line-height: var(--leading-snug); }
+.leading-normal { line-height: var(--leading-normal); }
+.leading-relaxed { line-height: var(--leading-relaxed); }
+.leading-loose { line-height: var(--leading-loose); }
+
+/* Thai language specific utility classes */
+html[lang="th"] .th-text-adjustment {
+    letter-spacing: 0.01em;
+    word-spacing: 0.02em;
+}
+
+/* Responsive typography - adjust for mobile */
+@media (max-width: 768px) {
+    h1, .h1 { font-size: var(--text-3xl); }
+    h2, .h2 { font-size: var(--text-2xl); }
+    h3, .h3 { font-size: var(--text-xl); }
+    
+    html[lang="th"] .nav-link {
+        font-size: var(--text-sm);
+    }
+}
+
+/* Sidebar nav typography */
+.sidebar .nav-link {
+    font-weight: var(--font-medium);
+}
+
+html[lang="th"] .sidebar .nav-link {
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
 }

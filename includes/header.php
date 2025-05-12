@@ -10,6 +10,12 @@
     <link rel="icon" href="<?php echo BASE_PATH; ?>/assets/images/favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="<?php echo BASE_PATH; ?>/assets/images/favicon.ico" type="image/x-icon">
     
+    <!-- Fonts - Add Noto Sans Thai for better Thai language support -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
     
@@ -72,7 +78,7 @@
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fa fa-user-circle me-1"></i> <?php echo htmlspecialchars($_SESSION['username']); ?>
                             </a>
-                            <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                                 <li><a class="dropdown-item" href="<?php echo BASE_PATH; ?>/profile"><i class="fa fa-id-card me-1"></i> <?php echo __('profile'); ?></a></li>
                                 <li><a class="dropdown-item" href="<?php echo BASE_PATH; ?>/settings"><i class="fa fa-cog me-1"></i> <?php echo __('settings'); ?></a></li>
                                 <li><hr class="dropdown-divider"></li>
@@ -93,47 +99,47 @@
                         <ul class="nav flex-column">
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'dashboard' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/dashboard">
-                                    <i class="fa fa-tachometer-alt me-2"></i> <?php echo __('dashboard'); ?>
+                                    <i class="fa fa-tachometer-alt me-2"></i> <span class="nav-text"><?php echo __('dashboard'); ?></span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'income' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/income">
-                                    <i class="fa fa-wallet me-2"></i> <?php echo __('income'); ?>
+                                    <i class="fa fa-wallet me-2"></i> <span class="nav-text"><?php echo __('income'); ?></span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'expenses' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/expenses">
-                                    <i class="fa fa-credit-card me-2"></i> <?php echo __('expenses'); ?>
+                                    <i class="fa fa-credit-card me-2"></i> <span class="nav-text"><?php echo __('expenses'); ?></span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'budget' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/budget">
-                                    <i class="fa fa-chart-pie me-2"></i> <?php echo __('budget'); ?>
+                                    <i class="fa fa-chart-pie me-2"></i> <span class="nav-text"><?php echo __('budget'); ?></span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'investments' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/investments">
-                                    <i class="fa fa-chart-line me-2"></i> <?php echo __('investments'); ?>
+                                    <i class="fa fa-chart-line me-2"></i> <span class="nav-text"><?php echo __('investments'); ?></span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'stocks' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/stocks">
-                                    <i class="fa fa-exchange-alt me-2"></i> <?php echo __('stock_analysis'); ?>
+                                    <i class="fa fa-exchange-alt me-2"></i> <span class="nav-text"><?php echo __('stock_analysis'); ?></span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'goals' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/goals">
-                                    <i class="fa fa-bullseye me-2"></i> <?php echo __('financial_goals'); ?>
+                                    <i class="fa fa-bullseye me-2"></i> <span class="nav-text"><?php echo __('financial_goals'); ?></span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'taxes' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/taxes">
-                                    <i class="fa fa-file-invoice-dollar me-2"></i> <?php echo __('tax_planning'); ?>
+                                    <i class="fa fa-file-invoice-dollar me-2"></i> <span class="nav-text"><?php echo __('tax_planning'); ?></span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'reports' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/reports">
-                                    <i class="fa fa-chart-bar me-2"></i> <?php echo __('reports'); ?>
+                                    <i class="fa fa-chart-bar me-2"></i> <span class="nav-text"><?php echo __('reports'); ?></span>
                                 </a>
                             </li>
                         </ul>
