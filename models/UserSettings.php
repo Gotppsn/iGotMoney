@@ -96,8 +96,7 @@ class UserSettings {
     public function update() {
         // SQL query
         $query = "UPDATE " . $this->table . " 
-                  SET currency = ?, theme = ?, notification_enabled = ?, 
-                      email_notification_enabled = ?, budget_alert_threshold = ? 
+                  SET currency = ?
                   WHERE user_id = ?";
         
         // Prepare statement
@@ -105,18 +104,10 @@ class UserSettings {
         
         // Sanitize input
         $this->currency = htmlspecialchars(strip_tags($this->currency));
-        $this->theme = htmlspecialchars(strip_tags($this->theme));
-        $this->notification_enabled = $this->notification_enabled ? 1 : 0;
-        $this->email_notification_enabled = $this->email_notification_enabled ? 1 : 0;
-        $this->budget_alert_threshold = htmlspecialchars(strip_tags($this->budget_alert_threshold));
         
         // Bind parameters
-        $stmt->bind_param("ssiiii", 
+        $stmt->bind_param("si", 
                           $this->currency, 
-                          $this->theme, 
-                          $this->notification_enabled, 
-                          $this->email_notification_enabled, 
-                          $this->budget_alert_threshold, 
                           $this->user_id);
         
         // Execute query
@@ -133,8 +124,7 @@ class UserSettings {
     public function resetToDefault() {
         // SQL query
         $query = "UPDATE " . $this->table . " 
-                  SET currency = 'USD', theme = 'light', notification_enabled = 1, 
-                      email_notification_enabled = 1, budget_alert_threshold = 80 
+                  SET currency = 'USD'
                   WHERE user_id = ?";
         
         // Prepare statement
@@ -147,10 +137,6 @@ class UserSettings {
         if ($stmt->execute()) {
             // Update local properties
             $this->currency = 'USD';
-            $this->theme = 'light';
-            $this->notification_enabled = 1;
-            $this->email_notification_enabled = 1;
-            $this->budget_alert_threshold = 80;
             
             return true;
         }
@@ -172,7 +158,8 @@ class UserSettings {
             'CNY' => 'Chinese Yuan (¥)',
             'INR' => 'Indian Rupee (₹)',
             'BRL' => 'Brazilian Real (R$)',
-            'MXN' => 'Mexican Peso (Mex$)'
+            'MXN' => 'Mexican Peso (Mex$)',
+            'THB' => 'Thai Baht (฿)'
         ];
     }
     
@@ -199,7 +186,8 @@ class UserSettings {
             'CNY' => '¥',
             'INR' => '₹',
             'BRL' => 'R$',
-            'MXN' => 'Mex$'
+            'MXN' => 'Mex$',
+            'THB' => '฿'
         ];
         
         return $symbols[$currency] ?? '$';

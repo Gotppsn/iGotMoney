@@ -1,65 +1,85 @@
+/**
+ * Modern Settings Page JavaScript
+ * Handles all interactive features for the settings page
+ */
+
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Modern Settings JS loaded');
+    console.log('Settings JS initialized');
     
-    // Initialize all components
+    // Initialize tab navigation
     initializeTabNavigation();
-    initializeRangeSlider();
+    
+    // Initialize other components
     initializeFormValidation();
     initializeResetSettings();
-    initializeToggles();
-    initializeAnimations();
+    initializeCurrencyPreview();
 });
 
+/**
+ * Tab navigation initialization
+ * Direct implementation without Bootstrap dependency
+ */
 function initializeTabNavigation() {
     const navLinks = document.querySelectorAll('.nav-link');
     const tabPanes = document.querySelectorAll('.tab-pane');
     
+    // Ensure first tab is visible by default
+    if (tabPanes.length > 0) {
+        // First hide all panes
+        tabPanes.forEach(pane => {
+            pane.style.display = 'none';
+            pane.classList.remove('active');
+        });
+        
+        // Show the first one
+        tabPanes[0].style.display = 'block';
+        tabPanes[0].classList.add('active');
+        
+        // Make sure first nav link is active
+        if (navLinks.length > 0) {
+            navLinks[0].classList.add('active');
+        }
+    }
+    
+    // Add click handlers to all tab links
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             
-            // Get the target tab
+            // Get target tab
             const targetId = this.getAttribute('data-bs-target');
             const targetPane = document.querySelector(targetId);
             
-            if (!targetPane) return;
+            if (!targetPane) {
+                console.error('Target pane not found:', targetId);
+                return;
+            }
             
-            // Remove active classes
-            navLinks.forEach(nav => nav.classList.remove('active'));
-            tabPanes.forEach(pane => pane.classList.remove('active'));
-            
-            // Add active classes
+            // Update active state for links
+            navLinks.forEach(nav => {
+                nav.classList.remove('active');
+            });
             this.classList.add('active');
-            targetPane.classList.add('active');
             
-            // Add animation
+            // Hide all panes
+            tabPanes.forEach(pane => {
+                pane.style.display = 'none';
+                pane.classList.remove('active');
+            });
+            
+            // Show the target pane
+            targetPane.style.display = 'block';
+            targetPane.classList.add('active');
             targetPane.style.animation = 'fadeIn 0.3s ease both';
+            
+            console.log('Tab activated:', targetId);
         });
     });
 }
 
-function initializeRangeSlider() {
-    const rangeInput = document.getElementById('budget_alert_threshold');
-    const rangeValue = document.getElementById('threshold_value');
-    
-    if (rangeInput && rangeValue) {
-        // Update value display on input
-        rangeInput.addEventListener('input', function() {
-            rangeValue.textContent = this.value + '%';
-            
-            // Add visual feedback
-            const percent = (this.value - this.min) / (this.max - this.min);
-            const hue = percent * 120; // 0 (red) to 120 (green)
-            rangeValue.style.color = `hsl(${hue}, 70%, 50%)`;
-        });
-        
-        // Initialize the color on load
-        const percent = (rangeInput.value - rangeInput.min) / (rangeInput.max - rangeInput.min);
-        const hue = percent * 120;
-        rangeValue.style.color = `hsl(${hue}, 70%, 50%)`;
-    }
-}
-
+/**
+ * Form validation with visual feedback
+ */
 function initializeFormValidation() {
     const forms = document.querySelectorAll('.needs-validation');
     
@@ -69,25 +89,54 @@ function initializeFormValidation() {
                 event.preventDefault();
                 event.stopPropagation();
                 
-                // Add shake animation to invalid fields
+                // Find and highlight invalid fields
                 const invalidFields = form.querySelectorAll(':invalid');
-                invalidFields.forEach(field => {
-                    field.classList.add('shake');
+                if (invalidFields.length > 0) {
+                    // Scroll to first invalid field
+                    invalidFields[0].scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    
+                    // Focus the first invalid field
                     setTimeout(() => {
-                        field.classList.remove('shake');
+                        invalidFields[0].focus();
                     }, 500);
-                });
+                    
+                    // Add shake animation
+                    invalidFields.forEach(field => {
+                        field.classList.add('shake');
+                        setTimeout(() => {
+                            field.classList.remove('shake');
+                        }, 600);
+                    });
+                }
+            } else {
+                // Add loading state to submit button
+                const submitButton = form.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    const originalContent = submitButton.innerHTML;
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                    submitButton.disabled = true;
+                    
+                    // Reset button after 3s (failsafe)
+                    setTimeout(() => {
+                        submitButton.innerHTML = originalContent;
+                        submitButton.disabled = false;
+                    }, 3000);
+                }
             }
             
             form.classList.add('was-validated');
         }, false);
     });
     
-    // Real-time validation for password fields
+    // Password matching validation
     const newPassword = document.getElementById('new_password');
     const confirmPassword = document.getElementById('confirm_password');
     
     if (newPassword && confirmPassword) {
+        // Check on confirm password input
         confirmPassword.addEventListener('input', function() {
             if (this.value !== newPassword.value) {
                 this.setCustomValidity('Passwords do not match');
@@ -96,6 +145,7 @@ function initializeFormValidation() {
             }
         });
         
+        // Check when primary password changes
         newPassword.addEventListener('input', function() {
             if (confirmPassword.value && this.value !== confirmPassword.value) {
                 confirmPassword.setCustomValidity('Passwords do not match');
@@ -106,132 +156,112 @@ function initializeFormValidation() {
     }
 }
 
+/**
+ * Reset settings functionality with modal confirmation
+ */
 function initializeResetSettings() {
     const resetButton = document.getElementById('resetSettings');
+    const resetModal = document.getElementById('resetSettingsModal');
     
-    if (resetButton) {
+    if (resetButton && resetModal) {
         resetButton.addEventListener('click', function() {
-            const modal = new bootstrap.Modal(document.getElementById('resetSettingsModal'));
-            modal.show();
+            // Try to use Bootstrap modal if available
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                const modal = new bootstrap.Modal(resetModal);
+                modal.show();
+            } else {
+                // Manual fallback if Bootstrap JS isn't available
+                resetModal.style.display = 'block';
+                resetModal.classList.add('show');
+                document.body.classList.add('modal-open');
+                
+                // Add backdrop
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                document.body.appendChild(backdrop);
+                
+                // Close modal handlers
+                const closeButtons = resetModal.querySelectorAll('[data-bs-dismiss="modal"], .modal-close, .btn-secondary');
+                closeButtons.forEach(button => {
+                    button.addEventListener('click', closeModal);
+                });
+                
+                // Close on modal background click
+                resetModal.addEventListener('click', function(e) {
+                    if (e.target === resetModal) {
+                        closeModal();
+                    }
+                });
+                
+                function closeModal() {
+                    resetModal.style.display = 'none';
+                    resetModal.classList.remove('show');
+                    document.body.classList.remove('modal-open');
+                    
+                    // Remove backdrop
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        document.body.removeChild(backdrop);
+                    }
+                }
+            }
         });
     }
 }
 
-function initializeToggles() {
-    // Initialize all toggle switches
-    const toggleFields = document.querySelectorAll('.toggle-field');
+/**
+ * Currency preview functionality
+ */
+function initializeCurrencyPreview() {
+    const currencySelect = document.getElementById('currency');
+    const previewValues = document.querySelectorAll('.preview-value');
     
-    toggleFields.forEach(field => {
-        const input = field.querySelector('input[type="checkbox"]');
-        const slider = field.querySelector('.toggle-slider');
-        
-        // Add click handler to the entire field
-        field.addEventListener('click', function(e) {
-            if (e.target.type !== 'checkbox') {
-                input.checked = !input.checked;
-                input.dispatchEvent(new Event('change'));
-            }
+    if (currencySelect && previewValues.length) {
+        // Update on change
+        currencySelect.addEventListener('change', function() {
+            updateCurrencySymbol(this.value);
         });
         
-        // Add visual feedback
-        input.addEventListener('change', function() {
-            if (this.checked) {
-                slider.style.backgroundColor = 'var(--primary-color)';
-            } else {
-                slider.style.backgroundColor = 'var(--gray-300)';
-            }
-        });
-    });
-    
-    // Handle disabled checkboxes
-    const disabledCheckboxes = document.querySelectorAll('.disabled-checkbox input');
-    disabledCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('click', function(e) {
-            e.preventDefault();
-            showTooltip(this, 'This setting is always enabled');
-        });
-    });
-}
-
-function initializeAnimations() {
-    // Add smooth scrolling for navigation
-    const navLinks = document.querySelectorAll('.nav-link');
-    
-    navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            const targetId = this.getAttribute('data-bs-target');
-            const targetElement = document.querySelector(targetId);
+        function updateCurrencySymbol(currencyCode) {
+            const symbols = {
+                'USD': '$',
+                'EUR': '€',
+                'GBP': '£',
+                'JPY': '¥',
+                'CAD': 'C$',
+                'AUD': 'A$',
+                'CNY': '¥',
+                'INR': '₹',
+                'BRL': 'R$',
+                'MXN': 'Mex$',
+                'THB': '฿'
+            };
             
-            if (targetElement) {
-                const offset = targetElement.offsetTop - 100;
-                window.scrollTo({
-                    top: offset,
-                    behavior: 'smooth'
-                });
-            }
-        });
-    });
-    
-    // Add animation to cards when they come into view
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('animate-in');
-            }
-        });
-    }, {
-        threshold: 0.1
-    });
-    
-    document.querySelectorAll('.settings-card').forEach(card => {
-        observer.observe(card);
-    });
+            const symbol = symbols[currencyCode] || '$';
+            
+            // Update all preview values with new currency symbol
+            previewValues.forEach(element => {
+                const value = element.textContent.replace(/^[^\d]*/, '');
+                element.textContent = `${symbol}${value}`;
+            });
+        }
+    }
 }
 
-function showTooltip(element, message) {
-    // Create tooltip element
-    const tooltip = document.createElement('div');
-    tooltip.className = 'custom-tooltip';
-    tooltip.textContent = message;
-    tooltip.style.cssText = `
-        position: absolute;
-        background: var(--gray-800);
-        color: white;
-        padding: 0.5rem 0.75rem;
-        border-radius: 0.375rem;
-        font-size: 0.875rem;
-        z-index: 1000;
-        opacity: 0;
-        transition: opacity 0.2s ease;
-        pointer-events: none;
-    `;
+// Add animation and utility styles
+const styleElement = document.createElement('style');
+styleElement.textContent = `
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
     
-    document.body.appendChild(tooltip);
-    
-    // Position the tooltip
-    const rect = element.getBoundingClientRect();
-    const tooltipRect = tooltip.getBoundingClientRect();
-    
-    tooltip.style.left = `${rect.left + (rect.width - tooltipRect.width) / 2}px`;
-    tooltip.style.top = `${rect.top - tooltipRect.height - 8}px`;
-    
-    // Show tooltip
-    setTimeout(() => {
-        tooltip.style.opacity = '1';
-    }, 10);
-    
-    // Remove tooltip after delay
-    setTimeout(() => {
-        tooltip.style.opacity = '0';
-        setTimeout(() => {
-            document.body.removeChild(tooltip);
-        }, 200);
-    }, 2000);
-}
-
-// Add shake animation styles
-const style = document.createElement('style');
-style.textContent = `
     @keyframes shake {
         0% { transform: translateX(0); }
         25% { transform: translateX(-5px); }
@@ -242,36 +272,22 @@ style.textContent = `
     
     .shake {
         animation: shake 0.5s ease-in-out;
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
     }
     
-    .animate-in {
-        animation: fadeIn 0.6s ease both;
+    .nav-link {
+        position: relative;
+        z-index: 10;
+    }
+    
+    .tab-pane.active {
+        display: block !important;
     }
 `;
-document.head.appendChild(style);
+document.head.appendChild(styleElement);
 
-// Handle form submissions with loading states
-document.querySelectorAll('form').forEach(form => {
-    form.addEventListener('submit', function(e) {
-        const submitButton = this.querySelector('button[type="submit"]');
-        
-        if (submitButton) {
-            const originalContent = submitButton.innerHTML;
-            
-            // Add loading state
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-            submitButton.disabled = true;
-            
-            // Reset button after form submission (this is a fallback)
-            setTimeout(() => {
-                submitButton.innerHTML = originalContent;
-                submitButton.disabled = false;
-            }, 3000);
-        }
-    });
-});
-
-// Add visual feedback for successful saves
+// Success message toast notification
 function showSuccessMessage(message = 'Settings saved successfully!') {
     const notification = document.createElement('div');
     notification.className = 'success-notification';
@@ -283,11 +299,11 @@ function showSuccessMessage(message = 'Settings saved successfully!') {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: var(--success-color);
+        background: var(--success-color, #10b981);
         color: white;
         padding: 1rem 1.5rem;
-        border-radius: var(--border-radius-sm);
-        box-shadow: var(--shadow-lg);
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         z-index: 9999;
         display: flex;
         align-items: center;
@@ -299,13 +315,13 @@ function showSuccessMessage(message = 'Settings saved successfully!') {
     
     document.body.appendChild(notification);
     
-    // Show notification
+    // Show notification with animation
     setTimeout(() => {
         notification.style.opacity = '1';
         notification.style.transform = 'translateY(0)';
     }, 10);
     
-    // Hide and remove notification
+    // Remove notification after a delay
     setTimeout(() => {
         notification.style.opacity = '0';
         notification.style.transform = 'translateY(-20px)';
@@ -316,7 +332,8 @@ function showSuccessMessage(message = 'Settings saved successfully!') {
     }, 3000);
 }
 
-// Add this to handle successful form submissions
-if (window.location.search.includes('success=1')) {
+// Check for success parameter in URL and show success message
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('success')) {
     showSuccessMessage();
 }

@@ -41,10 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'update_settings') {
         // Set settings properties
         $settings->currency = $_POST['currency'] ?? 'USD';
-        $settings->theme = $_POST['theme'] ?? 'light';
-        $settings->notification_enabled = isset($_POST['notification_enabled']) ? 1 : 0;
-        $settings->email_notification_enabled = isset($_POST['email_notification_enabled']) ? 1 : 0;
-        $settings->budget_alert_threshold = $_POST['budget_alert_threshold'] ?? 80;
+        $settings->user_id = $user_id;
         
         // Update settings
         if ($settings->update()) {
@@ -54,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($action === 'reset_settings') {
         // Reset settings to default
+        $settings->user_id = $user_id;
         if ($settings->resetToDefault()) {
             $success = 'Settings reset to default values!';
         } else {
@@ -97,9 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get available currencies and themes for dropdowns
+// Get available currencies for dropdown
 $available_currencies = $settings->getAvailableCurrencies();
-$available_themes = $settings->getAvailableThemes();
 
 // Include view
 require_once 'views/settings.php';
