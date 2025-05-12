@@ -11,20 +11,43 @@ define('DB_NAME', 'gotppsnc_igotmoney');
 define('DB_USER', 'gotppsnc_Panupol'); // Use your actual MySQL username here
 define('DB_PASSWORD', '039464@Got');
 
-// Create connection
+// Create connection with improved error handling
 function connectDB() {
-    $conn = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-    
-    // Check connection
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+    try {
+        $conn = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+        
+        // Check connection
+        if ($conn->connect_error) {
+            $error_message = "Database connection failed: " . $conn->connect_error;
+            error_log($error_message);
+            throw new Exception($error_message);
+        }
+        
+        // Set charset to ensure proper handling of special characters
+        $conn->set_charset("utf8mb4");
+        
+        return $conn;
+    } catch (Exception $e) {
+        error_log("Database connection error: " . $e->getMessage());
+        throw $e; // Re-throw to allow proper handling by calling code
     }
-    
-    return $conn;
 }
 
 // Close connection
 function closeDB($conn) {
-    $conn->close();
+    if ($conn instanceof mysqli) {
+        $conn->close();
+    }
 }
-?>
+
+// Test connection function to use for debugging
+function testDatabaseConnection() {
+    try {
+        $conn = connectDB();
+        $result = "Connection successful to database: " . DB_NAME;
+        closeDB($conn);
+        return ['success' => true, 'message' => $result];
+    } catch (Exception $e) {
+        return ['success' => false, 'message' => $e->getMessage()];
+    }
+}

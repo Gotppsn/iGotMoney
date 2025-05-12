@@ -6,14 +6,8 @@
  */
 
 // Base path configuration for sub-directory installation
-// Change this to '' if installed in the root directory
+// Change this to match your actual installation directory
 define('BASE_PATH', '/igotmoney');
-
-// Database configuration
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'gotppsnc_igotmoney');
-define('DB_USER', 'gotppsnc_Panupol');
-define('DB_PASSWORD', '039464@Got');
 
 // Application configuration
 define('APP_NAME', 'iGotMoney');
@@ -25,3 +19,20 @@ define('SESSION_LIFETIME', 86400); // 24 hours
 
 // Timezone setting
 date_default_timezone_set('Asia/Bangkok');
+
+// Debugging options
+define('DEBUG_MODE', true); // Set to false in production
+
+if (DEBUG_MODE) {
+    // Enable error reporting in debug mode
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+} else {
+    // Disable error reporting in production
+    ini_set('display_errors', 0);
+    error_reporting(0);
+}
+
+// Note: Database credentials are now only in database.php
+// to avoid duplication and potential inconsistencies

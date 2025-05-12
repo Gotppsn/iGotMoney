@@ -5,6 +5,11 @@
  * This file handles all requests and routes them to the appropriate controllers
  */
 
+// Enable detailed error reporting for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 // Start session
 session_start();
 
@@ -170,6 +175,26 @@ switch ($request_uri) {
         
     case '/profile':
         require_once 'controllers/profile.php';
+        break;
+        
+    case '/debug':
+        // Add a debug route to test database connection
+        echo "<h1>Database Connection Test</h1>";
+        try {
+            $conn = connectDB();
+            echo "<p style='color:green'>Database connection successful!</p>";
+            $result = $conn->query("SHOW TABLES");
+            if ($result) {
+                echo "<h3>Tables in database:</h3><ul>";
+                while ($row = $result->fetch_row()) {
+                    echo "<li>" . htmlspecialchars($row[0]) . "</li>";
+                }
+                echo "</ul>";
+            }
+            closeDB($conn);
+        } catch (Exception $e) {
+            echo "<p style='color:red'>Database connection failed: " . htmlspecialchars($e->getMessage()) . "</p>";
+        }
         break;
         
     default:
