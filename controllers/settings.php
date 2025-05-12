@@ -7,13 +7,14 @@
 
 // Check if user is logged in
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header('Location: /login');
+    header('Location: ' . BASE_PATH . '/login');
     exit();
 }
 
 // Include required models
 require_once 'models/UserSettings.php';
 require_once 'models/User.php';
+require_once 'includes/language.php';
 
 // Get user ID
 $user_id = $_SESSION['user_id'];
@@ -34,6 +35,9 @@ if (!$has_settings) {
     $settings->getSettings($user_id);
 }
 
+// Initialize language
+$language = Language::getInstance($settings->language);
+
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
@@ -41,11 +45,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'update_settings') {
         // Set settings properties
         $settings->currency = $_POST['currency'] ?? 'USD';
+        $settings->language = $_POST['language'] ?? 'en';
+        $settings->theme = $_POST['theme'] ?? 'system';
+        $settings->notification_enabled = isset($_POST['notification_enabled']) ? true : false;
+        $settings->email_notification_enabled = isset($_POST['email_notification_enabled']) ? true : false;
+        $settings->budget_alert_threshold = intval($_POST['budget_alert_threshold'] ?? 80);
         $settings->user_id = $user_id;
         
         // Update settings
         if ($settings->update()) {
-            $success = 'Settings updated successfully!';
+            $success = __('settings_updated');
+            
+            // If language changed, redirect to refresh the page with new language
+            if ($_POST['language'] !== $language->getCurrentLanguage()) {
+                header('Location: ' . BASE_PATH . '/settings?success=1');
+                exit;
+            }
         } else {
             $error = 'Failed to update settings.';
         }
@@ -54,6 +69,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $settings->user_id = $user_id;
         if ($settings->resetToDefault()) {
             $success = 'Settings reset to default values!';
+            
+            // If current language is not English, redirect to refresh with English
+            if ($language->getCurrentLanguage() !== 'en') {
+                header('Location: ' . BASE_PATH . '/settings?success=2');
+                exit;
+            }
         } else {
             $error = 'Failed to reset settings.';
         }
@@ -95,8 +116,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// Handle success messages from redirects
+if (isset($_GET['success'])) {
+    $success_code = intval($_GET['success']);
+    if ($success_code === 1) {
+        $success = __('settings_updated');
+    } elseif ($success_code === 2) {
+        $success = 'Settings reset to default values!';
+    }
+}
+
 // Get available currencies for dropdown
 $available_currencies = $settings->getAvailableCurrencies();
+
+// Get available languages for dropdown
+$available_languages = $settings->getAvailableLanguages();
 
 // Include view
 require_once 'views/settings.php';

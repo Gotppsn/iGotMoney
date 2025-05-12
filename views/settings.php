@@ -1,6 +1,6 @@
 <?php
 // Set page title and current page for menu highlighting
-$page_title = 'Settings - iGotMoney';
+$page_title = __('settings') . ' - ' . __('app_name');
 $current_page = 'settings';
 
 // Additional CSS and JS
@@ -25,8 +25,8 @@ require_once 'includes/header.php';
     <div class="page-header-section">
         <div class="page-header-content">
             <div class="page-title-group">
-                <h1 class="page-title">Settings</h1>
-                <p class="page-subtitle">Manage your account preferences and security settings</p>
+                <h1 class="page-title"><?php echo __('settings'); ?></h1>
+                <p class="page-subtitle"><?php echo __('manage_your_account_preferences'); ?></p>
             </div>
         </div>
     </div>
@@ -38,15 +38,15 @@ require_once 'includes/header.php';
                 <div class="nav-pills" role="tablist">
                     <button class="nav-link active" data-bs-target="#profile" type="button" role="tab" id="profile-tab">
                         <i class="fas fa-user-circle"></i>
-                        Profile
+                        <?php echo __('profile'); ?>
                     </button>
                     <button class="nav-link" data-bs-target="#security" type="button" role="tab" id="security-tab">
                         <i class="fas fa-lock"></i>
-                        Security
+                        <?php echo __('security'); ?>
                     </button>
                     <button class="nav-link" data-bs-target="#preferences" type="button" role="tab" id="preferences-tab">
                         <i class="fas fa-cog"></i>
-                        Preferences
+                        <?php echo __('preferences'); ?>
                     </button>
                 </div>
             </div>
@@ -63,8 +63,8 @@ require_once 'includes/header.php';
                                 <i class="fas fa-user-circle"></i>
                             </div>
                             <div class="header-content">
-                                <h2 class="card-title">Profile Information</h2>
-                                <p class="card-description">Update your account information and profile details</p>
+                                <h2 class="card-title"><?php echo __('profile_information'); ?></h2>
+                                <p class="card-description"><?php echo __('update_your_account_information'); ?></p>
                             </div>
                         </div>
                         <div class="settings-card-body">
@@ -75,16 +75,16 @@ require_once 'includes/header.php';
                                     <div class="form-field">
                                         <label for="username" class="form-label">
                                             <i class="fas fa-user"></i>
-                                            Username
+                                            <?php echo __('username'); ?>
                                         </label>
                                         <input type="text" class="form-control" id="username" value="<?php echo htmlspecialchars($user->username); ?>" readonly>
-                                        <small class="form-text">Username cannot be changed.</small>
+                                        <small class="form-text"><?php echo __('username_cannot_be_changed'); ?></small>
                                     </div>
                                     
                                     <div class="form-field">
                                         <label for="email" class="form-label">
                                             <i class="fas fa-envelope"></i>
-                                            Email Address
+                                            <?php echo __('email'); ?>
                                         </label>
                                         <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($user->email); ?>" required>
                                     </div>
@@ -92,7 +92,7 @@ require_once 'includes/header.php';
                                     <div class="form-field">
                                         <label for="first_name" class="form-label">
                                             <i class="fas fa-signature"></i>
-                                            First Name
+                                            <?php echo __('first_name'); ?>
                                         </label>
                                         <input type="text" class="form-control" id="first_name" name="first_name" value="<?php echo htmlspecialchars($user->first_name); ?>">
                                     </div>
@@ -100,7 +100,7 @@ require_once 'includes/header.php';
                                     <div class="form-field">
                                         <label for="last_name" class="form-label">
                                             <i class="fas fa-signature"></i>
-                                            Last Name
+                                            <?php echo __('last_name'); ?>
                                         </label>
                                         <input type="text" class="form-control" id="last_name" name="last_name" value="<?php echo htmlspecialchars($user->last_name); ?>">
                                     </div>
@@ -109,7 +109,7 @@ require_once 'includes/header.php';
                                 <div class="btn-group">
                                     <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-save"></i>
-                                        Update Profile
+                                        <?php echo __('update_profile'); ?>
                                     </button>
                                 </div>
                             </form>
@@ -125,8 +125,8 @@ require_once 'includes/header.php';
                                 <i class="fas fa-key"></i>
                             </div>
                             <div class="header-content">
-                                <h2 class="card-title">Change Password</h2>
-                                <p class="card-description">Update your password to keep your account secure</p>
+                                <h2 class="card-title"><?php echo __('change_password'); ?></h2>
+                                <p class="card-description"><?php echo __('update_your_password'); ?></p>
                             </div>
                         </div>
                         <div class="settings-card-body">
@@ -137,7 +137,7 @@ require_once 'includes/header.php';
                                     <div class="form-field full-width">
                                         <label for="current_password" class="form-label">
                                             <i class="fas fa-lock"></i>
-                                            Current Password
+                                            <?php echo __('current_password'); ?>
                                         </label>
                                         <input type="password" class="form-control" id="current_password" name="current_password" required>
                                     </div>
@@ -145,16 +145,16 @@ require_once 'includes/header.php';
                                     <div class="form-field">
                                         <label for="new_password" class="form-label">
                                             <i class="fas fa-unlock"></i>
-                                            New Password
+                                            <?php echo __('new_password'); ?>
                                         </label>
                                         <input type="password" class="form-control" id="new_password" name="new_password" required minlength="6">
-                                        <small class="form-text">Password must be at least 6 characters long.</small>
+                                        <small class="form-text"><?php echo __('password_min_length'); ?></small>
                                     </div>
                                     
                                     <div class="form-field">
                                         <label for="confirm_password" class="form-label">
                                             <i class="fas fa-redo"></i>
-                                            Confirm New Password
+                                            <?php echo __('confirm_new_password'); ?>
                                         </label>
                                         <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
                                     </div>
@@ -163,7 +163,7 @@ require_once 'includes/header.php';
                                 <div class="btn-group">
                                     <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-shield-alt"></i>
-                                        Change Password
+                                        <?php echo __('change_password'); ?>
                                     </button>
                                 </div>
                             </form>
@@ -176,33 +176,33 @@ require_once 'includes/header.php';
                                 <i class="fas fa-shield-alt"></i>
                             </div>
                             <div class="header-content">
-                                <h2 class="card-title">Account Security</h2>
-                                <p class="card-description">Keep your account safe with these security best practices</p>
+                                <h2 class="card-title"><?php echo __('account_security'); ?></h2>
+                                <p class="card-description"><?php echo __('security_best_practices'); ?></p>
                             </div>
                         </div>
                         <div class="settings-card-body">
                             <div class="security-list">
                                 <div class="security-item">
                                     <i class="fas fa-check-circle"></i>
-                                    <span>Use a strong, unique password</span>
+                                    <span><?php echo __('use_strong_password'); ?></span>
                                 </div>
                                 <div class="security-item">
                                     <i class="fas fa-check-circle"></i>
-                                    <span>Never share your login information</span>
+                                    <span><?php echo __('never_share_login'); ?></span>
                                 </div>
                                 <div class="security-item">
                                     <i class="fas fa-check-circle"></i>
-                                    <span>Log out when using shared devices</span>
+                                    <span><?php echo __('logout_shared_devices'); ?></span>
                                 </div>
                                 <div class="security-item">
                                     <i class="fas fa-check-circle"></i>
-                                    <span>Regularly update your password</span>
+                                    <span><?php echo __('regularly_update_password'); ?></span>
                                 </div>
                             </div>
                             
                             <div class="last-login">
                                 <i class="fas fa-clock"></i>
-                                <p>Last login: <strong><?php echo date('M j, Y h:i A'); ?></strong></p>
+                                <p><?php echo __('last_login'); ?>: <strong><?php echo date('M j, Y h:i A'); ?></strong></p>
                             </div>
                         </div>
                     </div>
@@ -210,14 +210,77 @@ require_once 'includes/header.php';
                 
                 <!-- Preferences Settings -->
                 <div class="tab-pane" id="preferences" role="tabpanel" style="display: none;">
+                    <!-- Language Settings Card -->
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <div class="header-icon">
+                                <i class="fas fa-globe"></i>
+                            </div>
+                            <div class="header-content">
+                                <h2 class="card-title"><?php echo __('language_settings'); ?></h2>
+                                <p class="card-description"><?php echo __('choose_language'); ?></p>
+                            </div>
+                        </div>
+                        <div class="settings-card-body">
+                            <form action="<?php echo BASE_PATH; ?>/settings" method="post" class="settings-form needs-validation" novalidate>
+                                <input type="hidden" name="action" value="update_settings">
+                                
+                                <div class="form-grid">
+                                    <div class="form-field">
+                                        <label for="language" class="form-label">
+                                            <i class="fas fa-language"></i>
+                                            <?php echo __('language'); ?>
+                                        </label>
+                                        <select class="form-select" id="language" name="language">
+                                            <?php foreach ($available_languages as $code => $name): ?>
+                                                <option value="<?php echo $code; ?>" <?php echo ($settings->language === $code) ? 'selected' : ''; ?>>
+                                                    <?php echo $name; ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        <small class="form-text"><?php echo __('language_preference_description'); ?></small>
+                                    </div>
+                                    
+                                    <div class="form-field">
+                                        <div class="language-preview">
+                                            <h3><?php echo __('language_preview'); ?></h3>
+                                            <div class="preview-examples">
+                                                <div class="preview-item">
+                                                    <span class="preview-label"><?php echo __('dashboard'); ?>:</span>
+                                                    <span class="preview-value"><?php echo $settings->language === 'en' ? 'Dashboard' : 'แดชบอร์ด'; ?></span>
+                                                </div>
+                                                <div class="preview-item">
+                                                    <span class="preview-label"><?php echo __('income'); ?>:</span>
+                                                    <span class="preview-value"><?php echo $settings->language === 'en' ? 'Income' : 'รายได้'; ?></span>
+                                                </div>
+                                                <div class="preview-item">
+                                                    <span class="preview-label"><?php echo __('expenses'); ?>:</span>
+                                                    <span class="preview-value"><?php echo $settings->language === 'en' ? 'Expenses' : 'ค่าใช้จ่าย'; ?></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="btn-group">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i>
+                                        <?php echo __('save_changes'); ?>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Currency Settings Card -->
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <div class="header-icon">
                                 <i class="fas fa-palette"></i>
                             </div>
                             <div class="header-content">
-                                <h2 class="card-title">Currency Settings</h2>
-                                <p class="card-description">Choose your preferred currency for financial calculations</p>
+                                <h2 class="card-title"><?php echo __('currency_settings'); ?></h2>
+                                <p class="card-description"><?php echo __('choose_currency'); ?></p>
                             </div>
                         </div>
                         <div class="settings-card-body">
@@ -228,7 +291,7 @@ require_once 'includes/header.php';
                                     <div class="form-field">
                                         <label for="currency" class="form-label">
                                             <i class="fas fa-money-bill-wave"></i>
-                                            Currency
+                                            <?php echo __('currency'); ?>
                                         </label>
                                         <select class="form-select" id="currency" name="currency">
                                             <?php foreach ($available_currencies as $code => $name): ?>
@@ -237,24 +300,24 @@ require_once 'includes/header.php';
                                                 </option>
                                             <?php endforeach; ?>
                                         </select>
-                                        <small class="form-text">Select your preferred currency for displaying financial data.</small>
+                                        <small class="form-text"><?php echo __('currency_preference_description'); ?></small>
                                     </div>
                                     
                                     <div class="form-field">
                                         <div class="currency-preview">
-                                            <h3>Currency Preview</h3>
+                                            <h3><?php echo __('currency_preview'); ?></h3>
                                             <div class="preview-examples">
                                                 <div class="preview-item">
-                                                    <span class="preview-label">Income:</span>
-                                                    <span class="preview-value"><?php echo $settings->getCurrencySymbol(); ?>1,000.00</span>
+                                                    <span class="preview-label"><?php echo __('income'); ?>:</span>
+                                                    <span class="preview-value"><?php echo ($settings->getCurrencySymbol) ? $settings->getCurrencySymbol() : '$'; ?>1,000.00</span>
                                                 </div>
                                                 <div class="preview-item">
-                                                    <span class="preview-label">Expense:</span>
-                                                    <span class="preview-value"><?php echo $settings->getCurrencySymbol(); ?>250.50</span>
+                                                    <span class="preview-label"><?php echo __('expenses'); ?>:</span>
+                                                    <span class="preview-value"><?php echo ($settings->getCurrencySymbol) ? $settings->getCurrencySymbol() : '$'; ?>250.50</span>
                                                 </div>
                                                 <div class="preview-item">
-                                                    <span class="preview-label">Budget:</span>
-                                                    <span class="preview-value"><?php echo $settings->getCurrencySymbol(); ?>750.00</span>
+                                                    <span class="preview-label"><?php echo __('budget'); ?>:</span>
+                                                    <span class="preview-value"><?php echo ($settings->getCurrencySymbol) ? $settings->getCurrencySymbol() : '$'; ?>750.00</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -264,11 +327,65 @@ require_once 'includes/header.php';
                                 <div class="btn-group">
                                     <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-save"></i>
-                                        Save Preferences
+                                        <?php echo __('save_preferences'); ?>
                                     </button>
                                     <button type="button" class="btn btn-secondary" id="resetSettings">
                                         <i class="fas fa-undo"></i>
-                                        Reset to Default
+                                        <?php echo __('reset_to_default'); ?>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Theme Settings -->
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <div class="header-icon">
+                                <i class="fas fa-moon"></i>
+                            </div>
+                            <div class="header-content">
+                                <h2 class="card-title"><?php echo __('theme_settings'); ?></h2>
+                                <p class="card-description"><?php echo __('choose_theme'); ?></p>
+                            </div>
+                        </div>
+                        <div class="settings-card-body">
+                            <form action="<?php echo BASE_PATH; ?>/settings" method="post" class="settings-form needs-validation" novalidate>
+                                <input type="hidden" name="action" value="update_settings">
+                                
+                                <div class="form-grid">
+                                    <div class="form-field">
+                                        <label for="theme" class="form-label">
+                                            <i class="fas fa-paint-brush"></i>
+                                            <?php echo __('theme'); ?>
+                                        </label>
+                                        <select class="form-select" id="theme" name="theme">
+                                            <option value="light" <?php echo ($settings->theme === 'light') ? 'selected' : ''; ?>><?php echo __('light'); ?></option>
+                                            <option value="dark" <?php echo ($settings->theme === 'dark') ? 'selected' : ''; ?>><?php echo __('dark'); ?></option>
+                                            <option value="system" <?php echo ($settings->theme === 'system') ? 'selected' : ''; ?>><?php echo __('system'); ?></option>
+                                        </select>
+                                        <small class="form-text"><?php echo __('theme_preference_description'); ?></small>
+                                    </div>
+                                    
+                                    <div class="form-field">
+                                        <div class="theme-preview">
+                                            <div class="theme-preview-card <?php echo $settings->theme !== 'dark' ? 'light-theme' : 'dark-theme'; ?>">
+                                                <div class="preview-header">
+                                                    <div class="preview-title"><?php echo __('theme_preview'); ?></div>
+                                                </div>
+                                                <div class="preview-body">
+                                                    <div class="preview-text"><?php echo __('this_is_how_theme_will_look'); ?></div>
+                                                    <div class="preview-button"><?php echo __('button'); ?></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="btn-group">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i>
+                                        <?php echo __('save_preferences'); ?>
                                     </button>
                                 </div>
                             </form>
@@ -288,22 +405,22 @@ require_once 'includes/header.php';
                 <div class="modal-icon">
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
-                <h5 class="modal-title">Reset Settings</h5>
+                <h5 class="modal-title"><?php echo __('reset_settings'); ?></h5>
                 <button type="button" class="modal-close" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to reset all settings to their default values?</p>
-                <p class="text-muted">This action cannot be undone.</p>
+                <p><?php echo __('confirm_reset_settings_question'); ?></p>
+                <p class="text-muted"><?php echo __('action_cannot_be_undone'); ?></p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo __('cancel'); ?></button>
                 <form id="resetSettingsForm" action="<?php echo BASE_PATH; ?>/settings" method="post" style="display: inline;">
                     <input type="hidden" name="action" value="reset_settings">
                     <button type="submit" class="btn btn-danger">
                         <i class="fas fa-undo"></i>
-                        Reset Settings
+                        <?php echo __('reset_settings'); ?>
                     </button>
                 </form>
             </div>

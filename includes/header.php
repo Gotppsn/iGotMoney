@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo isset($language) ? $language->getCurrentLanguage() : 'en'; ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="base-path" content="<?php echo BASE_PATH; ?>">
-    <title><?php echo $page_title ?? 'iGotMoney - Financial Management'; ?></title>
+    <title><?php echo $page_title ?? (__('app_name') . ' - ' . __('financial_management')); ?></title>
     
     <!-- Favicon -->
     <link rel="icon" href="<?php echo BASE_PATH; ?>/assets/images/favicon.ico" type="image/x-icon">
@@ -33,22 +33,39 @@
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
             <div class="container">
                 <a class="navbar-brand" href="<?php echo BASE_PATH; ?>/dashboard">
-                    <i class="fa fa-money-bill-wave me-2"></i>iGotMoney
+                    <i class="fa fa-money-bill-wave me-2"></i><?php echo __('app_name'); ?>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
+                        <!-- Language Selector Dropdown -->
+                        <li class="nav-item dropdown me-2">
+                            <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-globe me-1"></i> <?php echo __('language'); ?>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                                <?php foreach ($language->getSupportedLanguages() as $code => $name): ?>
+                                <li>
+                                    <a class="dropdown-item <?php echo $language->getCurrentLanguage() === $code ? 'active' : ''; ?>" 
+                                       href="<?php echo BASE_PATH; ?>/settings?quick_lang=<?php echo $code; ?>">
+                                        <?php echo $name; ?>
+                                    </a>
+                                </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </li>
+                        
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fa fa-user-circle me-1"></i> <?php echo htmlspecialchars($_SESSION['username']); ?>
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="userDropdown">
-                                <li><a class="dropdown-item" href="<?php echo BASE_PATH; ?>/profile"><i class="fa fa-id-card me-1"></i> Profile</a></li>
-                                <li><a class="dropdown-item" href="<?php echo BASE_PATH; ?>/settings"><i class="fa fa-cog me-1"></i> Settings</a></li>
+                                <li><a class="dropdown-item" href="<?php echo BASE_PATH; ?>/profile"><i class="fa fa-id-card me-1"></i> <?php echo __('profile'); ?></a></li>
+                                <li><a class="dropdown-item" href="<?php echo BASE_PATH; ?>/settings"><i class="fa fa-cog me-1"></i> <?php echo __('settings'); ?></a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="<?php echo BASE_PATH; ?>/logout"><i class="fa fa-sign-out-alt me-1"></i> Logout</a></li>
+                                <li><a class="dropdown-item" href="<?php echo BASE_PATH; ?>/logout"><i class="fa fa-sign-out-alt me-1"></i> <?php echo __('logout'); ?></a></li>
                             </ul>
                         </li>
                     </ul>
@@ -65,47 +82,47 @@
                         <ul class="nav flex-column">
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'dashboard' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/dashboard">
-                                    <i class="fa fa-tachometer-alt me-2"></i> Dashboard
+                                    <i class="fa fa-tachometer-alt me-2"></i> <?php echo __('dashboard'); ?>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'income' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/income">
-                                    <i class="fa fa-wallet me-2"></i> Income
+                                    <i class="fa fa-wallet me-2"></i> <?php echo __('income'); ?>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'expenses' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/expenses">
-                                    <i class="fa fa-credit-card me-2"></i> Expenses
+                                    <i class="fa fa-credit-card me-2"></i> <?php echo __('expenses'); ?>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'budget' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/budget">
-                                    <i class="fa fa-chart-pie me-2"></i> Budget
+                                    <i class="fa fa-chart-pie me-2"></i> <?php echo __('budget'); ?>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'investments' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/investments">
-                                    <i class="fa fa-chart-line me-2"></i> Investments
+                                    <i class="fa fa-chart-line me-2"></i> <?php echo __('investments'); ?>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'stocks' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/stocks">
-                                    <i class="fa fa-exchange-alt me-2"></i> Stock Analysis
+                                    <i class="fa fa-exchange-alt me-2"></i> <?php echo __('stock_analysis'); ?>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'goals' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/goals">
-                                    <i class="fa fa-bullseye me-2"></i> Financial Goals
+                                    <i class="fa fa-bullseye me-2"></i> <?php echo __('financial_goals'); ?>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'taxes' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/taxes">
-                                    <i class="fa fa-file-invoice-dollar me-2"></i> Tax Planning
+                                    <i class="fa fa-file-invoice-dollar me-2"></i> <?php echo __('tax_planning'); ?>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo ($current_page ?? '') === 'reports' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/reports">
-                                    <i class="fa fa-chart-bar me-2"></i> Reports
+                                    <i class="fa fa-chart-bar me-2"></i> <?php echo __('reports'); ?>
                                 </a>
                             </li>
                         </ul>
@@ -119,18 +136,35 @@
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
             <div class="container">
                 <a class="navbar-brand" href="<?php echo BASE_PATH; ?>/">
-                    <i class="fa fa-money-bill-wave me-2"></i>iGotMoney
+                    <i class="fa fa-money-bill-wave me-2"></i><?php echo __('app_name'); ?>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
+                        <!-- Language Selector for Non-Logged Users -->
+                        <li class="nav-item dropdown me-2">
+                            <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-globe me-1"></i> <?php echo __('language'); ?>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                                <?php foreach ($language->getSupportedLanguages() as $code => $name): ?>
+                                <li>
+                                    <a class="dropdown-item <?php echo $language->getCurrentLanguage() === $code ? 'active' : ''; ?>" 
+                                       href="<?php echo BASE_PATH; ?>/?lang=<?php echo $code; ?>">
+                                        <?php echo $name; ?>
+                                    </a>
+                                </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </li>
+                        
                         <li class="nav-item">
-                            <a class="nav-link <?php echo ($current_page ?? '') === 'login' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/login">Login</a>
+                            <a class="nav-link <?php echo ($current_page ?? '') === 'login' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/login"><?php echo __('login'); ?></a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link <?php echo ($current_page ?? '') === 'register' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/register">Register</a>
+                            <a class="nav-link <?php echo ($current_page ?? '') === 'register' ? 'active' : ''; ?>" href="<?php echo BASE_PATH; ?>/register"><?php echo __('register'); ?></a>
                         </li>
                     </ul>
                 </div>
