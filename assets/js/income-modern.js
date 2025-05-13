@@ -26,6 +26,7 @@ function initializeChart() {
         const chartLabelsEl = document.querySelector('meta[name="chart-labels"]');
         const chartDataEl = document.querySelector('meta[name="chart-data"]');
         const chartColorsEl = document.querySelector('meta[name="chart-colors"]');
+        const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
         
         if (!chartLabelsEl || !chartDataEl || !chartColorsEl) {
             console.error('Chart data meta tags not found!');
@@ -36,6 +37,7 @@ function initializeChart() {
         const chartLabels = JSON.parse(chartLabelsEl.getAttribute('content') || '[]');
         const chartData = JSON.parse(chartDataEl.getAttribute('content') || '[]');
         const chartColors = JSON.parse(chartColorsEl.getAttribute('content') || '[]');
+        const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
         
         if (chartLabels.length === 0 || chartData.length === 0) {
             showNoDataMessage();
@@ -108,7 +110,7 @@ function initializeChart() {
                                 const value = context.parsed;
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                 const percentage = ((value / total) * 100).toFixed(1);
-                                return `${label}: $${value.toLocaleString()} (${percentage}%)`;
+                                return `${label}: ${currencySymbol}${value.toLocaleString()} (${percentage}%)`;
                             }
                         }
                     }
@@ -293,6 +295,10 @@ function initializeFormValidation() {
 }
 
 function initializeAnimations() {
+    // Get currency symbol from meta
+    const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
+    const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
+    
     // Animate source bars on load
     const sourceBars = document.querySelectorAll('.source-bar-fill');
     sourceBars.forEach((bar, index) => {
@@ -390,12 +396,18 @@ function getTranslation(key, defaultValue = '') {
     return translations[key] || defaultValue || key;
 }
 
-// Utility function to format currency
+// Utility function to format currency with the user's currency symbol
 function formatCurrency(value) {
+    // Get currency symbol from meta tag
+    const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
+    const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
+    
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'USD'
-    }).format(value);
+        currency: 'USD', // This is just for formatting, we'll replace the symbol
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(value).replace(/^\$/, currencySymbol);
 }
 
 // Utility function to format date

@@ -7,6 +7,9 @@ $current_page = 'income';
 $additional_css = ['/assets/css/income-modern.css'];
 $additional_js = ['/assets/js/income-modern.js'];
 
+// Include currency helper for currency formatting
+require_once 'includes/currency_helper.php';
+
 // Include header
 require_once 'includes/header.php';
 ?>
@@ -36,7 +39,7 @@ require_once 'includes/header.php';
                 </div>
                 <div class="stat-content">
                     <h3 class="stat-label"><?php echo __('monthly_income'); ?></h3>
-                    <p class="stat-value">$<?php echo number_format($monthly_income, 2); ?></p>
+                    <p class="stat-value"><?php echo formatMoney($monthly_income); ?></p>
                     <?php
                     $previous_month = isset($prev_monthly_income) ? $prev_monthly_income : $monthly_income * 0.95;
                     $is_increased = $monthly_income >= $previous_month;
@@ -55,7 +58,7 @@ require_once 'includes/header.php';
                 </div>
                 <div class="stat-content">
                     <h3 class="stat-label"><?php echo __('annual_income'); ?></h3>
-                    <p class="stat-value">$<?php echo number_format($yearly_income, 2); ?></p>
+                    <p class="stat-value"><?php echo formatMoney($yearly_income); ?></p>
                     <div class="stat-info">
                         <i class="fas fa-info-circle"></i>
                         <span><?php echo __('projected_for'); ?> <?php echo date('Y'); ?></span>
@@ -177,7 +180,7 @@ require_once 'includes/header.php';
                                         </div>
                                     </div>
                                     <div class="source-amount">
-                                        <span class="amount">$<?php echo number_format($source['monthly_amount'], 2); ?>/mo</span>
+                                        <span class="amount"><?php echo formatMoney($source['monthly_amount']); ?>/mo</span>
                                         <span class="percentage"><?php echo number_format($percentage, 1); ?>%</span>
                                     </div>
                                 </div>
@@ -231,7 +234,7 @@ require_once 'includes/header.php';
                                 ?>
                                     <tr>
                                         <td class="source-name-cell"><?php echo htmlspecialchars($income_source['name']); ?></td>
-                                        <td class="amount-cell">$<?php echo number_format($income_source['amount'], 2); ?></td>
+                                        <td class="amount-cell"><?php echo formatMoney($income_source['amount']); ?></td>
                                         <td>
                                             <span class="frequency-badge">
                                                 <?php echo __($income_source['frequency']); ?>
@@ -313,7 +316,7 @@ require_once 'includes/header.php';
                         <div class="form-field">
                             <label for="amount"><?php echo __('amount'); ?></label>
                             <div class="amount-input">
-                                <span class="currency-symbol">$</span>
+                                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                 <input type="number" id="amount" name="amount" step="0.01" min="0.01" required>
                             </div>
                         </div>
@@ -390,7 +393,7 @@ require_once 'includes/header.php';
                         <div class="form-field">
                             <label for="edit_amount"><?php echo __('amount'); ?></label>
                             <div class="amount-input">
-                                <span class="currency-symbol">$</span>
+                                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                 <input type="number" id="edit_amount" name="amount" step="0.01" min="0.01" required>
                             </div>
                         </div>
@@ -532,6 +535,8 @@ echo '<meta name="base-path" content="' . BASE_PATH . '">';
 echo '<meta name="chart-labels" content="' . htmlspecialchars(json_encode($chart_labels)) . '">';
 echo '<meta name="chart-data" content="' . htmlspecialchars(json_encode($chart_data)) . '">';
 echo '<meta name="chart-colors" content="' . htmlspecialchars(json_encode(array_slice($chart_colors, 0, count($chart_data)))) . '">';
+// Add currency symbol meta tag for JavaScript
+echo '<meta name="currency-symbol" content="' . htmlspecialchars(getCurrencySymbol()) . '">';
 
 require_once 'includes/footer.php';
 ?>
