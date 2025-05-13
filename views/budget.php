@@ -6,6 +6,9 @@ $current_page = 'budget';
 // Additional CSS for modern design
 $additional_css = ['/assets/css/budget-modern.css'];
 
+// Include currency helper for currency formatting
+require_once 'includes/currency_helper.php';
+
 // Include header
 require_once 'includes/header.php';
 ?>
@@ -64,7 +67,7 @@ require_once 'includes/header.php';
                 </div>
                 <div class="stat-content">
                     <h3 class="stat-label"><?php echo __('total_budget'); ?></h3>
-                    <p class="stat-value">$<?php echo number_format($total_budget, 2); ?></p>
+                    <p class="stat-value"><?php echo formatMoney($total_budget); ?></p>
                     <div class="stat-info">
                         <i class="fas fa-calendar"></i>
                         <span><?php echo __('this_month'); ?></span>
@@ -92,11 +95,11 @@ require_once 'includes/header.php';
                 </div>
                 <div class="stat-content">
                     <h3 class="stat-label"><?php echo __('investment_budget'); ?></h3>
-                    <p class="stat-value">$<?php echo number_format($investment_budget, 2); ?></p>
+                    <p class="stat-value"><?php echo formatMoney($investment_budget); ?></p>
                     <?php if ($investment_budget > 0): ?>
                         <div class="stat-trend <?php echo $investment_spent >= $investment_budget ? 'positive' : 'warning'; ?>">
                             <i class="fas fa-<?php echo $investment_spent >= $investment_budget ? 'check' : 'arrow-up'; ?>"></i>
-                            <span><?php echo $investment_spent >= $investment_budget ? __('goal_reached') : '$' . number_format($investment_budget - $investment_spent, 2) . ' ' . __('remaining'); ?></span>
+                            <span><?php echo $investment_spent >= $investment_budget ? __('goal_reached') : formatMoney($investment_budget - $investment_spent) . ' ' . __('remaining'); ?></span>
                         </div>
                     <?php else: ?>
                         <div class="stat-info">
@@ -139,15 +142,15 @@ require_once 'includes/header.php';
                         <div class="budget-breakdown">
                             <div class="breakdown-item">
                                 <span class="breakdown-label"><?php echo __('total_budget'); ?></span>
-                                <span class="breakdown-value">$<?php echo number_format($total_budget, 2); ?></span>
+                                <span class="breakdown-value"><?php echo formatMoney($total_budget); ?></span>
                             </div>
                             <div class="breakdown-item">
                                 <span class="breakdown-label"><?php echo __('spent'); ?></span>
-                                <span class="breakdown-value text-danger">$<?php echo number_format($total_spent, 2); ?></span>
+                                <span class="breakdown-value text-danger"><?php echo formatMoney($total_spent); ?></span>
                             </div>
                             <div class="breakdown-item">
                                 <span class="breakdown-label"><?php echo __('remaining'); ?></span>
-                                <span class="breakdown-value text-success">$<?php echo number_format($total_remaining, 2); ?></span>
+                                <span class="breakdown-value text-success"><?php echo formatMoney($total_remaining); ?></span>
                             </div>
                         </div>
                     </div>
@@ -195,8 +198,8 @@ require_once 'includes/header.php';
                                         </div>
                                     </div>
                                     <div class="category-amount">
-                                        <span class="amount">$<?php echo number_format($budget['budget_amount'], 2); ?></span>
-                                        <span class="spent">$<?php echo number_format($budget['spent'], 2); ?> <?php echo __('spent'); ?></span>
+                                        <span class="amount"><?php echo formatMoney($budget['budget_amount']); ?></span>
+                                        <span class="spent"><?php echo formatMoney($budget['spent']); ?> <?php echo __('spent'); ?></span>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -275,11 +278,11 @@ require_once 'includes/header.php';
                                                 <?php echo htmlspecialchars($translated_category); ?>
                                             </span>
                                         </td>
-                                        <td class="amount-cell">$<?php echo number_format($budget['budget_amount'], 2); ?></td>
-                                        <td class="amount-cell">$<?php echo number_format($budget['spent'], 2); ?></td>
+                                        <td class="amount-cell"><?php echo formatMoney($budget['budget_amount']); ?></td>
+                                        <td class="amount-cell"><?php echo formatMoney($budget['spent']); ?></td>
                                         <td class="amount-cell">
                                             <span class="<?php echo $budget['available'] < 0 ? 'text-danger' : 'text-success'; ?>">
-                                                $<?php echo number_format($budget['available'], 2); ?>
+                                                <?php echo formatMoney($budget['available']); ?>
                                             </span>
                                         </td>
                                         <td class="progress-cell">
@@ -355,7 +358,7 @@ require_once 'includes/header.php';
             <div class="card-body">
                 <div class="recommendation-info">
                     <i class="fas fa-info-circle"></i>
-                    <p><?php echo __('based_on_your_income'); ?> <strong>$<?php echo number_format($monthly_income, 2); ?></strong> <?php echo __('per_month'); ?>, <?php echo __('we_recommend'); ?> <strong><?php echo __('investments'); ?></strong> <?php echo __('optimizing_budget'); ?>.</p>
+                    <p><?php echo __('based_on_your_income'); ?> <strong><?php echo formatMoney($monthly_income); ?></strong> <?php echo __('per_month'); ?>, <?php echo __('we_recommend'); ?> <strong><?php echo __('investments'); ?></strong> <?php echo __('optimizing_budget'); ?>.</p>
                 </div>
                 
                 <div class="recommendations-grid">
@@ -371,7 +374,7 @@ require_once 'includes/header.php';
                                     <?php endif; ?>
                                     <?php echo htmlspecialchars($translated_category); ?>
                                 </h4>
-                                <span class="recommendation-amount">$<?php echo number_format($recommendation['allocated_amount'], 2); ?></span>
+                                <span class="recommendation-amount"><?php echo formatMoney($recommendation['allocated_amount']); ?></span>
                             </div>
                             <div class="recommendation-progress">
                                 <div class="progress-bar" style="width: <?php echo $recommendation['percentage']; ?>%"></div>
@@ -437,7 +440,7 @@ require_once 'includes/header.php';
                         <div class="form-field">
                             <label for="amount"><?php echo __('budget_amount'); ?></label>
                             <div class="amount-input">
-                                <span class="currency-symbol">$</span>
+                                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                 <input type="number" id="amount" name="amount" step="0.01" min="0.01" required>
                             </div>
                         </div>
@@ -511,7 +514,7 @@ require_once 'includes/header.php';
                         <div class="form-field">
                             <label for="edit_amount"><?php echo __('budget_amount'); ?></label>
                             <div class="amount-input">
-                                <span class="currency-symbol">$</span>
+                                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                 <input type="number" id="edit_amount" name="amount" step="0.01" min="0.01" required>
                             </div>
                         </div>
@@ -598,7 +601,7 @@ require_once 'includes/header.php';
                         
                         <div class="income-display">
                             <span class="income-label"><?php echo __('your_current_monthly_income'); ?></span>
-                            <span class="income-amount">$<?php echo number_format($monthly_income, 2); ?></span>
+                            <span class="income-amount"><?php echo formatMoney($monthly_income); ?></span>
                         </div>
                         
                         <div class="generation-info">
@@ -638,6 +641,9 @@ require_once 'includes/header.php';
 <?php
 // Add BASE_PATH as a global JavaScript variable to use in AJAX requests
 echo '<script>const BASE_PATH = "' . BASE_PATH . '";</script>';
+
+// Add currency symbol meta tag for JavaScript
+echo '<meta name="currency-symbol" content="' . htmlspecialchars(getCurrencySymbol()) . '">';
 
 // Additional JS
 $additional_js = ['/assets/js/budget-modern.js'];
