@@ -1,23 +1,46 @@
+/**
+ * Enhanced Income Page JavaScript
+ * Handles all interactive functionality for the income management page
+ */
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Modern Income JS loaded');
     
     // Initialize all components
-    initializeChart();
+    initializeCharts();
     initializeEventListeners();
     initializeFormValidation();
     initializeAnimations();
     initializeSearch();
+    initializeTableSorting();
+    initializeFilters();
+    initializeQuickEdit();
+    initializeStatusToggle();
 });
 
-function initializeChart() {
+/**
+ * Initialize all charts on the page
+ */
+function initializeCharts() {
     if (typeof Chart === 'undefined') {
         console.error('Chart.js is not loaded!');
         return;
     }
     
+    // Initialize the frequency distribution chart
+    initializeFrequencyChart();
+    
+    // Initialize the income trend chart
+    initializeTrendChart();
+}
+
+/**
+ * Initialize the frequency distribution chart
+ */
+function initializeFrequencyChart() {
     const chartCanvas = document.getElementById('frequencyChart');
     if (!chartCanvas) {
-        console.error('Chart canvas element not found!');
+        console.error('Frequency chart canvas element not found!');
         return;
     }
 
@@ -30,7 +53,7 @@ function initializeChart() {
         
         if (!chartLabelsEl || !chartDataEl || !chartColorsEl) {
             console.error('Chart data meta tags not found!');
-            showNoDataMessage();
+            showNoDataMessage('chartNoData');
             return;
         }
         
@@ -40,7 +63,7 @@ function initializeChart() {
         const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
         
         if (chartLabels.length === 0 || chartData.length === 0) {
-            showNoDataMessage();
+            showNoDataMessage('chartNoData');
             return;
         }
 
@@ -118,6 +141,149 @@ function initializeChart() {
             }
         });
 
+        // Set up chart type toggle
+        const chartViewToggle = document.getElementById('chartViewToggle');
+        if (chartViewToggle) {
+            chartViewToggle.addEventListener('change', function() {
+                const chartType = this.value;
+                
+                if (window.frequencyChart) {
+                    // Destroy the current chart
+                    window.frequencyChart.destroy();
+                    
+                    // Create new chart with selected type
+                    window.frequencyChart = new Chart(ctx, {
+                        type: chartType === 'pie' ? 'doughnut' : 'bar',
+                        data: {
+                            labels: chartLabels,
+                            datasets: [{
+                                data: chartData,
+                                backgroundColor: chartColors,
+                                borderColor: chartType === 'pie' ? '#ffffff' : chartColors,
+                                borderWidth: chartType === 'pie' ? 3 : 0,
+                                hoverBorderWidth: chartType === 'pie' ? 3 : 0,
+                                hoverBorderColor: chartType === 'pie' ? '#ffffff' : chartColors,
+                                hoverOffset: chartType === 'pie' ? 20 : 0,
+                                barThickness: chartType === 'bar' ? 30 : undefined,
+                                borderRadius: chartType === 'bar' ? 6 : undefined
+                            }]
+                        },
+                        options: chartType === 'pie' ? {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '65%',
+                            animation: {
+                                animateScale: true,
+                                animateRotate: true,
+                                duration: 1500,
+                                easing: 'easeInOutQuart'
+                            },
+                            layout: {
+                                padding: 20
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    padding: 30,
+                                    labels: {
+                                        boxWidth: 16,
+                                        boxHeight: 16,
+                                        padding: 15,
+                                        font: {
+                                            size: 14,
+                                            weight: 500
+                                        },
+                                        usePointStyle: true,
+                                        pointStyle: 'circle'
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    titleColor: '#ffffff',
+                                    bodyColor: '#ffffff',
+                                    padding: 16,
+                                    cornerRadius: 12,
+                                    titleFont: {
+                                        size: 16,
+                                        weight: 600
+                                    },
+                                    bodyFont: {
+                                        size: 14
+                                    },
+                                    displayColors: true,
+                                    usePointStyle: true,
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.parsed;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = ((value / total) * 100).toFixed(1);
+                                            return `${label}: ${currencySymbol}${value.toLocaleString()} (${percentage}%)`;
+                                        }
+                                    }
+                                }
+                            }
+                        } : {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        drawBorder: false,
+                                        color: 'rgba(0, 0, 0, 0.05)'
+                                    },
+                                    ticks: {
+                                        font: {
+                                            size: 12
+                                        },
+                                        callback: function(value) {
+                                            return currencySymbol + value.toLocaleString();
+                                        }
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        font: {
+                                            size: 12
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    titleColor: '#ffffff',
+                                    bodyColor: '#ffffff',
+                                    padding: 16,
+                                    cornerRadius: 12,
+                                    titleFont: {
+                                        size: 16,
+                                        weight: 600
+                                    },
+                                    bodyFont: {
+                                        size: 14
+                                    },
+                                    callbacks: {
+                                        label: function(context) {
+                                            const value = context.parsed.y;
+                                            return `${currencySymbol}${value.toLocaleString()}`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
         // Hide no data message
         const noDataMessage = document.getElementById('chartNoData');
         if (noDataMessage) {
@@ -125,14 +291,164 @@ function initializeChart() {
         }
 
     } catch (error) {
-        console.error('Error initializing chart:', error);
-        showNoDataMessage();
+        console.error('Error initializing frequency chart:', error);
+        showNoDataMessage('chartNoData');
     }
 }
 
-function showNoDataMessage() {
-    const chartContainer = document.querySelector('.chart-container');
-    const noDataMessage = document.getElementById('chartNoData');
+/**
+ * Initialize the income trend chart
+ */
+function initializeTrendChart() {
+    const trendCanvas = document.getElementById('trendChart');
+    if (!trendCanvas) {
+        console.error('Trend chart canvas element not found!');
+        return;
+    }
+
+    try {
+        // Get projection data from meta tags
+        const projectionLabelsEl = document.querySelector('meta[name="projection-labels"]');
+        const projectionDataEl = document.querySelector('meta[name="projection-data"]');
+        const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
+        
+        if (!projectionLabelsEl || !projectionDataEl) {
+            console.error('Projection data meta tags not found!');
+            showNoDataMessage('trendChartNoData');
+            return;
+        }
+        
+        const projectionLabels = JSON.parse(projectionLabelsEl.getAttribute('content') || '[]');
+        const projectionData = JSON.parse(projectionDataEl.getAttribute('content') || '[]');
+        const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
+        
+        if (projectionLabels.length === 0 || projectionData.length === 0) {
+            showNoDataMessage('trendChartNoData');
+            return;
+        }
+
+        // Create trend chart
+        const ctx = trendCanvas.getContext('2d');
+        window.trendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: projectionLabels,
+                datasets: [{
+                    label: 'Monthly Income',
+                    data: projectionData,
+                    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                    borderColor: 'rgba(99, 102, 241, 1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 4,
+                    pointBackgroundColor: 'rgba(99, 102, 241, 1)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: 'rgba(99, 102, 241, 1)',
+                    pointHoverBorderColor: '#fff',
+                    pointHoverBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            drawBorder: false,
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            font: {
+                                size: 12
+                            },
+                            callback: function(value) {
+                                return currencySymbol + value.toLocaleString();
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        padding: 16,
+                        cornerRadius: 12,
+                        titleFont: {
+                            size: 16,
+                            weight: 600
+                        },
+                        bodyFont: {
+                            size: 14
+                        },
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed.y;
+                                return `${currencySymbol}${value.toLocaleString()}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Set up projection months toggle
+        const projectionMonths = document.getElementById('projectionMonths');
+        if (projectionMonths) {
+            projectionMonths.addEventListener('change', function() {
+                // We can't actually change the projection here without server-side calculation
+                // But we could hide/show a subset of the data we already have
+                const months = parseInt(this.value);
+                if (months && months < projectionLabels.length) {
+                    // Update the chart with a subset of the data
+                    window.trendChart.data.labels = projectionLabels.slice(0, months);
+                    window.trendChart.data.datasets[0].data = projectionData.slice(0, months);
+                    window.trendChart.update();
+                } else {
+                    // Show all data
+                    window.trendChart.data.labels = projectionLabels;
+                    window.trendChart.data.datasets[0].data = projectionData;
+                    window.trendChart.update();
+                }
+            });
+        }
+
+        // Hide no data message
+        const noDataMessage = document.getElementById('trendChartNoData');
+        if (noDataMessage) {
+            noDataMessage.style.display = 'none';
+        }
+
+    } catch (error) {
+        console.error('Error initializing trend chart:', error);
+        showNoDataMessage('trendChartNoData');
+    }
+}
+
+/**
+ * Show no data message and hide chart container
+ * @param {string} elementId - ID of the no data message element
+ */
+function showNoDataMessage(elementId) {
+    const chartContainer = document.querySelector(`.chart-container`);
+    const noDataMessage = document.getElementById(elementId);
     
     if (chartContainer) {
         chartContainer.style.display = 'none';
@@ -143,32 +459,67 @@ function showNoDataMessage() {
     }
 }
 
+/**
+ * Initialize all event listeners for interactive elements
+ */
 function initializeEventListeners() {
+    // Refresh data button
+    const refreshButton = document.getElementById('refreshData');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', refreshData);
+    }
+
     // Edit income buttons
     document.addEventListener('click', function(e) {
-        if (e.target.closest('.btn-action.edit')) {
+        const editButton = e.target.closest('.btn-action.edit');
+        if (editButton) {
             e.preventDefault();
-            const button = e.target.closest('.btn-action.edit');
-            const incomeId = button.getAttribute('data-income-id');
+            const incomeId = editButton.getAttribute('data-income-id');
             if (incomeId) {
                 loadIncomeForEdit(incomeId);
             }
         }
     });
 
+    // Duplicate income buttons
+    document.addEventListener('click', function(e) {
+        const duplicateButton = e.target.closest('.btn-action.duplicate');
+        if (duplicateButton) {
+            e.preventDefault();
+            const incomeId = duplicateButton.getAttribute('data-income-id');
+            if (incomeId) {
+                loadIncomeForDuplicate(incomeId);
+            }
+        }
+    });
+
     // Delete income buttons
     document.addEventListener('click', function(e) {
-        if (e.target.closest('.btn-action.delete')) {
+        const deleteButton = e.target.closest('.btn-action.delete');
+        if (deleteButton) {
             e.preventDefault();
-            const button = e.target.closest('.btn-action.delete');
-            const incomeId = button.getAttribute('data-income-id');
+            const incomeId = deleteButton.getAttribute('data-income-id');
             if (incomeId) {
+                const row = deleteButton.closest('tr');
+                const incomeName = row.querySelector('.source-name-cell').textContent;
+                
                 document.getElementById('delete_income_id').value = incomeId;
+                const deleteNameDisplay = document.querySelector('.delete-income-name');
+                if (deleteNameDisplay) {
+                    deleteNameDisplay.textContent = incomeName;
+                }
+                
                 const deleteModal = new bootstrap.Modal(document.getElementById('deleteIncomeModal'));
                 deleteModal.show();
             }
         }
     });
+
+    // Reset filters button
+    const resetFiltersButton = document.querySelector('.btn-reset-filters');
+    if (resetFiltersButton) {
+        resetFiltersButton.addEventListener('click', resetFilters);
+    }
 
     // Add income modal focus
     const addIncomeModal = document.getElementById('addIncomeModal');
@@ -179,7 +530,7 @@ function initializeEventListeners() {
     }
 
     // Handle end date inputs
-    const endDateInputs = document.querySelectorAll('#end_date, #edit_end_date');
+    const endDateInputs = document.querySelectorAll('#end_date, #edit_end_date, #duplicate_end_date');
     endDateInputs.forEach(input => {
         input.addEventListener('change', function() {
             // Allow empty values for optional end date
@@ -196,7 +547,7 @@ function initializeEventListeners() {
             
             // Check if date is reasonable
             if (selectedDate < new Date('1900-01-01')) {
-                alert('Please select a valid date after January 1, 1900');
+                showToast('Error', 'Please select a valid date after January 1, 1900', 'error');
                 this.value = '';
                 return;
             }
@@ -206,20 +557,44 @@ function initializeEventListeners() {
     // Active status toggle
     const isActiveCheckbox = document.getElementById('is_active');
     const editIsActiveCheckbox = document.getElementById('edit_is_active');
+    const duplicateIsActiveCheckbox = document.getElementById('duplicate_is_active');
     
-    if (isActiveCheckbox) {
-        isActiveCheckbox.addEventListener('change', function() {
-            handleActiveStatusChange(this);
-        });
-    }
+    [isActiveCheckbox, editIsActiveCheckbox, duplicateIsActiveCheckbox].forEach(checkbox => {
+        if (checkbox) {
+            checkbox.addEventListener('change', function() {
+                handleActiveStatusChange(this);
+            });
+        }
+    });
 
-    if (editIsActiveCheckbox) {
-        editIsActiveCheckbox.addEventListener('change', function() {
-            handleActiveStatusChange(this);
+    // Top income sources item click
+    document.querySelectorAll('.source-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            // Don't trigger if clicking on the quick edit button
+            if (e.target.closest('.btn-quick-edit')) {
+                return;
+            }
+            
+            const incomeId = this.getAttribute('data-income-id');
+            if (incomeId) {
+                // Scroll to and highlight the corresponding row in the table
+                const tableRow = document.querySelector(`#incomeTable tr[data-id="${incomeId}"]`);
+                if (tableRow) {
+                    tableRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    tableRow.classList.add('highlight-row');
+                    setTimeout(() => {
+                        tableRow.classList.remove('highlight-row');
+                    }, 2000);
+                }
+            }
         });
-    }
+    });
 }
 
+/**
+ * Handle visual feedback for active status toggle
+ * @param {HTMLElement} checkbox - The checkbox element
+ */
 function handleActiveStatusChange(checkbox) {
     // Visual feedback when toggling active status
     const toggleSlider = checkbox.nextElementSibling;
@@ -228,6 +603,29 @@ function handleActiveStatusChange(checkbox) {
     }
 }
 
+/**
+ * Refresh data by reloading the page
+ */
+function refreshData() {
+    const refreshBtn = document.getElementById('refreshData');
+    if (refreshBtn) {
+        refreshBtn.classList.add('loading');
+        refreshBtn.setAttribute('disabled', 'disabled');
+    }
+    
+    // Show toast notification
+    showToast('Refreshing', 'Updating your financial data...', 'info');
+    
+    // Reload the page after a short delay
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+}
+
+/**
+ * Load income data for editing
+ * @param {string} incomeId - The income ID to edit
+ */
 function loadIncomeForEdit(incomeId) {
     const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
     
@@ -270,15 +668,72 @@ function loadIncomeForEdit(incomeId) {
             const editModal = new bootstrap.Modal(document.getElementById('editIncomeModal'));
             editModal.show();
         } else {
-            showNotification(getTranslation('failed_to_load_income_data'), 'error');
+            showToast('Error', 'Failed to load income data', 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification(getTranslation('an_error_occurred_loading'), 'error');
+        showToast('Error', 'An error occurred while loading income data', 'error');
     });
 }
 
+/**
+ * Load income data for duplication
+ * @param {string} incomeId - The income ID to duplicate
+ */
+function loadIncomeForDuplicate(incomeId) {
+    const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
+    
+    fetch(`${basePath}/income?action=get_income&income_id=${incomeId}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Populate duplicate form
+            document.getElementById('duplicate_name').value = `Copy of ${data.income.name}`;
+            document.getElementById('duplicate_amount').value = data.income.amount;
+            document.getElementById('duplicate_frequency').value = data.income.frequency;
+            document.getElementById('duplicate_start_date').value = new Date().toISOString().split('T')[0]; // Today's date
+            
+            // Handle end date
+            const endDateInput = document.getElementById('duplicate_end_date');
+            if (data.income.end_date && data.income.end_date !== '0000-00-00' && data.income.end_date !== null) {
+                const parsedDate = new Date(data.income.end_date);
+                if (!isNaN(parsedDate.getTime()) && parsedDate > new Date('1900-01-01')) {
+                    endDateInput.value = data.income.end_date;
+                } else {
+                    endDateInput.value = '';
+                }
+            } else {
+                endDateInput.value = '';
+            }
+            
+            document.getElementById('duplicate_is_active').checked = data.income.is_active == 1;
+            
+            // Show duplicate modal
+            const duplicateModal = new bootstrap.Modal(document.getElementById('duplicateIncomeModal'));
+            duplicateModal.show();
+        } else {
+            showToast('Error', 'Failed to load income data for duplication', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error', 'An error occurred while loading income data for duplication', 'error');
+    });
+}
+
+/**
+ * Initialize form validation for all forms
+ */
 function initializeFormValidation() {
     const forms = document.querySelectorAll('.needs-validation');
     
@@ -294,6 +749,9 @@ function initializeFormValidation() {
     });
 }
 
+/**
+ * Initialize animations for visual elements
+ */
 function initializeAnimations() {
     // Get currency symbol from meta
     const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
@@ -309,109 +767,543 @@ function initializeAnimations() {
     });
 }
 
+/**
+ * Initialize search functionality for the income table
+ */
 function initializeSearch() {
     const searchInput = document.getElementById('incomeSearch');
     
     if (searchInput) {
         searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const tableRows = document.querySelectorAll('.income-table tbody tr');
-            let visibleRows = 0;
-            
-            tableRows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                if (text.includes(searchTerm)) {
-                    row.style.display = '';
-                    visibleRows++;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-            
-            // Show/hide no results message
-            const noDataMessage = document.getElementById('tableNoData');
-            const tableBody = document.querySelector('.table-responsive');
-            
-            if (visibleRows === 0 && tableRows.length > 0) {
-                if (tableBody) tableBody.style.display = 'none';
-                if (noDataMessage) {
-                    noDataMessage.style.display = 'block';
-                    noDataMessage.querySelector('h4').textContent = getTranslation('no_matching_income_sources');
-                    noDataMessage.querySelector('p').textContent = getTranslation('try_adjusting_search');
-                    noDataMessage.querySelector('.btn-add-first').style.display = 'none';
-                }
-            } else {
-                if (tableBody) tableBody.style.display = 'block';
-                if (noDataMessage && tableRows.length > 0) noDataMessage.style.display = 'none';
-            }
+            filterTable();
         });
     }
 }
 
-function showNotification(message, type = 'info') {
-    // Create a simple notification system
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
+/**
+ * Initialize table sorting functionality
+ */
+function initializeTableSorting() {
+    const sortableHeaders = document.querySelectorAll('th.sortable');
     
-    // Add styles
-    notification.style.position = 'fixed';
-    notification.style.top = '20px';
-    notification.style.right = '20px';
-    notification.style.padding = '1rem 1.5rem';
-    notification.style.borderRadius = '0.5rem';
-    notification.style.backgroundColor = type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#3b82f6';
-    notification.style.color = 'white';
-    notification.style.zIndex = '9999';
-    notification.style.opacity = '0';
-    notification.style.transition = 'opacity 0.3s ease';
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const sortBy = this.getAttribute('data-sort');
+            if (!sortBy) return;
+            
+            // If already sorted, toggle direction; otherwise, sort ascending
+            const currentDirection = this.classList.contains('sorted-asc') ? 'desc' : 
+                                    this.classList.contains('sorted-desc') ? 'none' : 'asc';
+            
+            // Remove sorting classes from all headers
+            document.querySelectorAll('th.sortable').forEach(h => {
+                h.classList.remove('sorted-asc', 'sorted-desc');
+            });
+            
+            // Apply sorting class to current header if not 'none'
+            if (currentDirection !== 'none') {
+                this.classList.add(currentDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+                sortTable(sortBy, currentDirection);
+            }
+        });
+    });
+}
+
+/**
+ * Sort the income table by the specified column and direction
+ * @param {string} column - The column to sort by
+ * @param {string} direction - The sort direction ('asc' or 'desc')
+ */
+function sortTable(column, direction) {
+    const table = document.getElementById('incomeTable');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
     
-    document.body.appendChild(notification);
+    // Sort rows based on column and direction
+    rows.sort((a, b) => {
+        let aValue, bValue;
+        
+        switch (column) {
+            case 'name':
+                aValue = a.querySelector('.source-name-cell').textContent.trim().toLowerCase();
+                bValue = b.querySelector('.source-name-cell').textContent.trim().toLowerCase();
+                break;
+            case 'amount':
+                // Extract numeric value from formatted amount
+                aValue = parseFloat(a.querySelector('.amount-cell').textContent.replace(/[^0-9.-]+/g, ''));
+                bValue = parseFloat(b.querySelector('.amount-cell').textContent.replace(/[^0-9.-]+/g, ''));
+                break;
+            case 'frequency':
+                // Get the frequency text
+                aValue = a.querySelector('.frequency-badge').textContent.trim().toLowerCase();
+                bValue = b.querySelector('.frequency-badge').textContent.trim().toLowerCase();
+                
+                // Custom sorting order for frequencies
+                const order = {
+                    'daily': 1,
+                    'weekly': 2,
+                    'bi-weekly': 3,
+                    'monthly': 4,
+                    'quarterly': 5,
+                    'annually': 6,
+                    'one-time': 7
+                };
+                
+                // Map to custom order values if found
+                if (order[aValue] !== undefined) aValue = order[aValue];
+                if (order[bValue] !== undefined) bValue = order[bValue];
+                break;
+            case 'start_date':
+            case 'end_date':
+                // Get the date column
+                const aDate = column === 'start_date' ? 
+                    a.cells[3].textContent : a.cells[4].textContent;
+                const bDate = column === 'start_date' ? 
+                    b.cells[3].textContent : b.cells[4].textContent;
+                
+                // Handle 'ongoing' text for end dates
+                if (column === 'end_date') {
+                    if (aDate.includes('ongoing')) {
+                        aValue = new Date(9999, 11, 31); // Far future date
+                    } else {
+                        aValue = new Date(aDate);
+                    }
+                    
+                    if (bDate.includes('ongoing')) {
+                        bValue = new Date(9999, 11, 31); // Far future date
+                    } else {
+                        bValue = new Date(bDate);
+                    }
+                } else {
+                    aValue = new Date(aDate);
+                    bValue = new Date(bDate);
+                }
+                break;
+            case 'status':
+                aValue = a.getAttribute('data-status');
+                bValue = b.getAttribute('data-status');
+                break;
+            default:
+                return 0;
+        }
+        
+        // Handle different data types
+        if (aValue === bValue) return 0;
+        
+        // Determine sort direction
+        const sortVal = direction === 'asc' ? 
+            (aValue > bValue ? 1 : -1) : 
+            (aValue < bValue ? 1 : -1);
+            
+        return sortVal;
+    });
     
-    // Fade in
-    setTimeout(() => {
-        notification.style.opacity = '1';
-    }, 10);
+    // Reappend rows in sorted order
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+/**
+ * Initialize table filtering functionality
+ */
+function initializeFilters() {
+    const statusFilter = document.getElementById('statusFilter');
+    const frequencyFilter = document.getElementById('frequencyFilter');
     
-    // Fade out and remove
-    setTimeout(() => {
-        notification.style.opacity = '0';
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function() {
+            filterTable();
+        });
+    }
+    
+    if (frequencyFilter) {
+        frequencyFilter.addEventListener('change', function() {
+            filterTable();
+        });
+    }
+}
+
+/**
+ * Filter the income table based on search input and filters
+ */
+function filterTable() {
+    const searchTerm = document.getElementById('incomeSearch').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const frequencyFilter = document.getElementById('frequencyFilter').value;
+    
+    const tableRows = document.querySelectorAll('#incomeTable tbody tr');
+    let visibleRows = 0;
+    
+    tableRows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const status = row.getAttribute('data-status');
+        const frequency = row.getAttribute('data-frequency');
+        
+        // Check if row matches all filters
+        const matchesSearch = text.includes(searchTerm);
+        const matchesStatus = statusFilter === 'all' || status === statusFilter;
+        const matchesFrequency = frequencyFilter === 'all' || frequency === frequencyFilter;
+        
+        if (matchesSearch && matchesStatus && matchesFrequency) {
+            row.style.display = '';
+            visibleRows++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Show/hide no results message
+    const tableResponseive = document.querySelector('.table-responsive');
+    const tableNoData = document.getElementById('tableNoData');
+    const tableNoResults = document.getElementById('tableNoResults');
+    
+    if (visibleRows === 0 && tableRows.length > 0) {
+        if (tableResponseive) tableResponseive.style.display = 'none';
+        if (tableNoData) tableNoData.style.display = 'none';
+        if (tableNoResults) tableNoResults.style.display = 'block';
+    } else {
+        if (tableResponseive) tableResponseive.style.display = 'block';
+        if (tableNoData && tableRows.length === 0) tableNoData.style.display = 'block';
+        if (tableNoResults) tableNoResults.style.display = 'none';
+    }
+}
+
+/**
+ * Reset all table filters
+ */
+function resetFilters() {
+    const searchInput = document.getElementById('incomeSearch');
+    const statusFilter = document.getElementById('statusFilter');
+    const frequencyFilter = document.getElementById('frequencyFilter');
+    
+    if (searchInput) searchInput.value = '';
+    if (statusFilter) statusFilter.value = 'all';
+    if (frequencyFilter) frequencyFilter.value = 'all';
+    
+    filterTable();
+}
+
+/**
+ * Initialize quick edit functionality
+ */
+function initializeQuickEdit() {
+    // Quick edit buttons
+    document.addEventListener('click', function(e) {
+        const quickEditButton = e.target.closest('.btn-quick-edit');
+        if (quickEditButton) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const sourceItem = quickEditButton.closest('.source-item');
+            if (sourceItem) {
+                const incomeId = sourceItem.getAttribute('data-income-id');
+                if (incomeId) {
+                    showQuickEditPopover(quickEditButton, incomeId);
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Show quick edit popover for an income item
+ * @param {HTMLElement} button - The button that triggered the popover
+ * @param {string} incomeId - The income ID to edit
+ */
+function showQuickEditPopover(button, incomeId) {
+    // Check if we already have an active popover
+    const existingPopovers = document.querySelectorAll('.popover');
+    existingPopovers.forEach(p => p.remove());
+    
+    const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
+    
+    // First, load the income data
+    fetch(`${basePath}/income?action=get_income&income_id=${incomeId}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Create popover
+            const popover = document.createElement('div');
+            popover.className = 'popover fade show bs-popover-auto';
+            popover.style.position = 'absolute';
+            
+            // Get template content
+            const template = document.getElementById('quickEditTemplate');
+            const content = template.innerHTML;
+            
+            // Create popover structure
+            popover.innerHTML = `
+                <div class="popover-header">Quick Edit</div>
+                <div class="popover-body">${content}</div>
+                <div class="popover-arrow"></div>
+            `;
+            
+            // Position popover
+            const buttonRect = button.getBoundingClientRect();
+            popover.style.top = `${buttonRect.top + window.scrollY - 10}px`;
+            popover.style.left = `${buttonRect.left + window.scrollX - 260}px`; // Position to the left
+            
+            // Add to DOM
+            document.body.appendChild(popover);
+            
+            // Set input values
+            popover.querySelector('#quick_edit_amount').value = data.income.amount;
+            popover.querySelector('#quick_edit_frequency').value = data.income.frequency;
+            popover.querySelector('#quick_edit_active').checked = data.income.is_active == 1;
+            
+            // Add event listeners
+            popover.querySelector('.quick-edit-save').addEventListener('click', function() {
+                saveQuickEdit(incomeId, popover);
+            });
+            
+            popover.querySelector('.quick-edit-cancel').addEventListener('click', function() {
+                popover.remove();
+            });
+            
+            // Close when clicking outside
+            document.addEventListener('click', function closePopover(e) {
+                if (!popover.contains(e.target) && e.target !== button) {
+                    popover.remove();
+                    document.removeEventListener('click', closePopover);
+                }
+            });
+        } else {
+            showToast('Error', 'Failed to load income data', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error', 'An error occurred while loading income data', 'error');
+    });
+}
+
+/**
+ * Save quick edit changes via AJAX
+ * @param {string} incomeId - The income ID being edited
+ * @param {HTMLElement} popover - The popover element containing the form
+ */
+function saveQuickEdit(incomeId, popover) {
+    const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
+    const amount = popover.querySelector('#quick_edit_amount').value;
+    const frequency = popover.querySelector('#quick_edit_frequency').value;
+    const isActive = popover.querySelector('#quick_edit_active').checked ? 1 : 0;
+    
+    // Get i18n strings
+    const savingText = document.querySelector('meta[name="i18n-saving"]')?.getAttribute('content') || 'Saving...';
+    const successText = document.querySelector('meta[name="i18n-save-success"]')?.getAttribute('content') || 'Changes saved successfully';
+    const errorText = document.querySelector('meta[name="i18n-save-error"]')?.getAttribute('content') || 'Error saving changes';
+    
+    // Show saving indicator
+    const saveButton = popover.querySelector('.quick-edit-save');
+    const originalText = saveButton.innerHTML;
+    saveButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${savingText}`;
+    saveButton.disabled = true;
+    
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('action', 'edit');
+    formData.append('income_id', incomeId);
+    formData.append('amount', amount);
+    formData.append('frequency', frequency);
+    if (isActive) formData.append('is_active', 'on');
+    
+    // Need to include other required fields that we're not changing
+    // First, get the current data
+    fetch(`${basePath}/income?action=get_income&income_id=${incomeId}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Add required fields
+            formData.append('name', data.income.name);
+            formData.append('start_date', data.income.start_date);
+            if (data.income.end_date) formData.append('end_date', data.income.end_date);
+            
+            // Now submit the update
+            return fetch(`${basePath}/income`, {
+                method: 'POST',
+                body: formData
+            });
+        } else {
+            throw new Error('Failed to load income data');
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
+        // Show success message
+        showToast('Success', successText, 'success');
+        
+        // Remove popover
+        popover.remove();
+        
+        // Refresh the page to show updated data
         setTimeout(() => {
-            notification.remove();
-        }, 300);
-    }, 3000);
+            window.location.reload();
+        }, 1000);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        // Reset button
+        saveButton.innerHTML = originalText;
+        saveButton.disabled = false;
+        
+        // Show error message
+        showToast('Error', errorText, 'error');
+    });
 }
 
-// Helper function to get translations from the data attributes
-function getTranslation(key, defaultValue = '') {
-    // For future implementation: we can add data attributes to the body element with translations
-    // For now, we'll use hardcoded fallbacks
-    const translations = {
-        'failed_to_load_income_data': 'Failed to load income data',
-        'an_error_occurred_loading': 'An error occurred while loading income data',
-        'no_matching_income_sources': 'No matching income sources found',
-        'try_adjusting_search': 'Try adjusting your search term'
-    };
+/**
+ * Initialize status toggle functionality
+ */
+function initializeStatusToggle() {
+    document.querySelectorAll('.toggle-status').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const row = this.closest('tr');
+            const incomeId = row.getAttribute('data-id');
+            const isActive = this.checked;
+            
+            updateIncomeStatus(incomeId, isActive);
+        });
+    });
+}
+
+/**
+ * Update income status via AJAX
+ * @param {string} incomeId - The income ID to update
+ * @param {boolean} isActive - The new status
+ */
+function updateIncomeStatus(incomeId, isActive) {
+    const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
     
-    return translations[key] || defaultValue || key;
-}
-
-// Utility function to format currency with the user's currency symbol
-function formatCurrency(value) {
-    // Get currency symbol from meta tag
-    const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
-    const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
+    // Get i18n strings
+    const savingText = document.querySelector('meta[name="i18n-saving"]')?.getAttribute('content') || 'Saving...';
+    const successText = document.querySelector('meta[name="i18n-save-success"]')?.getAttribute('content') || 'Changes saved successfully';
+    const errorText = document.querySelector('meta[name="i18n-save-error"]')?.getAttribute('content') || 'Error saving changes';
     
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD', // This is just for formatting, we'll replace the symbol
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(value).replace(/^\$/, currencySymbol);
+    // Show saving indicator
+    showToast('Updating', savingText, 'info');
+    
+    // First, get the current data
+    fetch(`${basePath}/income?action=get_income&income_id=${incomeId}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('action', 'edit');
+            formData.append('income_id', incomeId);
+            formData.append('name', data.income.name);
+            formData.append('amount', data.income.amount);
+            formData.append('frequency', data.income.frequency);
+            formData.append('start_date', data.income.start_date);
+            if (data.income.end_date) formData.append('end_date', data.income.end_date);
+            if (isActive) formData.append('is_active', 'on');
+            
+            // Submit the update
+            return fetch(`${basePath}/income`, {
+                method: 'POST',
+                body: formData
+            });
+        } else {
+            throw new Error('Failed to load income data');
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
+        // Show success message
+        showToast('Success', successText, 'success');
+        
+        // Update the UI to reflect the change
+        const row = document.querySelector(`tr[data-id="${incomeId}"]`);
+        if (row) {
+            // Update data attribute
+            row.setAttribute('data-status', isActive ? 'active' : 'inactive');
+            
+            // Update status badge
+            const statusBadge = row.querySelector('.status-badge');
+            if (statusBadge) {
+                statusBadge.className = `status-badge ${isActive ? 'active' : 'inactive'}`;
+                statusBadge.textContent = isActive ? 'Active' : 'Inactive';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        // Show error message
+        showToast('Error', errorText, 'error');
+        
+        // Revert the toggle to its previous state
+        const toggle = document.querySelector(`tr[data-id="${incomeId}"] .toggle-status`);
+        if (toggle) {
+            toggle.checked = !isActive;
+        }
+    });
 }
 
-// Utility function to format date
-function formatDate(dateString) {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('en-US', options);
+/**
+ * Show a toast notification
+ * @param {string} title - The toast title
+ * @param {string} message - The toast message
+ * @param {string} type - The toast type ('success', 'error', 'info')
+ */
+function showToast(title, message, type = 'info') {
+    const toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) return;
+    
+    // Create toast element
+    const toastEl = document.createElement('div');
+    toastEl.className = `toast ${type}`;
+    toastEl.setAttribute('role', 'alert');
+    toastEl.setAttribute('aria-live', 'assertive');
+    toastEl.setAttribute('aria-atomic', 'true');
+    
+    // Icon based on type
+    let icon = 'info-circle';
+    if (type === 'success') icon = 'check-circle';
+    if (type === 'error') icon = 'exclamation-circle';
+    
+    // Toast content
+    toastEl.innerHTML = `
+        <div class="toast-header">
+            <i class="fas fa-${icon} me-2"></i>
+            <strong class="me-auto">${title}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            ${message}
+        </div>
+    `;
+    
+    // Add to container
+    toastContainer.appendChild(toastEl);
+    
+    // Initialize and show toast
+    const toast = new bootstrap.Toast(toastEl, {
+        autohide: true,
+        delay: 3000
+    });
+    toast.show();
+    
+    // Remove toast from DOM after it's hidden
+    toastEl.addEventListener('hidden.bs.toast', function() {
+        toastEl.remove();
+    });
 }
