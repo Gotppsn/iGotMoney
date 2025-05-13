@@ -52,8 +52,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $requested_lang = 'en';
             }
             
+            // Validate and set currency
+            $valid_currencies = array_keys($settings->getAvailableCurrencies());
+            $requested_currency = $_POST['currency'] ?? 'USD';
+            
+            if (!in_array($requested_currency, $valid_currencies)) {
+                $requested_currency = 'USD';
+            }
+            
             // Set settings properties
-            $settings->currency = $_POST['currency'] ?? 'USD';
+            $settings->currency = $requested_currency;
             $settings->language = $requested_lang;
             $settings->theme = $_POST['theme'] ?? 'system';
             $settings->notification_enabled = isset($_POST['notification_enabled']) ? true : false;
@@ -65,6 +73,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($settings->update()) {
                 // Set session language for immediate effect
                 $_SESSION['temp_lang'] = $requested_lang;
+                
+                // Store currency in session for immediate use
+                $_SESSION['user_currency'] = $requested_currency;
                 
                 $success = __('settings_updated');
                 
@@ -88,6 +99,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($settings->resetToDefault()) {
                 // Also update session language
                 $_SESSION['temp_lang'] = 'en';
+                
+                // Reset currency in session
+                $_SESSION['user_currency'] = 'USD';
                 
                 $success = 'Settings reset to default values!';
                 

@@ -4,8 +4,11 @@ $page_title = __('settings') . ' - ' . __('app_name');
 $current_page = 'settings';
 
 // Additional CSS and JS
-$additional_css = ['/assets/css/settings-modern.css'];
+$additional_css = ['/assets/css/settings-modern.css', '/assets/css/currency.css'];
 $additional_js = ['/assets/js/settings-modern.js'];
+
+// Include formatter helper
+require_once 'includes/formatter.php';
 
 // Add page-specific script for tab handling
 $page_scripts = '
@@ -276,7 +279,7 @@ require_once 'includes/header.php';
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <div class="header-icon">
-                                <i class="fas fa-palette"></i>
+                                <i class="fas fa-money-bill-wave"></i>
                             </div>
                             <div class="header-content">
                                 <h2 class="card-title"><?php echo __('currency_settings'); ?></h2>
@@ -286,6 +289,7 @@ require_once 'includes/header.php';
                         <div class="settings-card-body">
                             <form action="<?php echo BASE_PATH; ?>/settings" method="post" class="settings-form needs-validation" novalidate>
                                 <input type="hidden" name="action" value="update_settings">
+                                <input type="hidden" name="language" value="<?php echo htmlspecialchars($settings->language); ?>">
                                 
                                 <div class="form-grid">
                                     <div class="form-field">
@@ -309,15 +313,15 @@ require_once 'includes/header.php';
                                             <div class="preview-examples">
                                                 <div class="preview-item">
                                                     <span class="preview-label"><?php echo __('income'); ?>:</span>
-                                                    <span class="preview-value"><?php echo ($settings->getCurrencySymbol) ? $settings->getCurrencySymbol() : '$'; ?>1,000.00</span>
+                                                    <span class="preview-value"><?php echo $settings->formatMoney(1000.00); ?></span>
                                                 </div>
                                                 <div class="preview-item">
                                                     <span class="preview-label"><?php echo __('expenses'); ?>:</span>
-                                                    <span class="preview-value"><?php echo ($settings->getCurrencySymbol) ? $settings->getCurrencySymbol() : '$'; ?>250.50</span>
+                                                    <span class="preview-value"><?php echo $settings->formatMoney(250.50); ?></span>
                                                 </div>
                                                 <div class="preview-item">
                                                     <span class="preview-label"><?php echo __('budget'); ?>:</span>
-                                                    <span class="preview-value"><?php echo ($settings->getCurrencySymbol) ? $settings->getCurrencySymbol() : '$'; ?>750.00</span>
+                                                    <span class="preview-value"><?php echo $settings->formatMoney(750.00); ?></span>
                                                 </div>
                                             </div>
                                         </div>
@@ -332,60 +336,6 @@ require_once 'includes/header.php';
                                     <button type="button" class="btn btn-secondary" id="resetSettings">
                                         <i class="fas fa-undo"></i>
                                         <?php echo __('reset_to_default'); ?>
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    <!-- Theme Settings -->
-                    <div class="settings-card">
-                        <div class="settings-card-header">
-                            <div class="header-icon">
-                                <i class="fas fa-moon"></i>
-                            </div>
-                            <div class="header-content">
-                                <h2 class="card-title"><?php echo __('theme_settings'); ?></h2>
-                                <p class="card-description"><?php echo __('choose_theme'); ?></p>
-                            </div>
-                        </div>
-                        <div class="settings-card-body">
-                            <form action="<?php echo BASE_PATH; ?>/settings" method="post" class="settings-form needs-validation" novalidate>
-                                <input type="hidden" name="action" value="update_settings">
-                                
-                                <div class="form-grid">
-                                    <div class="form-field">
-                                        <label for="theme" class="form-label">
-                                            <i class="fas fa-paint-brush"></i>
-                                            <?php echo __('theme'); ?>
-                                        </label>
-                                        <select class="form-select" id="theme" name="theme">
-                                            <option value="light" <?php echo ($settings->theme === 'light') ? 'selected' : ''; ?>><?php echo __('light'); ?></option>
-                                            <option value="dark" <?php echo ($settings->theme === 'dark') ? 'selected' : ''; ?>><?php echo __('dark'); ?></option>
-                                            <option value="system" <?php echo ($settings->theme === 'system') ? 'selected' : ''; ?>><?php echo __('system'); ?></option>
-                                        </select>
-                                        <small class="form-text"><?php echo __('theme_preference_description'); ?></small>
-                                    </div>
-                                    
-                                    <div class="form-field">
-                                        <div class="theme-preview">
-                                            <div class="theme-preview-card <?php echo $settings->theme !== 'dark' ? 'light-theme' : 'dark-theme'; ?>">
-                                                <div class="preview-header">
-                                                    <div class="preview-title"><?php echo __('theme_preview'); ?></div>
-                                                </div>
-                                                <div class="preview-body">
-                                                    <div class="preview-text"><?php echo __('this_is_how_theme_will_look'); ?></div>
-                                                    <div class="preview-button"><?php echo __('button'); ?></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="btn-group">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save"></i>
-                                        <?php echo __('save_preferences'); ?>
                                     </button>
                                 </div>
                             </form>

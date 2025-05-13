@@ -252,7 +252,11 @@ class UserSettings extends BaseModel {
             'JPY' => 'Japanese Yen (¥)',
             'THB' => 'Thai Baht (฿)',
             'CNY' => 'Chinese Yuan (¥)',
-            'AUD' => 'Australian Dollar ($)'
+            'AUD' => 'Australian Dollar (A$)',
+            'CAD' => 'Canadian Dollar (C$)',
+            'INR' => 'Indian Rupee (₹)',
+            'BRL' => 'Brazilian Real (R$)',
+            'MXN' => 'Mexican Peso (Mex$)'
         ];
     }
     
@@ -281,9 +285,44 @@ class UserSettings extends BaseModel {
             'JPY' => '¥',
             'THB' => '฿',
             'CNY' => '¥',
-            'AUD' => 'A$'
+            'AUD' => 'A$',
+            'CAD' => 'C$',
+            'INR' => '₹',
+            'BRL' => 'R$',
+            'MXN' => 'Mex$'
         ];
         
         return $symbols[$this->currency] ?? '$';
+    }
+    
+    /**
+     * Format money amount with user's currency symbol
+     * 
+     * @param float $amount Amount to format
+     * @param bool $includeSymbol Whether to include currency symbol
+     * @return string Formatted amount
+     */
+    public function formatMoney($amount, $includeSymbol = true) {
+        $symbol = $includeSymbol ? $this->getCurrencySymbol() : '';
+        
+        // Handle different currency formatting conventions
+        switch ($this->currency) {
+            case 'JPY':
+            case 'CNY':
+                // No decimal places for Yen and Yuan
+                return $symbol . number_format($amount, 0);
+                
+            case 'EUR':
+                // European format: € 1.234,56
+                return $symbol . ' ' . number_format($amount, 2, ',', '.');
+                
+            case 'THB':
+                // Thai Baht format
+                return $symbol . number_format($amount, 2);
+                
+            default:
+                // Default format: $1,234.56
+                return $symbol . number_format($amount, 2);
+        }
     }
 }

@@ -239,12 +239,31 @@ function initializeCurrencyPreview() {
             
             const symbol = symbols[currencyCode] || '$';
             
-            // Update all preview values with new currency symbol
+            // Format example values based on currency
             previewValues.forEach(element => {
-                const value = element.textContent.replace(/^[^\d]*/, '');
-                element.textContent = `${symbol}${value}`;
+                // Extract the numeric value
+                const value = element.textContent.replace(/[^\d.,]/g, '');
+                
+                // Format the display based on currency
+                switch(currencyCode) {
+                    case 'JPY':
+                    case 'CNY':
+                        // No decimals for Yen and Yuan
+                        element.textContent = `${symbol}${parseFloat(value).toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+                        break;
+                    case 'EUR':
+                        // European format with spaces
+                        element.textContent = `${symbol} ${parseFloat(value).toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                        break;
+                    default:
+                        // Standard format
+                        element.textContent = `${symbol}${parseFloat(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                }
             });
         }
+        
+        // Initialize with the current value
+        updateCurrencySymbol(currencySelect.value);
     }
 }
 
