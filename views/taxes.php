@@ -9,6 +9,9 @@ $additional_js = ['/assets/js/taxes-modern.js'];
 
 // Include header
 require_once 'includes/header.php';
+
+// Include currency helper
+require_once 'includes/currency_helper.php';
 ?>
 
 <!-- Main Content Wrapper -->
@@ -72,7 +75,7 @@ require_once 'includes/header.php';
                 </div>
                 <div class="stat-content">
                     <h3 class="stat-label"><?php echo __('estimated_income'); ?></h3>
-                    <p class="stat-value">$<?php echo number_format($has_tax_info ? $tax->estimated_income : 0, 2); ?></p>
+                    <p class="stat-value"><?php echo getCurrencySymbol(); ?><?php echo formatMoney($has_tax_info ? $tax->estimated_income : 0, false); ?></p>
                     <div class="stat-info">
                         <i class="fas fa-calendar"></i>
                         <span><?php echo $selected_year; ?></span>
@@ -86,7 +89,7 @@ require_once 'includes/header.php';
                 </div>
                 <div class="stat-content">
                     <h3 class="stat-label"><?php echo __('tax_liability'); ?></h3>
-                    <p class="stat-value">$<?php echo number_format($tax_liability, 2); ?></p>
+                    <p class="stat-value"><?php echo getCurrencySymbol(); ?><?php echo formatMoney($tax_liability, false); ?></p>
                     <div class="stat-info">
                         <i class="fas fa-calculator"></i>
                         <span><?php echo __('estimated_for'); ?> <?php echo $selected_year; ?></span>
@@ -100,7 +103,7 @@ require_once 'includes/header.php';
                 </div>
                 <div class="stat-content">
                     <h3 class="stat-label"><?php echo __('remaining_tax'); ?></h3>
-                    <p class="stat-value">$<?php echo number_format($remaining_tax, 2); ?></p>
+                    <p class="stat-value"><?php echo getCurrencySymbol(); ?><?php echo formatMoney($remaining_tax, false); ?></p>
                     <div class="stat-info">
                         <i class="fas fa-clock"></i>
                         <span><?php echo __('still_owed'); ?></span>
@@ -164,7 +167,7 @@ require_once 'includes/header.php';
                             <div class="form-field">
                                 <label for="estimated_income"><?php echo __('estimated_annual_income'); ?></label>
                                 <div class="amount-input">
-                                    <span class="currency-symbol">$</span>
+                                    <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                     <input type="number" id="estimated_income" name="estimated_income" 
                                            value="<?php echo $has_tax_info ? $tax->estimated_income : $yearly_income; ?>" 
                                            min="0" step="0.01" required>
@@ -175,7 +178,7 @@ require_once 'includes/header.php';
                             <div class="form-field">
                                 <label for="tax_paid_to_date"><?php echo __('tax_paid_to_date'); ?></label>
                                 <div class="amount-input">
-                                    <span class="currency-symbol">$</span>
+                                    <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                     <input type="number" id="tax_paid_to_date" name="tax_paid_to_date" 
                                            value="<?php echo $has_tax_info ? $tax->tax_paid_to_date : 0; ?>" 
                                            min="0" step="0.01" required>
@@ -186,7 +189,7 @@ require_once 'includes/header.php';
                             <div class="form-field">
                                 <label for="deductions"><?php echo __('total_deductions'); ?></label>
                                 <div class="amount-input">
-                                    <span class="currency-symbol">$</span>
+                                    <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                     <input type="number" id="deductions" name="deductions" 
                                            value="<?php echo $has_tax_info ? $tax->deductions : 12950; ?>" 
                                            min="0" step="0.01" required>
@@ -197,7 +200,7 @@ require_once 'includes/header.php';
                             <div class="form-field">
                                 <label for="credits"><?php echo __('total_tax_credits'); ?></label>
                                 <div class="amount-input">
-                                    <span class="currency-symbol">$</span>
+                                    <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                     <input type="number" id="credits" name="credits" 
                                            value="<?php echo $has_tax_info ? $tax->credits : 0; ?>" 
                                            min="0" step="0.01" required>
@@ -286,42 +289,42 @@ require_once 'includes/header.php';
                                 <tbody>
                                     <tr>
                                         <td><?php echo __('gross_income'); ?></td>
-                                        <td>$<?php echo number_format($tax->estimated_income, 2); ?></td>
+                                        <td><?php echo getCurrencySymbol(); ?><?php echo formatMoney($tax->estimated_income, false); ?></td>
                                         <td>100%</td>
                                     </tr>
                                     <tr>
                                         <td><?php echo __('deductions'); ?></td>
-                                        <td>$<?php echo number_format($tax->deductions, 2); ?></td>
+                                        <td><?php echo getCurrencySymbol(); ?><?php echo formatMoney($tax->deductions, false); ?></td>
                                         <td><?php echo number_format(($tax->deductions / $tax->estimated_income) * 100, 2); ?>%</td>
                                     </tr>
                                     <tr>
                                         <td><?php echo __('taxable_income'); ?></td>
-                                        <td>$<?php echo number_format(max(0, $tax->estimated_income - $tax->deductions), 2); ?></td>
+                                        <td><?php echo getCurrencySymbol(); ?><?php echo formatMoney(max(0, $tax->estimated_income - $tax->deductions), false); ?></td>
                                         <td><?php echo number_format((max(0, $tax->estimated_income - $tax->deductions) / $tax->estimated_income) * 100, 2); ?>%</td>
                                     </tr>
                                     <tr>
                                         <td><?php echo __('tax_before_credits'); ?></td>
-                                        <td>$<?php echo number_format($tax_liability + $tax->credits, 2); ?></td>
+                                        <td><?php echo getCurrencySymbol(); ?><?php echo formatMoney($tax_liability + $tax->credits, false); ?></td>
                                         <td><?php echo number_format((($tax_liability + $tax->credits) / $tax->estimated_income) * 100, 2); ?>%</td>
                                     </tr>
                                     <tr>
                                         <td><?php echo __('tax_credits'); ?></td>
-                                        <td>$<?php echo number_format($tax->credits, 2); ?></td>
+                                        <td><?php echo getCurrencySymbol(); ?><?php echo formatMoney($tax->credits, false); ?></td>
                                         <td><?php echo number_format(($tax->credits / $tax->estimated_income) * 100, 2); ?>%</td>
                                     </tr>
                                     <tr class="highlight">
                                         <td><strong><?php echo __('final_tax_liability'); ?></strong></td>
-                                        <td><strong>$<?php echo number_format($tax_liability, 2); ?></strong></td>
+                                        <td><strong><?php echo getCurrencySymbol(); ?><?php echo formatMoney($tax_liability, false); ?></strong></td>
                                         <td><strong><?php echo number_format($effective_tax_rate, 2); ?>%</strong></td>
                                     </tr>
                                     <tr>
                                         <td><?php echo __('tax_paid_to_date'); ?></td>
-                                        <td>$<?php echo number_format($tax->tax_paid_to_date, 2); ?></td>
+                                        <td><?php echo getCurrencySymbol(); ?><?php echo formatMoney($tax->tax_paid_to_date, false); ?></td>
                                         <td><?php echo number_format(($tax->tax_paid_to_date / max(0.01, $tax_liability)) * 100, 2); ?>%</td>
                                     </tr>
                                     <tr class="<?php echo $remaining_tax > 0 ? 'negative' : 'positive'; ?>">
                                         <td><strong><?php echo $remaining_tax > 0 ? __('tax_still_owed') : __('tax_refund_expected'); ?></strong></td>
-                                        <td><strong>$<?php echo number_format(abs($remaining_tax), 2); ?></strong></td>
+                                        <td><strong><?php echo getCurrencySymbol(); ?><?php echo formatMoney(abs($remaining_tax), false); ?></strong></td>
                                         <td><strong><?php echo number_format((abs($remaining_tax) / max(0.01, $tax_liability)) * 100, 2); ?>%</strong></td>
                                     </tr>
                                 </tbody>
@@ -431,6 +434,7 @@ echo '<meta name="base-path" content="' . BASE_PATH . '">';
 echo '<meta name="chart-labels" content="' . htmlspecialchars(json_encode($chart_labels)) . '">';
 echo '<meta name="chart-data" content="' . htmlspecialchars(json_encode($chart_data)) . '">';
 echo '<meta name="chart-colors" content="' . htmlspecialchars(json_encode($chart_colors)) . '">';
+echo '<meta name="currency-symbol" content="' . getCurrencySymbol() . '">';
 
 require_once 'includes/footer.php';
 ?>

@@ -57,6 +57,12 @@ function loadTranslations() {
     });
 }
 
+// Get currency symbol from the page metadata or use $ as a fallback
+function getCurrencySymbol() {
+    const metaTag = document.querySelector('meta[name="currency-symbol"]');
+    return metaTag ? metaTag.getAttribute('content') : '$';
+}
+
 function getTranslation(key, defaultText) {
     return translations[key] || defaultText;
 }
@@ -363,6 +369,7 @@ function loadGoalForEdit(goalId) {
 
 function loadGoalProgress(goalId) {
     const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
+    const currencySymbol = getCurrencySymbol();
     
     fetch(`${basePath}/goals?action=get_goal&goal_id=${goalId}`, {
         headers: {
@@ -376,8 +383,8 @@ function loadGoalProgress(goalId) {
             const goal = data.goal;
             document.getElementById('progress_goal_id').value = goal.goal_id;
             document.getElementById('progress_goal_name').textContent = goal.name;
-            document.getElementById('progress_current_amount').textContent = '$' + parseFloat(goal.current_amount).toFixed(2);
-            document.getElementById('progress_target_amount').textContent = '$' + parseFloat(goal.target_amount).toFixed(2);
+            document.getElementById('progress_current_amount').textContent = currencySymbol + parseFloat(goal.current_amount).toFixed(2);
+            document.getElementById('progress_target_amount').textContent = currencySymbol + parseFloat(goal.target_amount).toFixed(2);
             
             // Update progress bar
             const progressBar = document.getElementById('progress_bar');
@@ -603,6 +610,7 @@ function calculateGoalMetrics() {
     const currentAmount = parseFloat(document.getElementById('current_amount').value) || 0;
     const startDate = new Date(document.getElementById('start_date').value);
     const targetDate = new Date(document.getElementById('target_date').value);
+    const currencySymbol = getCurrencySymbol();
     
     if (targetAmount <= 0 || isNaN(startDate.getTime()) || isNaN(targetDate.getTime())) {
         document.getElementById('goalCalculator').classList.add('d-none');
@@ -630,7 +638,7 @@ function calculateGoalMetrics() {
     const monthsText = document.getElementById('timeToGoal').getAttribute('data-months-text') || 'months';
     
     // Update UI
-    document.getElementById('monthlyContribution').textContent = '$' + monthlyContribution.toFixed(2);
+    document.getElementById('monthlyContribution').textContent = currencySymbol + monthlyContribution.toFixed(2);
     document.getElementById('timeToGoal').textContent = totalMonths + ' ' + monthsText;
     document.getElementById('goalCalculator').classList.remove('d-none');
 }
@@ -640,6 +648,7 @@ function calculateEditGoalMetrics() {
     const currentAmount = parseFloat(document.getElementById('edit_current_amount').value) || 0;
     const startDate = new Date(document.getElementById('edit_start_date').value);
     const targetDate = new Date(document.getElementById('edit_target_date').value);
+    const currencySymbol = getCurrencySymbol();
     
     if (targetAmount <= 0 || isNaN(startDate.getTime()) || isNaN(targetDate.getTime())) {
         document.getElementById('editGoalCalculator').classList.add('d-none');
@@ -667,7 +676,7 @@ function calculateEditGoalMetrics() {
     const monthsText = document.getElementById('editTimeToGoal').getAttribute('data-months-text') || 'months';
     
     // Update UI
-    document.getElementById('editMonthlyContribution').textContent = '$' + monthlyContribution.toFixed(2);
+    document.getElementById('editMonthlyContribution').textContent = currencySymbol + monthlyContribution.toFixed(2);
     document.getElementById('editTimeToGoal').textContent = totalMonths + ' ' + monthsText;
     document.getElementById('editGoalCalculator').classList.remove('d-none');
 }
@@ -712,7 +721,9 @@ function displayRecommendations(recommendations) {
     const tableBody = document.querySelector('.recommendations-table tbody');
     if (!tableBody) return;
     
+    const currencySymbol = getCurrencySymbol();
     let html = '';
+    
     recommendations.forEach(goal => {
         // Get translated "Adopt" text
         const adoptText = document.querySelector('.btn-adopt') ? 
@@ -722,8 +733,8 @@ function displayRecommendations(recommendations) {
             <tr>
                 <td>${escapeHtml(goal.name)}</td>
                 <td>${escapeHtml(goal.description)}</td>
-                <td>$${parseFloat(goal.target_amount).toFixed(2)}</td>
-                <td>$${parseFloat(goal.monthly_contribution).toFixed(2)}</td>
+                <td>${currencySymbol}${parseFloat(goal.target_amount).toFixed(2)}</td>
+                <td>${currencySymbol}${parseFloat(goal.monthly_contribution).toFixed(2)}</td>
                 <td>
                     <span class="priority-badge priority-${goal.priority}">
                         ${capitalizeFirst(goal.priority)}

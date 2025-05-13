@@ -9,6 +9,9 @@ $additional_js = ['/assets/js/goals-modern.js'];
 
 // Include header
 require_once 'includes/header.php';
+
+// Include currency helper functions
+require_once 'includes/currency_helper.php';
 ?>
 
 <!-- Main Content Wrapper -->
@@ -245,8 +248,8 @@ require_once 'includes/header.php';
                                                 </div>
                                                 <div class="goal-progress-info">
                                                     <div class="progress-text">
-                                                        <span class="amount">$<?php echo number_format($goal['current_amount'], 2); ?></span> <?php echo __('of'); ?> 
-                                                        <span class="amount">$<?php echo number_format($goal['target_amount'], 2); ?></span>
+                                                        <span class="amount"><?php echo getCurrencySymbol(); ?><?php echo formatMoney($goal['current_amount'], false); ?></span> <?php echo __('of'); ?> 
+                                                        <span class="amount"><?php echo getCurrencySymbol(); ?><?php echo formatMoney($goal['target_amount'], false); ?></span>
                                                     </div>
                                                     <div class="progress-status <?php echo $status_class; ?>">
                                                         <i class="fas fa-<?php echo $progress_icon; ?>"></i>
@@ -283,7 +286,7 @@ require_once 'includes/header.php';
                                                     </div>
                                                     <div class="meta-item">
                                                         <span class="meta-label"><?php echo __('monthly_needed'); ?></span>
-                                                        <span class="meta-value text-primary">$<?php echo number_format($monthly_contribution, 2); ?></span>
+                                                        <span class="meta-value text-primary"><?php echo getCurrencySymbol(); ?><?php echo formatMoney($monthly_contribution, false); ?></span>
                                                     </div>
                                                 <?php endif; ?>
                                             </div>
@@ -370,7 +373,7 @@ require_once 'includes/header.php';
                             <div class="form-field">
                                 <label for="target_amount"><?php echo __('target_amount'); ?></label>
                                 <div class="input-group">
-                                    <span class="currency-symbol">$</span>
+                                    <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                     <input type="number" id="target_amount" name="target_amount" step="0.01" min="0.01" required>
                                 </div>
                                 <div class="invalid-feedback"><?php echo __('please_provide_valid_target_amount'); ?></div>
@@ -378,7 +381,7 @@ require_once 'includes/header.php';
                             <div class="form-field">
                                 <label for="current_amount"><?php echo __('current_amount'); ?></label>
                                 <div class="input-group">
-                                    <span class="currency-symbol">$</span>
+                                    <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                     <input type="number" id="current_amount" name="current_amount" step="0.01" min="0" value="0">
                                 </div>
                                 <div class="invalid-feedback"><?php echo __('current_amount_nonnegative'); ?></div>
@@ -411,7 +414,7 @@ require_once 'includes/header.php';
                             <h6><?php echo __('goal_calculator'); ?></h6>
                             <div class="info-row">
                                 <span class="info-label"><?php echo __('monthly_contribution_needed'); ?></span>
-                                <span class="info-value" id="monthlyContribution">$0.00</span>
+                                <span class="info-value" id="monthlyContribution"><?php echo getCurrencySymbol(); ?>0.00</span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label"><?php echo __('total_time_to_achieve'); ?></span>
@@ -467,7 +470,7 @@ require_once 'includes/header.php';
                             <div class="form-field">
                                 <label for="edit_target_amount"><?php echo __('target_amount'); ?></label>
                                 <div class="input-group">
-                                    <span class="currency-symbol">$</span>
+                                    <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                     <input type="number" id="edit_target_amount" name="target_amount" step="0.01" min="0.01" required>
                                 </div>
                                 <div class="invalid-feedback"><?php echo __('please_provide_valid_target_amount'); ?></div>
@@ -475,7 +478,7 @@ require_once 'includes/header.php';
                             <div class="form-field">
                                 <label for="edit_current_amount"><?php echo __('current_amount'); ?></label>
                                 <div class="input-group">
-                                    <span class="currency-symbol">$</span>
+                                    <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                     <input type="number" id="edit_current_amount" name="current_amount" step="0.01" min="0">
                                 </div>
                                 <div class="invalid-feedback"><?php echo __('current_amount_nonnegative'); ?></div>
@@ -518,7 +521,7 @@ require_once 'includes/header.php';
                             <h6><?php echo __('goal_calculator'); ?></h6>
                             <div class="info-row">
                                 <span class="info-label"><?php echo __('monthly_contribution_needed'); ?></span>
-                                <span class="info-value" id="editMonthlyContribution">$0.00</span>
+                                <span class="info-value" id="editMonthlyContribution"><?php echo getCurrencySymbol(); ?>0.00</span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label"><?php echo __('total_time_to_achieve'); ?></span>
@@ -564,15 +567,15 @@ require_once 'includes/header.php';
                             <div class="progress-bar" id="progress_bar" role="progressbar"></div>
                         </div>
                         <div class="progress-details">
-                            <span><?php echo __('current_amount'); ?>: <strong id="progress_current_amount">$0.00</strong></span>
-                            <span><?php echo __('target_amount'); ?>: <strong id="progress_target_amount">$0.00</strong></span>
+                            <span><?php echo __('current_amount'); ?>: <strong id="progress_current_amount"><?php echo getCurrencySymbol(); ?>0.00</strong></span>
+                            <span><?php echo __('target_amount'); ?>: <strong id="progress_target_amount"><?php echo getCurrencySymbol(); ?>0.00</strong></span>
                         </div>
                     </div>
                     
                     <div class="form-field">
                         <label for="progress_amount"><?php echo __('add_to_current_amount'); ?></label>
                         <div class="input-group">
-                            <span class="currency-symbol">$</span>
+                            <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                             <input type="number" id="progress_amount" name="amount" step="0.01" min="0.01" required>
                         </div>
                         <div class="invalid-feedback"><?php echo __('please_enter_valid_amount'); ?></div>
@@ -647,7 +650,7 @@ require_once 'includes/header.php';
                 <?php if (isset($show_recommendations) && isset($recommended_goals)): ?>
                     <div class="recommendation-info">
                         <i class="fas fa-info-circle"></i>
-                        <p><?php echo __('based_on_monthly_income'); ?> $<?php echo number_format($monthly_income, 2); ?>, <?php echo __('recommended_financial_goals'); ?>.</p>
+                        <p><?php echo __('based_on_monthly_income'); ?> <?php echo getCurrencySymbol(); ?><?php echo formatMoney($monthly_income, false); ?>, <?php echo __('recommended_financial_goals'); ?>.</p>
                     </div>
                     
                     <div class="table-responsive">
@@ -667,8 +670,8 @@ require_once 'includes/header.php';
                                     <tr>
                                         <td><?php echo htmlspecialchars($rec_goal['name']); ?></td>
                                         <td><?php echo htmlspecialchars($rec_goal['description']); ?></td>
-                                        <td>$<?php echo number_format($rec_goal['target_amount'], 2); ?></td>
-                                        <td>$<?php echo number_format($rec_goal['monthly_contribution'], 2); ?></td>
+                                        <td><?php echo getCurrencySymbol(); ?><?php echo formatMoney($rec_goal['target_amount'], false); ?></td>
+                                        <td><?php echo getCurrencySymbol(); ?><?php echo formatMoney($rec_goal['monthly_contribution'], false); ?></td>
                                         <td>
                                             <span class="priority-badge priority-<?php echo $rec_goal['priority']; ?>">
                                                 <?php echo ucfirst($rec_goal['priority']); ?>
@@ -699,7 +702,7 @@ require_once 'includes/header.php';
                         </div>
                         
                         <div class="mb-4">
-                            <p class="mb-1"><?php echo __('your_current_monthly_income'); ?> <strong>$<?php echo number_format($monthly_income, 2); ?></strong></p>
+                            <p class="mb-1"><?php echo __('your_current_monthly_income'); ?> <strong><?php echo getCurrencySymbol(); ?><?php echo formatMoney($monthly_income, false); ?></strong></p>
                             
                             <p class="mb-2"><?php echo __('budget_will_be_created_with'); ?></p>
                             <ul>

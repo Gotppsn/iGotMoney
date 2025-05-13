@@ -101,11 +101,12 @@ function initializeChart() {
                         usePointStyle: true,
                         callbacks: {
                             label: function(context) {
+                                const currencySymbol = getCurrencySymbol();
                                 const label = context.label || '';
                                 const value = context.parsed;
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                 const percentage = ((value / total) * 100).toFixed(1);
-                                return `${label}: $${value.toLocaleString()} (${percentage}%)`;
+                                return `${label}: ${currencySymbol}${value.toLocaleString()} (${percentage}%)`;
                             }
                         }
                     }
@@ -116,6 +117,12 @@ function initializeChart() {
     } catch (error) {
         console.error('Error initializing chart:', error);
     }
+}
+
+// Get currency symbol from the page metadata or use $ as a fallback
+function getCurrencySymbol() {
+    const metaTag = document.querySelector('meta[name="currency-symbol"]');
+    return metaTag ? metaTag.getAttribute('content') : '$';
 }
 
 function initializeEventListeners() {
@@ -254,6 +261,7 @@ function initializeCalculations() {
 }
 
 function calculateTaxEstimates() {
+    const currencySymbol = getCurrencySymbol();
     const filingStatus = document.getElementById('filing_status')?.value || 'single';
     const estimatedIncome = parseFloat(document.getElementById('estimated_income')?.value) || 0;
     const deductions = parseFloat(document.getElementById('deductions')?.value) || 0;
@@ -354,6 +362,7 @@ function calculateTaxEstimates() {
 
 function updateStatCards(estimatedIncome, taxLiability, remainingTax, effectiveTaxRate) {
     const cards = document.querySelectorAll('.stat-value');
+    const currencySymbol = getCurrencySymbol();
     
     if (cards.length >= 4) {
         // Apply subtle animation to highlight changes
@@ -366,9 +375,9 @@ function updateStatCards(estimatedIncome, taxLiability, remainingTax, effectiveT
         });
         
         // Update values
-        cards[0].textContent = '$' + estimatedIncome.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        cards[1].textContent = '$' + taxLiability.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        cards[2].textContent = '$' + remainingTax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        cards[0].textContent = currencySymbol + estimatedIncome.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        cards[1].textContent = currencySymbol + taxLiability.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        cards[2].textContent = currencySymbol + remainingTax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         cards[3].textContent = effectiveTaxRate.toFixed(2) + '%';
     }
 }
