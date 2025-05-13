@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeQuickFilters();
     initializeInsights();
     initializeTooltips();
+    initializeTopCategories(); // New function call
 });
 
 function initializeChart() {
@@ -190,6 +191,77 @@ function initializeChart() {
     } catch (error) {
         console.error('Error initializing chart:', error);
         showNoDataMessage();
+    }
+}
+
+function initializeTopCategories() {
+    // Get data from the chart
+    const chartLabelsEl = document.querySelector('meta[name="chart-labels"]');
+    const chartDataEl = document.querySelector('meta[name="chart-data"]');
+    const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
+    
+    if (!chartLabelsEl || !chartDataEl || !currencySymbolEl) {
+        console.error('Chart data meta tags not found for top categories!');
+        return;
+    }
+    
+    try {
+        const chartLabels = JSON.parse(chartLabelsEl.getAttribute('content') || '[]');
+        const chartData = JSON.parse(chartDataEl.getAttribute('content') || '[]');
+        const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
+        
+        if (chartLabels.length === 0 || chartData.length === 0) {
+            console.warn('No category data available for top categories');
+            return;
+        }
+        
+        // Create an array of [label, data] pairs
+        const categories = chartLabels.map((label, i) => [label, chartData[i]]);
+        
+        // Sort by amount (descending)
+        categories.sort((a, b) => b[1] - a[1]);
+        
+        // Get total for percentage calculations
+        const totalAmount = chartData.reduce((acc, val) => acc + val, 0);
+        
+        // Get the top categories container
+        const topCategoriesContainer = document.querySelector('.top-categories-list');
+        if (!topCategoriesContainer) {
+            console.error('Top categories container not found!');
+            return;
+        }
+        
+        // Generate HTML for top categories
+        let html = '';
+        categories.slice(0, 5).forEach((category, index) => {
+            const [name, amount] = category;
+            const percentage = ((amount / totalAmount) * 100).toFixed(1);
+            
+            html += `
+                <div class="top-category-item">
+                    <div class="top-category-rank">${index + 1}</div>
+                    <div class="top-category-info">
+                        <h4 class="top-category-name">${name}</h4>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: ${percentage}%" 
+                                 aria-valuenow="${percentage}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="top-category-amount">
+                        <span class="amount">${currencySymbol}${amount.toLocaleString()}</span>
+                        <span class="percentage">${percentage}%</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        topCategoriesContainer.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error initializing top categories:', error);
     }
 }
 

@@ -122,7 +122,8 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                 </div>
             </div>
             
-            <div class="chart-card categories-list">
+            <!-- Updated Top Categories Section -->
+            <div class="chart-card top-categories">
                 <div class="chart-header">
                     <div class="chart-title">
                         <i class="fas fa-list-ol"></i>
@@ -130,39 +131,9 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                     </div>
                 </div>
                 <div class="chart-body">
-                    <div class="categories-list-content">
-                        <?php if (isset($top_expenses) && $top_expenses->num_rows > 0): ?>
-                            <?php 
-                            $top_expenses->data_seek(0);
-                            $rank = 1;
-                            while ($category = $top_expenses->fetch_assoc()): 
-                                $percentage = ($category['total'] / max(0.01, $monthly_expenses)) * 100;
-                                // Get translated category name
-                                $translated_category_name = $expense->getTranslatedCategoryName($category['category_name']);
-                            ?>
-                                <div class="category-item">
-                                    <div class="category-rank"><?php echo $rank++; ?></div>
-                                    <div class="category-info">
-                                        <h4 class="category-name"><?php echo htmlspecialchars($translated_category_name); ?></h4>
-                                        <div class="category-bar">
-                                            <div class="category-bar-fill" 
-                                                 style="width: <?php echo $percentage; ?>%"
-                                                 data-percentage="<?php echo $percentage; ?>">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="category-amount">
-                                        <span class="amount"><?php echo formatMoney($category['total']); ?></span>
-                                        <span class="percentage"><?php echo number_format($percentage, 1); ?>%</span>
-                                    </div>
-                                    <div class="category-actions">
-                                        <button class="category-filter-btn" title="<?php echo __('filter'); ?>" data-category-id="<?php echo $category['category_id']; ?>">
-                                            <i class="fas fa-filter"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            <?php endwhile; ?>
-                        <?php else: ?>
+                    <div class="top-categories-list">
+                        <!-- This will be populated by JavaScript -->
+                        <?php if (!isset($top_expenses) || $top_expenses->num_rows === 0): ?>
                             <div class="empty-categories">
                                 <i class="fas fa-folder-open"></i>
                                 <p><?php echo __('no_expenses_recorded_yet'); ?></p>
