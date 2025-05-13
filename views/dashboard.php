@@ -1,4 +1,4 @@
-<?php
+<?php 
 // Set page title and current page for menu highlighting
 $page_title = __('dashboard_title') . ' - ' . __('app_name');
 $current_page = 'dashboard';
@@ -27,10 +27,6 @@ require_once 'includes/header.php';
                 <button type="button" class="btn-action btn-refresh" id="refreshDashboard">
                     <i class="fas fa-sync-alt"></i>
                     <span><?php echo __('refresh'); ?></span>
-                </button>
-                <button type="button" class="btn-action btn-print" id="printDashboard">
-                    <i class="fas fa-print"></i>
-                    <span><?php echo __('print'); ?></span>
                 </button>
             </div>
         </div>
@@ -153,12 +149,17 @@ require_once 'includes/header.php';
                     
                     <?php 
                     if (isset($top_expenses) && $top_expenses->num_rows > 0):
-                        $top_expenses->data_seek(0);
                         while ($expense = $top_expenses->fetch_assoc()):
+                            // Translate category name
+                            $category_key = 'expense_category_' . $expense['category_name'];
+                            $translated_name = __($category_key);
+                            if ($translated_name === $category_key) {
+                                $translated_name = $expense['category_name'];
+                            }
                     ?>
                     <div class="category-item">
                         <div class="category-info">
-                            <h4><?php echo htmlspecialchars($expense['category_name']); ?></h4>
+                            <h4><?php echo htmlspecialchars($translated_name); ?></h4>
                             <div class="category-bar">
                                 <div class="category-bar-fill" 
                                     style="width: <?php echo min(100, ($expense['total'] / max(1, $monthly_expenses)) * 100); ?>%" 
@@ -215,10 +216,17 @@ require_once 'includes/header.php';
                             <a href="<?php echo BASE_PATH; ?>/budget" class="btn-primary"><?php echo __('create_budget'); ?></a>
                         </div>
                     <?php else: ?>
-                        <?php foreach ($budget_status as $budget): ?>
+                        <?php foreach ($budget_status as $budget): 
+                            // Translate category name
+                            $category_key = 'expense_category_' . $budget['category_name'];
+                            $translated_category = __($category_key);
+                            if ($translated_category === $category_key) {
+                                $translated_category = $budget['category_name'];
+                            }
+                        ?>
                             <div class="budget-item">
                                 <div class="budget-info">
-                                    <span class="budget-category"><?php echo htmlspecialchars($budget['category_name']); ?></span>
+                                    <span class="budget-category"><?php echo htmlspecialchars($translated_category); ?></span>
                                     <div class="budget-values">
                                         <div class="budget-percentage">
                                             <?php echo number_format($budget['percentage'], 0); ?>%
@@ -461,7 +469,7 @@ require_once 'includes/header.php';
 </div>
 
 <?php
-// Prepare chart data
+// Prepare chart data with translations
 $chart_labels = [];
 $chart_data = [];
 $chart_colors = [
@@ -472,7 +480,14 @@ $chart_colors = [
 if (isset($top_expenses) && $top_expenses->num_rows > 0) {
     $top_expenses->data_seek(0);
     while ($category = $top_expenses->fetch_assoc()) {
-        $chart_labels[] = $category['category_name'];
+        // Translate category name
+        $category_key = 'expense_category_' . $category['category_name'];
+        $translated_name = __($category_key);
+        if ($translated_name === $category_key) {
+            $translated_name = $category['category_name'];
+        }
+        
+        $chart_labels[] = $translated_name;
         $chart_data[] = floatval($category['total']);
     }
 }

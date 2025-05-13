@@ -65,7 +65,6 @@ if (isset($_GET['generate_advice']) && $_GET['generate_advice'] == 'true') {
 $financial_advice = $advice->getLatestAdvice($_SESSION['user_id'], 3);
 
 // Get expense data for different periods
-$expense_data = array();
 if (isset($_GET['period'])) {
     $period = $_GET['period'];
     switch($period) {
@@ -90,10 +89,32 @@ if (isset($_GET['period'])) {
     
     // Return JSON response for AJAX requests
     header('Content-Type: application/json');
-    echo json_encode(array(
-        'labels' => array_column($expense_data->fetch_all(MYSQLI_ASSOC), 'category_name'),
-        'data' => array_column($expense_data->fetch_all(MYSQLI_ASSOC), 'total')
-    ));
+    
+    // Fetch all data into array first
+    $all_data = $expense_data->fetch_all(MYSQLI_ASSOC);
+    
+    // Translate category names
+    $labels = [];
+    $data = [];
+    
+    foreach ($all_data as $category) {
+        // Translate category name using the language system
+        $category_key = 'expense_category_' . $category['category_name'];
+        $translated_name = __($category_key);
+        
+        // If translation not found, fallback to original name
+        if ($translated_name === $category_key) {
+            $translated_name = $category['category_name'];
+        }
+        
+        $labels[] = $translated_name;
+        $data[] = floatval($category['total']);
+    }
+    
+    echo json_encode([
+        'labels' => $labels,
+        'data' => $data
+    ]);
     exit();
 }
 
