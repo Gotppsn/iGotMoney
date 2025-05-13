@@ -29,6 +29,12 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
         </div>
     </div>
 
+    <div class="quick-filters-section">
+        <div class="filters-container" id="quickFilters">
+            <!-- Quick filters will be populated by JavaScript -->
+        </div>
+    </div>
+
     <div class="quick-stats-section">
         <div class="stats-grid">
             <div class="stat-card monthly">
@@ -80,13 +86,20 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
         </div>
     </div>
 
+    <!-- New Insights Section -->
+    <div class="insights-section">
+        <div class="insights-container" id="expenseInsights">
+            <!-- Insights will be populated by JavaScript -->
+        </div>
+    </div>
+
     <div class="charts-section">
         <div class="charts-grid">
             <div class="chart-card category-chart">
                 <div class="chart-header">
                     <div class="chart-title">
                         <i class="fas fa-chart-pie"></i>
-                        <h3><?php echo __('expense_categories'); ?></h3>
+                        <h3><span id="chartPeriodTitle">This Month</span> <?php echo __('expense_categories'); ?></h3>
                     </div>
                     <div class="chart-controls">
                         <select id="chartPeriodSelect" class="chart-period-select">
@@ -141,6 +154,11 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                                     <div class="category-amount">
                                         <span class="amount"><?php echo formatMoney($category['total']); ?></span>
                                         <span class="percentage"><?php echo number_format($percentage, 1); ?>%</span>
+                                    </div>
+                                    <div class="category-actions">
+                                        <button class="category-filter-btn" title="<?php echo __('filter'); ?>" data-category-id="<?php echo $category['category_id']; ?>">
+                                            <i class="fas fa-filter"></i>
+                                        </button>
                                     </div>
                                 </div>
                             <?php endwhile; ?>
@@ -224,6 +242,23 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                                         <?php $categories->data_seek(0); ?>
                                     </select>
                                 </div>
+                                <!-- Advanced Filter Options -->
+                                <div class="filter-section-advanced">
+                                    <h5><?php echo __('amount'); ?></h5>
+                                    <div class="amount-slider-container">
+                                        <input type="range" id="amountRange" class="amount-slider" min="0" max="10000" step="100" value="5000">
+                                        <div class="amount-value-display">
+                                            <span id="amountValue"><?php echo getCurrencySymbol(); ?>5000</span>
+                                        </div>
+                                    </div>
+                                    <div class="filter-toggle">
+                                        <span class="filter-toggle-label"><?php echo __('recurring_expense'); ?></span>
+                                        <div class="toggle-field">
+                                            <input type="checkbox" id="recurringFilter" name="recurring">
+                                            <span class="toggle-slider"></span>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="filter-actions">
                                     <button type="submit" class="btn-apply-filter" id="applyFilter"><?php echo __('apply_filter'); ?></button>
                                     <button type="button" class="btn-reset-filter" id="resetFilter"><?php echo __('reset'); ?></button>
@@ -234,10 +269,26 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                 </div>
             </div>
             <div class="table-body">
+                <!-- Bulk Actions Bar -->
+                <div class="bulk-actions" id="bulkActions">
+                    <span class="bulk-actions-count"><span class="selected-count">0</span> items selected</span>
+                    <button class="bulk-actions-btn" id="bulkCategoryBtn">
+                        <i class="fas fa-tag"></i>
+                        Change Category
+                    </button>
+                    <button class="bulk-actions-btn btn-delete" id="bulkDeleteBtn">
+                        <i class="fas fa-trash-alt"></i>
+                        Delete
+                    </button>
+                </div>
+                
                 <div class="table-responsive">
                     <table class="expenses-table" id="expenseTable">
                         <thead>
                             <tr>
+                                <th class="checkbox-header">
+                                    <input type="checkbox" id="selectAll" class="form-check-input">
+                                </th>
                                 <th><?php echo __('description'); ?></th>
                                 <th><?php echo __('category'); ?></th>
                                 <th><?php echo __('amount'); ?></th>
@@ -251,10 +302,21 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                                 <?php while ($expense_item = $expenses->fetch_assoc()): 
                                     // Get translated category name
                                     $translated_category = $expense->getTranslatedCategoryName($expense_item['category_name']);
+                                    $is_recurring = $expense_item['is_recurring'];
                                 ?>
                                     <tr>
+                                        <td class="checkbox-cell">
+                                            <input type="checkbox" class="expense-checkbox form-check-input" value="<?php echo $expense_item['expense_id']; ?>">
+                                        </td>
                                         <td class="description-cell">
-                                            <span class="description-text"><?php echo htmlspecialchars($expense_item['description']); ?></span>
+                                            <span class="description-text">
+                                                <?php if ($is_recurring): ?>
+                                                <span class="recurring-badge" data-bs-toggle="tooltip" title="<?php echo __('recurring'); ?>">
+                                                    <i class="fas fa-sync-alt"></i>
+                                                </span>
+                                                <?php endif; ?>
+                                                <?php echo htmlspecialchars($expense_item['description']); ?>
+                                            </span>
                                         </td>
                                         <td class="category-cell">
                                             <span class="category-badge"><?php echo htmlspecialchars($translated_category); ?></span>
@@ -275,10 +337,13 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                                             <?php endif; ?>
                                         </td>
                                         <td class="actions-cell">
-                                            <button class="btn-action edit" data-expense-id="<?php echo $expense_item['expense_id']; ?>" title="<?php echo __('edit'); ?>">
+                                            <button class="btn-action clone" data-expense-id="<?php echo $expense_item['expense_id']; ?>" title="<?php echo __('clone'); ?>" data-bs-toggle="tooltip">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                            <button class="btn-action edit" data-expense-id="<?php echo $expense_item['expense_id']; ?>" title="<?php echo __('edit'); ?>" data-bs-toggle="tooltip">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button class="btn-action delete" data-expense-id="<?php echo $expense_item['expense_id']; ?>" title="<?php echo __('delete'); ?>">
+                                            <button class="btn-action delete" data-expense-id="<?php echo $expense_item['expense_id']; ?>" title="<?php echo __('delete'); ?>" data-bs-toggle="tooltip">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </td>
@@ -316,13 +381,16 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <form id="addExpenseForm" method="POST" action="<?php echo BASE_PATH; ?>/expenses" class="direct-form">
+            <form id="addExpenseForm" method="POST" action="<?php echo BASE_PATH; ?>/expenses" class="direct-form needs-validation" novalidate>
                 <input type="hidden" name="action" value="add">
                 <div class="modal-body">
                     <div class="form-grid">
                         <div class="form-field full-width">
                             <label for="description"><?php echo __('description'); ?></label>
                             <input type="text" id="description" name="description" class="form-control" required>
+                            <div class="invalid-feedback">
+                                Description is required
+                            </div>
                         </div>
                         
                         <div class="form-field">
@@ -341,6 +409,9 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                                 <?php endwhile; ?>
                                 <?php $categories->data_seek(0); ?>
                             </select>
+                            <div class="invalid-feedback">
+                                Please select a category
+                            </div>
                         </div>
                         
                         <div class="form-field">
@@ -348,15 +419,21 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                             <div class="amount-input">
                                 <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                 <input type="number" id="amount" name="amount" class="form-control" step="0.01" min="0.01" required>
+                                <div class="invalid-feedback">
+                                    Please enter a valid amount
+                                </div>
                             </div>
                         </div>
                         
                         <div class="form-field">
                             <label for="expense_date"><?php echo __('date'); ?></label>
                             <input type="date" id="expense_date" name="expense_date" class="form-control" value="<?php echo date('Y-m-d'); ?>" required>
+                            <div class="invalid-feedback">
+                                Please select a date
+                            </div>
                         </div>
                         
-                        <div class="form-field">
+                        <div class="form-field" id="frequency_group">
                             <label for="frequency"><?php echo __('frequency'); ?></label>
                             <select id="frequency" name="frequency" class="modern-select" disabled>
                                 <option value="one-time"><?php echo __('one-time'); ?></option>
@@ -405,7 +482,7 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <form id="editExpenseForm" method="POST" action="<?php echo BASE_PATH; ?>/expenses" class="direct-form">
+            <form id="editExpenseForm" method="POST" action="<?php echo BASE_PATH; ?>/expenses" class="direct-form needs-validation" novalidate>
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" id="edit_expense_id" name="expense_id">
                 <div class="modal-body">
@@ -413,6 +490,9 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                         <div class="form-field full-width">
                             <label for="edit_description"><?php echo __('description'); ?></label>
                             <input type="text" id="edit_description" name="description" class="form-control" required>
+                            <div class="invalid-feedback">
+                                Description is required
+                            </div>
                         </div>
                         
                         <div class="form-field">
@@ -431,6 +511,9 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                                 <?php endwhile; ?>
                                 <?php $categories->data_seek(0); ?>
                             </select>
+                            <div class="invalid-feedback">
+                                Please select a category
+                            </div>
                         </div>
                         
                         <div class="form-field">
@@ -438,15 +521,21 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                             <div class="amount-input">
                                 <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                 <input type="number" id="edit_amount" name="amount" class="form-control" step="0.01" min="0.01" required>
+                                <div class="invalid-feedback">
+                                    Please enter a valid amount
+                                </div>
                             </div>
                         </div>
                         
                         <div class="form-field">
                             <label for="edit_expense_date"><?php echo __('date'); ?></label>
                             <input type="date" id="edit_expense_date" name="expense_date" class="form-control" required>
+                            <div class="invalid-feedback">
+                                Please select a date
+                            </div>
                         </div>
                         
-                        <div class="form-field">
+                        <div class="form-field" id="edit_frequency_group">
                             <label for="edit_frequency"><?php echo __('frequency'); ?></label>
                             <select id="edit_frequency" name="frequency" class="modern-select">
                                 <option value="one-time"><?php echo __('one-time'); ?></option>
