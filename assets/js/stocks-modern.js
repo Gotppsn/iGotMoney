@@ -20,6 +20,9 @@ function initializeChart() {
         return;
     }
 
+    // Get currency symbol from meta tag
+    const currencySymbol = document.querySelector('meta[name="currency-symbol"]')?.content || '$';
+
     // Price Chart
     const priceCanvas = document.getElementById('stockPriceChart');
     if (priceCanvas) {
@@ -75,7 +78,7 @@ function initializeChart() {
                         },
                         callbacks: {
                             label: function(context) {
-                                return 'Price: $' + context.parsed.y.toFixed(2);
+                                return 'Price: ' + currencySymbol + context.parsed.y.toFixed(2);
                             }
                         }
                     }
@@ -96,7 +99,7 @@ function initializeChart() {
                         },
                         ticks: {
                             callback: function(value) {
-                                return '$' + value.toFixed(2);
+                                return currencySymbol + value.toFixed(2);
                             }
                         }
                     }
@@ -214,9 +217,12 @@ function initializeEventListeners() {
                 const row = button.closest('tr');
                 const ticker = row.querySelector('.stock-symbol').textContent;
                 const company = row.querySelector('.stock-company').textContent;
-                const price = row.querySelector('[data-price]').getAttribute('data-price');
-                const targetBuy = row.cells[3].querySelector('.target-price')?.textContent.replace('$', '') || '';
-                const targetSell = row.cells[4].querySelector('.target-price')?.textContent.replace('$', '') || '';
+                const price = row.cells[2].getAttribute('data-price');
+                // Get target prices without currency symbols
+                const targetBuyEl = row.cells[3].querySelector('.target-price');
+                const targetSellEl = row.cells[4].querySelector('.target-price');
+                const targetBuy = targetBuyEl ? targetBuyEl.textContent.replace(/[^0-9.]/g, '') : '';
+                const targetSell = targetSellEl ? targetSellEl.textContent.replace(/[^0-9.]/g, '') : '';
                 const notes = row.getAttribute('data-notes') || '';
                 
                 // Populate edit form
@@ -355,10 +361,12 @@ function initializeRealTimeUpdates() {
 
 function updateCurrentPrice(ticker) {
     const priceElement = document.getElementById('currentStockPrice');
-    const priceChangeElement = document.getElementById('priceChange');
-    const priceChangePercentElement = document.getElementById('priceChangePercent');
+    const priceChangeElement = document.getElementById('priceChangePercent');
     
     if (!priceElement) return;
+    
+    // Get currency symbol from meta tag
+    const currencySymbol = document.querySelector('meta[name="currency-symbol"]')?.content || '$';
     
     // Add updating class
     priceElement.parentElement.classList.add('updating');
@@ -374,7 +382,7 @@ function updateCurrentPrice(ticker) {
                 
                 if (newPrice !== oldPrice) {
                     // Update price
-                    priceElement.textContent = '$' + newPrice.toFixed(2);
+                    priceElement.textContent = currencySymbol + newPrice.toFixed(2);
                     priceElement.setAttribute('data-price', newPrice);
                     
                     // Flash animation
@@ -387,9 +395,8 @@ function updateCurrentPrice(ticker) {
                     const priceChange = newPrice - oldPrice;
                     const priceChangePercent = (priceChange / oldPrice) * 100;
                     
-                    if (priceChangeElement && priceChangePercentElement) {
-                        priceChangeElement.textContent = priceChange.toFixed(2);
-                        priceChangePercentElement.textContent = priceChangePercent.toFixed(2) + '%';
+                    if (priceChangeElement) {
+                        priceChangeElement.textContent = priceChangePercent.toFixed(2) + '%';
                         
                         const changeContainer = priceChangeElement.closest('.price-change');
                         if (changeContainer) {
@@ -454,10 +461,15 @@ function extractAndSetTargetPrices() {
         const value = item.querySelector('.indicator-value')?.textContent;
         
         if (label && value) {
-            if (label.includes('Bollinger Upper')) {
-                bollingerUpper = parseFloat(value.replace('$', ''));
-            } else if (label.includes('Bollinger Lower')) {
-                bollingerLower = parseFloat(value.replace('$', ''));
+            // Use regex to extract just the numeric value from the indicator value
+            const numericValue = parseFloat(value.replace(/[^0-9.]/g, ''));
+            
+            if (!isNaN(numericValue)) {
+                if (label.includes('Bollinger Upper')) {
+                    bollingerUpper = numericValue;
+                } else if (label.includes('Bollinger Lower')) {
+                    bollingerLower = numericValue;
+                }
             }
         }
     });

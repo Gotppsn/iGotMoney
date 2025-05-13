@@ -7,6 +7,9 @@ $current_page = 'stocks';
 $additional_css = ['/assets/css/stocks-modern.css'];
 $additional_js = ['/assets/js/stocks-modern.js'];
 
+// Include currency helper for currency formatting
+require_once 'includes/currency_helper.php';
+
 // Include header
 require_once 'includes/header.php';
 ?>
@@ -75,7 +78,7 @@ require_once 'includes/header.php';
                                         
                                         <div class="price-section">
                                             <div class="stock-price" id="currentStockPrice" data-price="<?php echo $stock_analysis['current_price']; ?>">
-                                                $<?php echo number_format($stock_analysis['current_price'], 2); ?>
+                                                <?php echo formatMoney($stock_analysis['current_price']); ?>
                                             </div>
                                             
                                             <?php
@@ -85,7 +88,7 @@ require_once 'includes/header.php';
                                             
                                             <div class="price-change <?php echo $change_class; ?>">
                                                 <i class="fas fa-<?php echo $change_icon; ?>"></i>
-                                                $<span id="priceChange"><?php echo number_format($stock_analysis['price_change'], 2); ?></span>
+                                                <?php echo formatMoney($stock_analysis['price_change']); ?>
                                                 (<span id="priceChangePercent"><?php echo number_format($stock_analysis['price_change_percent'], 2); ?>%</span>)
                                             </div>
                                             <div class="price-update-time"><?php echo __('auto_updates_every_minute'); ?></div>
@@ -98,11 +101,11 @@ require_once 'includes/header.php';
                                         <div class="indicator-list">
                                             <div class="indicator-item">
                                                 <span class="indicator-label"><?php echo __('short_ma'); ?></span>
-                                                <span class="indicator-value">$<?php echo number_format($stock_analysis['short_ma'], 2); ?></span>
+                                                <span class="indicator-value"><?php echo formatMoney($stock_analysis['short_ma']); ?></span>
                                             </div>
                                             <div class="indicator-item">
                                                 <span class="indicator-label"><?php echo __('long_ma'); ?></span>
-                                                <span class="indicator-value">$<?php echo number_format($stock_analysis['long_ma'], 2); ?></span>
+                                                <span class="indicator-value"><?php echo formatMoney($stock_analysis['long_ma']); ?></span>
                                             </div>
                                             <div class="indicator-item">
                                                 <span class="indicator-label"><?php echo __('rsi'); ?></span>
@@ -110,11 +113,11 @@ require_once 'includes/header.php';
                                             </div>
                                             <div class="indicator-item">
                                                 <span class="indicator-label"><?php echo __('bollinger_upper'); ?></span>
-                                                <span class="indicator-value">$<?php echo number_format($stock_analysis['bollinger_upper'], 2); ?></span>
+                                                <span class="indicator-value"><?php echo formatMoney($stock_analysis['bollinger_upper']); ?></span>
                                             </div>
                                             <div class="indicator-item">
                                                 <span class="indicator-label"><?php echo __('bollinger_lower'); ?></span>
-                                                <span class="indicator-value">$<?php echo number_format($stock_analysis['bollinger_lower'], 2); ?></span>
+                                                <span class="indicator-value"><?php echo formatMoney($stock_analysis['bollinger_lower']); ?></span>
                                             </div>
                                         </div>
                                     </div>
@@ -162,7 +165,7 @@ require_once 'includes/header.php';
                                                 <ul class="price-points">
                                                     <?php foreach ($stock_analysis['buy_points'] as $point): ?>
                                                         <li class="price-point">
-                                                            <span class="price-point-value">$<?php echo number_format($point['price'], 2); ?></span>
+                                                            <span class="price-point-value"><?php echo formatMoney($point['price']); ?></span>
                                                             <span class="price-point-reason"><?php echo $point['reason']; ?></span>
                                                         </li>
                                                     <?php endforeach; ?>
@@ -174,7 +177,7 @@ require_once 'includes/header.php';
                                                 <ul class="price-points">
                                                     <?php foreach ($stock_analysis['sell_points'] as $point): ?>
                                                         <li class="price-point">
-                                                            <span class="price-point-value">$<?php echo number_format($point['price'], 2); ?></span>
+                                                            <span class="price-point-value"><?php echo formatMoney($point['price']); ?></span>
                                                             <span class="price-point-reason"><?php echo $point['reason']; ?></span>
                                                         </li>
                                                     <?php endforeach; ?>
@@ -266,18 +269,18 @@ require_once 'includes/header.php';
                                         <span class="stock-company"><?php echo htmlspecialchars($stock['company_name']); ?></span>
                                     </td>
                                     <td data-price="<?php echo $stock['current_price']; ?>">
-                                        $<?php echo number_format($stock['current_price'], 2); ?>
+                                        <?php echo formatMoney($stock['current_price']); ?>
                                     </td>
                                     <td>
                                         <?php if (!empty($stock['target_buy_price'])): ?>
-                                            <span class="target-price">$<?php echo number_format($stock['target_buy_price'], 2); ?></span>
+                                            <span class="target-price"><?php echo formatMoney($stock['target_buy_price']); ?></span>
                                         <?php else: ?>
                                             <span class="text-muted">--</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
                                         <?php if (!empty($stock['target_sell_price'])): ?>
-                                            <span class="target-price">$<?php echo number_format($stock['target_sell_price'], 2); ?></span>
+                                            <span class="target-price"><?php echo formatMoney($stock['target_sell_price']); ?></span>
                                         <?php else: ?>
                                             <span class="text-muted">--</span>
                                         <?php endif; ?>
@@ -418,21 +421,30 @@ require_once 'includes/header.php';
                         
                         <div class="form-field">
                             <label for="current_price_watchlist"><?php echo __('current_price_label'); ?></label>
-                            <input type="number" class="form-control" id="current_price_watchlist" name="current_price" 
-                                   step="0.01" min="0.01" required>
+                            <div class="currency-input">
+                                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
+                                <input type="number" class="form-control" id="current_price_watchlist" name="current_price" 
+                                       step="0.01" min="0.01" required>
+                            </div>
                             <div class="invalid-feedback"><?php echo __('current_price_invalid'); ?></div>
                         </div>
                         
                         <div class="form-field">
                             <label for="target_buy_price"><?php echo __('target_buy_price'); ?></label>
-                            <input type="number" class="form-control" id="target_buy_price" name="target_buy_price" 
-                                   step="0.01" min="0.01">
+                            <div class="currency-input">
+                                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
+                                <input type="number" class="form-control" id="target_buy_price" name="target_buy_price" 
+                                       step="0.01" min="0.01">
+                            </div>
                         </div>
                         
                         <div class="form-field">
                             <label for="target_sell_price"><?php echo __('target_sell_price'); ?></label>
-                            <input type="number" class="form-control" id="target_sell_price" name="target_sell_price" 
-                                   step="0.01" min="0.01">
+                            <div class="currency-input">
+                                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
+                                <input type="number" class="form-control" id="target_sell_price" name="target_sell_price" 
+                                       step="0.01" min="0.01">
+                            </div>
                         </div>
                         
                         <div class="form-field full-width">
@@ -486,20 +498,29 @@ require_once 'includes/header.php';
                         
                         <div class="form-field">
                             <label for="edit_current_price"><?php echo __('current_price_label'); ?></label>
-                            <input type="number" class="form-control" id="edit_current_price" name="current_price" 
-                                   step="0.01" min="0.01" required>
+                            <div class="currency-input">
+                                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
+                                <input type="number" class="form-control" id="edit_current_price" name="current_price" 
+                                       step="0.01" min="0.01" required>
+                            </div>
                         </div>
                         
                         <div class="form-field">
                             <label for="edit_target_buy_price"><?php echo __('target_buy_price'); ?></label>
-                            <input type="number" class="form-control" id="edit_target_buy_price" name="target_buy_price" 
-                                   step="0.01" min="0.01">
+                            <div class="currency-input">
+                                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
+                                <input type="number" class="form-control" id="edit_target_buy_price" name="target_buy_price" 
+                                       step="0.01" min="0.01">
+                            </div>
                         </div>
                         
                         <div class="form-field">
                             <label for="edit_target_sell_price"><?php echo __('target_sell_price'); ?></label>
-                            <input type="number" class="form-control" id="edit_target_sell_price" name="target_sell_price" 
-                                   step="0.01" min="0.01">
+                            <div class="currency-input">
+                                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
+                                <input type="number" class="form-control" id="edit_target_sell_price" name="target_sell_price" 
+                                       step="0.01" min="0.01">
+                            </div>
                         </div>
                         
                         <div class="form-field full-width">
@@ -562,9 +583,15 @@ if (isset($stock_analysis) && $stock_analysis['status'] === 'success') {
     
     echo '<script>const stockPriceData = ' . json_encode($stockPriceData) . ';</script>';
     echo '<script>const BASE_PATH = "' . BASE_PATH . '";</script>';
+    
+    // Add currency symbol meta tag for JavaScript
+    echo '<meta name="currency-symbol" content="' . htmlspecialchars(getCurrencySymbol()) . '">';
 } else {
     echo '<script>const stockPriceData = null;</script>';
     echo '<script>const BASE_PATH = "' . BASE_PATH . '";</script>';
+    
+    // Add currency symbol meta tag for JavaScript
+    echo '<meta name="currency-symbol" content="' . htmlspecialchars(getCurrencySymbol()) . '">';
 }
 
 require_once 'includes/footer.php';

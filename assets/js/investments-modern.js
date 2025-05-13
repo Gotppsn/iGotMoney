@@ -32,6 +32,7 @@ function initializeAllocationChart() {
         const allocationLabelsEl = document.querySelector('meta[name="allocation-labels"]');
         const allocationDataEl = document.querySelector('meta[name="allocation-data"]');
         const allocationColorsEl = document.querySelector('meta[name="allocation-colors"]');
+        const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
         
         if (!allocationLabelsEl || !allocationDataEl || !allocationColorsEl) {
             console.error('Allocation chart data meta tags not found!');
@@ -42,6 +43,7 @@ function initializeAllocationChart() {
         const allocationLabels = JSON.parse(allocationLabelsEl.getAttribute('content') || '[]');
         const allocationData = JSON.parse(allocationDataEl.getAttribute('content') || '[]');
         const allocationColors = JSON.parse(allocationColorsEl.getAttribute('content') || '[]');
+        const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
         
         if (allocationLabels.length === 0 || allocationData.length === 0) {
             showNoDataMessage('allocationChart');
@@ -114,7 +116,7 @@ function initializeAllocationChart() {
                                 const value = context.parsed;
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                 const percentage = ((value / total) * 100).toFixed(1);
-                                return `${label}: $${value.toLocaleString()} (${percentage}%)`;
+                                return `${label}: ${currencySymbol}${value.toLocaleString()} (${percentage}%)`;
                             }
                         }
                     }
@@ -140,6 +142,7 @@ function initializeRiskChart() {
         const riskLabelsEl = document.querySelector('meta[name="risk-labels"]');
         const riskDataEl = document.querySelector('meta[name="risk-data"]');
         const riskColorsEl = document.querySelector('meta[name="risk-colors"]');
+        const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
         
         if (!riskLabelsEl || !riskDataEl || !riskColorsEl) {
             console.error('Risk chart data meta tags not found!');
@@ -150,6 +153,7 @@ function initializeRiskChart() {
         const riskLabels = JSON.parse(riskLabelsEl.getAttribute('content') || '[]');
         const riskData = JSON.parse(riskDataEl.getAttribute('content') || '[]');
         const riskColors = JSON.parse(riskColorsEl.getAttribute('content') || '[]');
+        const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
         
         if (riskLabels.length === 0 || riskData.length === 0) {
             showNoDataMessage('riskChart');
@@ -222,7 +226,7 @@ function initializeRiskChart() {
                                 const value = context.parsed;
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                 const percentage = ((value / total) * 100).toFixed(1);
-                                return `${label}: $${value.toLocaleString()} (${percentage}%)`;
+                                return `${label}: ${currencySymbol}${value.toLocaleString()} (${percentage}%)`;
                             }
                         }
                     }
@@ -362,6 +366,9 @@ function initializeInvestmentCalculator() {
 }
 
 function updateCalculator(form) {
+    // Get currency symbol from meta tag
+    const currencySymbol = document.querySelector('meta[name="currency-symbol"]')?.content || '$';
+    
     const prefix = form === 'edit' ? 'edit_' : '';
     const purchasePrice = parseFloat(document.getElementById(prefix + 'purchase_price')?.value) || 0;
     const quantity = parseFloat(document.getElementById(prefix + 'quantity')?.value) || 0;
@@ -374,15 +381,15 @@ function updateCalculator(form) {
     
     const calculatorEl = document.getElementById(prefix + 'investment_calculator');
     if (calculatorEl) {
-        document.getElementById(prefix + 'initial_investment').textContent = `$${initialInvestment.toFixed(2).toLocaleString()}`;
-        document.getElementById(prefix + 'current_value').textContent = `$${currentValue.toFixed(2).toLocaleString()}`;
+        document.getElementById(prefix + 'initial_investment').textContent = `${currencySymbol}${initialInvestment.toFixed(2).toLocaleString()}`;
+        document.getElementById(prefix + 'current_value').textContent = `${currencySymbol}${currentValue.toFixed(2).toLocaleString()}`;
         
         const gainLossContainer = document.getElementById(prefix + 'gain_loss_container');
         if (gainLossContainer) {
             const gainLossEl = document.getElementById(prefix + 'gain_loss');
             const gainLossPercentEl = document.getElementById(prefix + 'gain_loss_percent');
             
-            gainLossEl.textContent = `$${Math.abs(gainLoss).toFixed(2).toLocaleString()}`;
+            gainLossEl.textContent = `${currencySymbol}${Math.abs(gainLoss).toFixed(2).toLocaleString()}`;
             gainLossEl.className = gainLoss >= 0 ? 'calculator-value text-success' : 'calculator-value text-danger';
             
             gainLossPercentEl.textContent = `(${gainLoss >= 0 ? '+' : ''}${gainLossPercent.toFixed(2)}%)`;

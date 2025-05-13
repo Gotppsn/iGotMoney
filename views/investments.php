@@ -7,6 +7,9 @@ $current_page = 'investments';
 $additional_css = ['/assets/css/investments-modern.css?v=' . time()];
 $additional_js = ['/assets/js/investments-modern.js?v=' . time()];
 
+// Include currency helper for dynamic currency formatting
+require_once 'includes/currency_helper.php';
+
 // Include header
 require_once 'includes/header.php';
 
@@ -51,11 +54,11 @@ $percent_gain_loss = $investment_summary['percent_gain_loss'] ?? 0;
                         <div class="metrics-grid">
                             <div class="metric-item">
                                 <p class="metric-label"><?php echo __('total_invested'); ?></p>
-                                <h3 class="metric-value">$<?php echo number_format($total_invested, 2); ?></h3>
+                                <h3 class="metric-value"><?php echo formatMoney($total_invested); ?></h3>
                             </div>
                             <div class="metric-item">
                                 <p class="metric-label"><?php echo __('current_value'); ?></p>
-                                <h3 class="metric-value">$<?php echo number_format($current_value, 2); ?></h3>
+                                <h3 class="metric-value"><?php echo formatMoney($current_value); ?></h3>
                             </div>
                         </div>
                     </div>
@@ -119,7 +122,7 @@ $percent_gain_loss = $investment_summary['percent_gain_loss'] ?? 0;
                                         <i class="fas fa-<?php echo $investment['percent_gain_loss'] >= 0 ? 'arrow-up' : 'arrow-down'; ?>"></i>
                                         <?php echo number_format(abs($investment['percent_gain_loss']), 2); ?>%
                                     </div>
-                                    <div class="performer-value">$<?php echo number_format($investment['current'], 2); ?></div>
+                                    <div class="performer-value"><?php echo formatMoney($investment['current']); ?></div>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -154,7 +157,7 @@ $percent_gain_loss = $investment_summary['percent_gain_loss'] ?? 0;
                                         <i class="fas fa-<?php echo $investment['percent_gain_loss'] >= 0 ? 'arrow-up' : 'arrow-down'; ?>"></i>
                                         <?php echo number_format(abs($investment['percent_gain_loss']), 2); ?>%
                                     </div>
-                                    <div class="performer-value">$<?php echo number_format($investment['current'], 2); ?></div>
+                                    <div class="performer-value"><?php echo formatMoney($investment['current']); ?></div>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -229,14 +232,14 @@ $percent_gain_loss = $investment_summary['percent_gain_loss'] ?? 0;
                                             </span>
                                         </td>
                                         <td><?php echo date('M j, Y', strtotime($investment['purchase_date'])); ?></td>
-                                        <td class="amount-cell">$<?php echo number_format($investment['purchase_price'], 2); ?></td>
+                                        <td class="amount-cell"><?php echo formatMoney($investment['purchase_price']); ?></td>
                                         <td><?php echo number_format($investment['quantity'], 6); ?></td>
-                                        <td class="amount-cell">$<?php echo number_format($investment['current_price'], 2); ?></td>
-                                        <td class="amount-cell">$<?php echo number_format($current_val, 2); ?></td>
+                                        <td class="amount-cell"><?php echo formatMoney($investment['current_price']); ?></td>
+                                        <td class="amount-cell"><?php echo formatMoney($current_val); ?></td>
                                         <td class="gain-loss-cell">
                                             <div class="gain-loss-amount <?php echo $gain_loss >= 0 ? 'positive' : 'negative'; ?>">
                                                 <i class="fas fa-<?php echo $gain_loss >= 0 ? 'arrow-up' : 'arrow-down'; ?>"></i>
-                                                $<?php echo number_format(abs($gain_loss), 2); ?>
+                                                <?php echo formatMoney(abs($gain_loss)); ?>
                                             </div>
                                             <div class="gain-loss-percent"><?php echo number_format($percent_gl, 2); ?>%</div>
                                         </td>
@@ -360,7 +363,7 @@ $percent_gain_loss = $investment_summary['percent_gain_loss'] ?? 0;
                         <div class="form-field">
                             <label for="purchase_price"><?php echo __('purchase_price'); ?></label>
                             <div class="currency-input">
-                                <span class="currency-symbol">$</span>
+                                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                 <input type="number" id="purchase_price" name="purchase_price" class="form-control" step="0.01" min="0.01" required>
                             </div>
                         </div>
@@ -373,7 +376,7 @@ $percent_gain_loss = $investment_summary['percent_gain_loss'] ?? 0;
                         <div class="form-field full-width">
                             <label for="current_price"><?php echo __('current_price'); ?></label>
                             <div class="currency-input">
-                                <span class="currency-symbol">$</span>
+                                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                 <input type="number" id="current_price" name="current_price" class="form-control" step="0.01" min="0">
                             </div>
                             <small class="form-text text-muted"><?php echo __('leave_blank_purchase_price'); ?></small>
@@ -389,17 +392,17 @@ $percent_gain_loss = $investment_summary['percent_gain_loss'] ?? 0;
                         <div class="calculator-grid">
                             <div class="calculator-item">
                                 <p class="calculator-label"><?php echo __('initial_investment'); ?></p>
-                                <h4 class="calculator-value" id="initial_investment">$0.00</h4>
+                                <h4 class="calculator-value" id="initial_investment"><?php echo formatMoney(0); ?></h4>
                             </div>
                             <div class="calculator-item">
                                 <p class="calculator-label"><?php echo __('current_value'); ?></p>
-                                <h4 class="calculator-value" id="current_value">$0.00</h4>
+                                <h4 class="calculator-value" id="current_value"><?php echo formatMoney(0); ?></h4>
                             </div>
                         </div>
                         <div id="gain_loss_container" class="calculator-gain-loss" style="display: none;">
                             <p class="calculator-label"><?php echo __('gain_loss'); ?></p>
                             <h4 class="calculator-value">
-                                <span id="gain_loss">$0.00</span>
+                                <span id="gain_loss"><?php echo formatMoney(0); ?></span>
                                 <span id="gain_loss_percent"></span>
                             </h4>
                         </div>
@@ -474,7 +477,7 @@ $percent_gain_loss = $investment_summary['percent_gain_loss'] ?? 0;
                         <div class="form-field">
                             <label for="edit_purchase_price"><?php echo __('purchase_price'); ?></label>
                             <div class="currency-input">
-                                <span class="currency-symbol">$</span>
+                                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                 <input type="number" id="edit_purchase_price" name="purchase_price" step="0.01" min="0.01" required>
                             </div>
                         </div>
@@ -487,7 +490,7 @@ $percent_gain_loss = $investment_summary['percent_gain_loss'] ?? 0;
                         <div class="form-field full-width">
                             <label for="edit_current_price"><?php echo __('current_price'); ?></label>
                             <div class="currency-input">
-                                <span class="currency-symbol">$</span>
+                                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                 <input type="number" id="edit_current_price" name="current_price" step="0.01" min="0" required>
                             </div>
                         </div>
@@ -502,17 +505,17 @@ $percent_gain_loss = $investment_summary['percent_gain_loss'] ?? 0;
                         <div class="calculator-grid">
                             <div class="calculator-item">
                                 <p class="calculator-label"><?php echo __('initial_investment'); ?></p>
-                                <h4 class="calculator-value" id="edit_initial_investment">$0.00</h4>
+                                <h4 class="calculator-value" id="edit_initial_investment"><?php echo formatMoney(0); ?></h4>
                             </div>
                             <div class="calculator-item">
                                 <p class="calculator-label"><?php echo __('current_value'); ?></p>
-                                <h4 class="calculator-value" id="edit_current_value">$0.00</h4>
+                                <h4 class="calculator-value" id="edit_current_value"><?php echo formatMoney(0); ?></h4>
                             </div>
                         </div>
                         <div id="edit_gain_loss_container" class="calculator-gain-loss">
                             <p class="calculator-label"><?php echo __('gain_loss'); ?></p>
                             <h4 class="calculator-value">
-                                <span id="edit_gain_loss">$0.00</span>
+                                <span id="edit_gain_loss"><?php echo formatMoney(0); ?></span>
                                 <span id="edit_gain_loss_percent"></span>
                             </h4>
                         </div>
@@ -585,7 +588,7 @@ $percent_gain_loss = $investment_summary['percent_gain_loss'] ?? 0;
                     <div class="form-field">
                         <label for="update_current_price"><?php echo __('current_price'); ?></label>
                         <div class="currency-input">
-                            <span class="currency-symbol">$</span>
+                            <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                             <input type="number" id="update_current_price" name="current_price" step="0.01" min="0" required>
                         </div>
                     </div>
@@ -653,6 +656,9 @@ foreach ($riskLabels as $label) {
     $riskColorsMapping[] = $riskColors[$risk] ?? '#6366f1';
 }
 echo '<meta name="risk-colors" content="' . htmlspecialchars(json_encode($riskColorsMapping)) . '">';
+
+// Add currency symbol meta tag for JavaScript
+echo '<meta name="currency-symbol" content="' . htmlspecialchars(getCurrencySymbol()) . '">';
 
 require_once 'includes/footer.php';
 ?>
