@@ -13,9 +13,7 @@ require_once 'includes/formatter.php';
 // Add page-specific script for tab handling
 $page_scripts = '
     document.addEventListener("DOMContentLoaded", function() {
-        if (typeof initializeTabNavigation === "function") {
-            initializeTabNavigation();
-        }
+        console.log("Settings page initialized");
     });
 ';
 
@@ -39,15 +37,15 @@ require_once 'includes/header.php';
         <div class="settings-nav-card">
             <div class="settings-nav">
                 <div class="nav-pills" role="tablist">
-                    <button class="nav-link active" data-bs-target="#profile" type="button" role="tab" id="profile-tab">
+                    <button class="nav-link active" id="profile-tab" type="button" role="tab">
                         <i class="fas fa-user-circle"></i>
                         <?php echo __('profile'); ?>
                     </button>
-                    <button class="nav-link" data-bs-target="#security" type="button" role="tab" id="security-tab">
+                    <button class="nav-link" id="security-tab" type="button" role="tab">
                         <i class="fas fa-lock"></i>
                         <?php echo __('security'); ?>
                     </button>
-                    <button class="nav-link" data-bs-target="#preferences" type="button" role="tab" id="preferences-tab">
+                    <button class="nav-link" id="preferences-tab" type="button" role="tab">
                         <i class="fas fa-cog"></i>
                         <?php echo __('preferences'); ?>
                     </button>
@@ -313,15 +311,24 @@ require_once 'includes/header.php';
                                             <div class="preview-examples">
                                                 <div class="preview-item">
                                                     <span class="preview-label"><?php echo __('income'); ?>:</span>
-                                                    <span class="preview-value"><?php echo $settings->formatMoney(1000.00); ?></span>
+                                                    <span class="preview-value" id="income-preview" data-value="1000">
+                                                        <?php 
+                                                        $symbol = $settings->getCurrencySymbol();
+                                                        echo $symbol; 
+                                                        ?>1,000.00
+                                                    </span>
                                                 </div>
                                                 <div class="preview-item">
                                                     <span class="preview-label"><?php echo __('expenses'); ?>:</span>
-                                                    <span class="preview-value"><?php echo $settings->formatMoney(250.50); ?></span>
+                                                    <span class="preview-value" id="expenses-preview" data-value="250.5">
+                                                        <?php echo $symbol; ?>250.50
+                                                    </span>
                                                 </div>
                                                 <div class="preview-item">
                                                     <span class="preview-label"><?php echo __('budget'); ?>:</span>
-                                                    <span class="preview-value"><?php echo $settings->formatMoney(750.00); ?></span>
+                                                    <span class="preview-value" id="budget-preview" data-value="750">
+                                                        <?php echo $symbol; ?>750.00
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -348,7 +355,7 @@ require_once 'includes/header.php';
 </div>
 
 <!-- Reset Settings Modal -->
-<div class="modal fade modern-modal" id="resetSettingsModal" tabindex="-1">
+<div class="modal fade" id="resetSettingsModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
