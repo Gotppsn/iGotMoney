@@ -5,7 +5,10 @@ $current_page = 'reports';
 
 // Additional CSS and JS
 $additional_css = ['/assets/css/reports-modern.css'];
-$additional_js = ['/assets/js/reports.js'];
+$additional_js = ['/assets/js/reports-modern.js'];
+
+// Include currency helper for currency formatting
+require_once 'includes/currency_helper.php';
 
 // Include header
 require_once 'includes/header.php';
@@ -105,15 +108,15 @@ require_once 'includes/header.php';
                                     ?>
                                         <tr>
                                             <td><?php echo htmlspecialchars($row['name']); ?></td>
-                                            <td>$<?php echo number_format($row['amount'], 2); ?></td>
+                                            <td><?php echo formatMoney($row['amount']); ?></td>
                                             <td><?php echo ucfirst(str_replace('_', ' ', $row['frequency'])); ?></td>
                                             <td><?php echo $row['transaction_count']; ?></td>
-                                            <td>$<?php echo number_format($row['total_amount'], 2); ?></td>
+                                            <td><?php echo formatMoney($row['total_amount']); ?></td>
                                         </tr>
                                     <?php endwhile; ?>
                                     <tr class="table-primary">
                                         <td colspan="4"><strong><?php echo __('total'); ?></strong></td>
-                                        <td><strong>$<?php echo number_format($total_amount, 2); ?></strong></td>
+                                        <td><strong><?php echo formatMoney($total_amount); ?></strong></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -178,13 +181,13 @@ require_once 'includes/header.php';
                                                 <tr>
                                                     <td><?php echo htmlspecialchars($row['category_name']); ?></td>
                                                     <td><?php echo $row['transaction_count']; ?></td>
-                                                    <td>$<?php echo number_format($row['total_amount'], 2); ?></td>
+                                                    <td><?php echo formatMoney($row['total_amount']); ?></td>
                                                     <td><?php echo number_format($percentage, 2); ?>%</td>
                                                 </tr>
                                             <?php endwhile; ?>
                                             <tr class="table-primary">
                                                 <td colspan="2"><strong><?php echo __('total'); ?></strong></td>
-                                                <td><strong>$<?php echo number_format($total_amount, 2); ?></strong></td>
+                                                <td><strong><?php echo formatMoney($total_amount); ?></strong></td>
                                                 <td><strong>100%</strong></td>
                                             </tr>
                                         </tbody>
@@ -248,11 +251,11 @@ require_once 'includes/header.php';
                         <h5><i class="fas fa-chart-line"></i> <?php echo __('overall_budget_status'); ?></h5>
                         <div class="summary-item">
                             <span class="summary-label"><?php echo __('total_budget'); ?>:</span>
-                            <span class="summary-value">$<?php echo number_format($total_budget, 2); ?></span>
+                            <span class="summary-value"><?php echo formatMoney($total_budget); ?></span>
                         </div>
                         <div class="summary-item">
                             <span class="summary-label"><?php echo __('actual_spent'); ?>:</span>
-                            <span class="summary-value">$<?php echo number_format($total_actual, 2); ?></span>
+                            <span class="summary-value"><?php echo formatMoney($total_actual); ?></span>
                         </div>
                         <div class="summary-item">
                             <span class="summary-label"><?php echo __('budget_used'); ?>:</span>
@@ -296,17 +299,17 @@ require_once 'includes/header.php';
                                             ?>
                                                 <tr class="<?php echo $class; ?>">
                                                     <td><?php echo htmlspecialchars($row['category_name']); ?></td>
-                                                    <td>$<?php echo number_format($row['budget_amount'], 2); ?></td>
-                                                    <td>$<?php echo number_format($row['actual_amount'], 2); ?></td>
-                                                    <td>$<?php echo number_format($difference, 2); ?></td>
+                                                    <td><?php echo formatMoney($row['budget_amount']); ?></td>
+                                                    <td><?php echo formatMoney($row['actual_amount']); ?></td>
+                                                    <td><?php echo formatMoney($difference); ?></td>
                                                     <td><?php echo number_format($percentage, 2); ?>%</td>
                                                 </tr>
                                             <?php endwhile; ?>
                                             <tr class="table-primary">
                                                 <td><strong><?php echo __('total'); ?></strong></td>
-                                                <td><strong>$<?php echo number_format($total_budget, 2); ?></strong></td>
-                                                <td><strong>$<?php echo number_format($total_actual, 2); ?></strong></td>
-                                                <td><strong>$<?php echo number_format($total_budget - $total_actual, 2); ?></strong></td>
+                                                <td><strong><?php echo formatMoney($total_budget); ?></strong></td>
+                                                <td><strong><?php echo formatMoney($total_actual); ?></strong></td>
+                                                <td><strong><?php echo formatMoney($total_budget - $total_actual); ?></strong></td>
                                                 <td><strong><?php echo $total_budget > 0 ? number_format(($total_actual / $total_budget) * 100, 2) : 0; ?>%</strong></td>
                                             </tr>
                                         </tbody>
@@ -375,16 +378,16 @@ require_once 'includes/header.php';
                                     ?>
                                         <tr class="<?php echo $class; ?>">
                                             <td><?php echo $month_label; ?></td>
-                                            <td>$<?php echo number_format($row['income'], 2); ?></td>
-                                            <td>$<?php echo number_format($row['expenses'], 2); ?></td>
-                                            <td>$<?php echo number_format($row['net'], 2); ?></td>
+                                            <td><?php echo formatMoney($row['income']); ?></td>
+                                            <td><?php echo formatMoney($row['expenses']); ?></td>
+                                            <td><?php echo formatMoney($row['net']); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                     <tr class="table-primary">
                                         <td><strong><?php echo __('total'); ?></strong></td>
-                                        <td><strong>$<?php echo number_format($total_income, 2); ?></strong></td>
-                                        <td><strong>$<?php echo number_format($total_expenses, 2); ?></strong></td>
-                                        <td><strong>$<?php echo number_format($total_net, 2); ?></strong></td>
+                                        <td><strong><?php echo formatMoney($total_income); ?></strong></td>
+                                        <td><strong><?php echo formatMoney($total_expenses); ?></strong></td>
+                                        <td><strong><?php echo formatMoney($total_net); ?></strong></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -418,11 +421,11 @@ require_once 'includes/header.php';
                                 <div class="summary-card">
                                     <div class="summary-item">
                                         <span class="summary-label"><?php echo __('total_invested'); ?>:</span> 
-                                        <span class="summary-value">$<?php echo number_format($report_data['investment_summary']['total_invested'], 2); ?></span>
+                                        <span class="summary-value"><?php echo formatMoney($report_data['investment_summary']['total_invested']); ?></span>
                                     </div>
                                     <div class="summary-item">
                                         <span class="summary-label"><?php echo __('current_value'); ?>:</span> 
-                                        <span class="summary-value">$<?php echo number_format($report_data['investment_summary']['current_value'], 2); ?></span>
+                                        <span class="summary-value"><?php echo formatMoney($report_data['investment_summary']['current_value']); ?></span>
                                     </div>
                                     <div class="summary-item">
                                         <?php 
@@ -431,7 +434,7 @@ require_once 'includes/header.php';
                                         ?>
                                         <span class="summary-label"><?php echo __('total_gain_loss'); ?>:</span> 
                                         <span class="summary-value <?php echo $gain_loss >= 0 ? 'positive' : 'negative'; ?>">
-                                            <?php echo $gain_loss >= 0 ? '+' : '-'; ?>$<?php echo number_format(abs($gain_loss), 2); ?>
+                                            <?php echo $gain_loss >= 0 ? '+' : '-'; ?><?php echo formatMoney(abs($gain_loss), true); ?>
                                             (<?php echo number_format(abs($gain_loss_percent), 2); ?>%)
                                         </span>
                                     </div>
@@ -463,15 +466,15 @@ require_once 'includes/header.php';
                                         <?php foreach ($report_data['investment_summary']['by_type'] as $type => $data): ?>
                                             <tr>
                                                 <td><?php echo htmlspecialchars($type); ?></td>
-                                                <td>$<?php echo number_format($data['invested'], 2); ?></td>
-                                                <td>$<?php echo number_format($data['current'], 2); ?></td>
+                                                <td><?php echo formatMoney($data['invested']); ?></td>
+                                                <td><?php echo formatMoney($data['current']); ?></td>
                                                 <td>
                                                     <?php 
                                                     $type_gain_loss = $data['gain_loss'];
                                                     $type_gain_loss_percent = $data['percent_gain_loss'];
                                                     ?>
                                                     <span class="<?php echo $type_gain_loss >= 0 ? 'positive' : 'negative'; ?>">
-                                                        <?php echo $type_gain_loss >= 0 ? '+' : '-'; ?>$<?php echo number_format(abs($type_gain_loss), 2); ?>
+                                                        <?php echo $type_gain_loss >= 0 ? '+' : '-'; ?><?php echo formatMoney(abs($type_gain_loss), true); ?>
                                                         (<?php echo number_format(abs($type_gain_loss_percent), 2); ?>%)
                                                     </span>
                                                 </td>
@@ -509,11 +512,11 @@ require_once 'includes/header.php';
                                 <div class="summary-card">
                                     <div class="summary-item">
                                         <span class="summary-label"><?php echo __('total_income'); ?>:</span> 
-                                        <span class="summary-value">$<?php echo number_format($report_data['summary']['total_income'], 2); ?></span>
+                                        <span class="summary-value"><?php echo formatMoney($report_data['summary']['total_income']); ?></span>
                                     </div>
                                     <div class="summary-item">
                                         <span class="summary-label"><?php echo __('total_expenses'); ?>:</span> 
-                                        <span class="summary-value">$<?php echo number_format($report_data['summary']['total_expenses'], 2); ?></span>
+                                        <span class="summary-value"><?php echo formatMoney($report_data['summary']['total_expenses']); ?></span>
                                     </div>
                                     <div class="summary-item">
                                         <?php 
@@ -521,7 +524,7 @@ require_once 'includes/header.php';
                                         ?>
                                         <span class="summary-label"><?php echo __('net_savings'); ?>:</span> 
                                         <span class="summary-value <?php echo $net_savings >= 0 ? 'positive' : 'negative'; ?>">
-                                            <?php echo $net_savings >= 0 ? '+' : '-'; ?>$<?php echo number_format(abs($net_savings), 2); ?>
+                                            <?php echo $net_savings >= 0 ? '+' : '-'; ?><?php echo formatMoney(abs($net_savings), true); ?>
                                         </span>
                                     </div>
                                     <div class="summary-item">
@@ -576,9 +579,9 @@ require_once 'includes/header.php';
                                         ?>
                                             <tr class="<?php echo $class; ?>">
                                                 <td><?php echo $month_label; ?></td>
-                                                <td>$<?php echo number_format($row['income'], 2); ?></td>
-                                                <td>$<?php echo number_format($row['expenses'], 2); ?></td>
-                                                <td>$<?php echo number_format($row['net'], 2); ?></td>
+                                                <td><?php echo formatMoney($row['income']); ?></td>
+                                                <td><?php echo formatMoney($row['expenses']); ?></td>
+                                                <td><?php echo formatMoney($row['net']); ?></td>
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>
@@ -599,6 +602,9 @@ require_once 'includes/header.php';
 </div>
 
 <?php
+// Add meta tag for currency symbol - for JavaScript
+echo '<meta name="currency-symbol" content="' . htmlspecialchars(getCurrencySymbol()) . '">';
+
 // Add chart initialization JavaScript
 $page_scripts = "
 // Initialize date range selection
@@ -656,7 +662,8 @@ if (isset($chart_data['income_trend']) && !empty($chart_data['income_trend']['la
                         },
                         ticks: {
                             callback: function(value) {
-                                return '$' + value.toLocaleString();
+                                const currencySymbol = document.querySelector('meta[name=\"currency-symbol\"]').getAttribute('content');
+                                return currencySymbol + value.toLocaleString();
                             },
                             font: {
                                 size: 11
@@ -686,7 +693,8 @@ if (isset($chart_data['income_trend']) && !empty($chart_data['income_trend']['la
                         },
                         callbacks: {
                             label: function(context) {
-                                return '" . __('income') . ": $' + context.raw.toLocaleString();
+                                const currencySymbol = document.querySelector('meta[name=\"currency-symbol\"]').getAttribute('content');
+                                return '" . __('income') . ": ' + currencySymbol + context.raw.toLocaleString();
                             }
                         }
                     },
@@ -775,11 +783,12 @@ if (isset($chart_data['expense_by_category']) && !empty($chart_data['expense_by_
                         },
                         callbacks: {
                             label: function(context) {
+                                const currencySymbol = document.querySelector('meta[name=\"currency-symbol\"]').getAttribute('content');
                                 var label = context.label || '';
                                 var value = context.raw || 0;
                                 var total = context.dataset.data.reduce((a, b) => a + b, 0);
                                 var percentage = Math.round((value / total) * 100);
-                                return label + ': $' + value.toLocaleString() + ' (' + percentage + '%)';
+                                return label + ': ' + currencySymbol + value.toLocaleString() + ' (' + percentage + '%)';
                             }
                         }
                     }
@@ -832,7 +841,8 @@ if (isset($chart_data['expense_trend']) && !empty($chart_data['expense_trend']['
                         },
                         ticks: {
                             callback: function(value) {
-                                return '$' + value.toLocaleString();
+                                const currencySymbol = document.querySelector('meta[name=\"currency-symbol\"]').getAttribute('content');
+                                return currencySymbol + value.toLocaleString();
                             },
                             font: {
                                 size: 11
@@ -862,7 +872,8 @@ if (isset($chart_data['expense_trend']) && !empty($chart_data['expense_trend']['
                         },
                         callbacks: {
                             label: function(context) {
-                                return '" . __('expenses') . ": $' + context.raw.toLocaleString();
+                                const currencySymbol = document.querySelector('meta[name=\"currency-symbol\"]').getAttribute('content');
+                                return '" . __('expenses') . ": ' + currencySymbol + context.raw.toLocaleString();
                             }
                         }
                     },
@@ -925,7 +936,8 @@ if (isset($chart_data['budget_vs_actual']) && !empty($chart_data['budget_vs_actu
                         },
                         ticks: {
                             callback: function(value) {
-                                return '$' + value.toLocaleString();
+                                const currencySymbol = document.querySelector('meta[name=\"currency-symbol\"]').getAttribute('content');
+                                return currencySymbol + value.toLocaleString();
                             },
                             font: {
                                 size: 11
@@ -955,7 +967,8 @@ if (isset($chart_data['budget_vs_actual']) && !empty($chart_data['budget_vs_actu
                         },
                         callbacks: {
                             label: function(context) {
-                                return context.dataset.label + ': $' + context.raw.toLocaleString();
+                                const currencySymbol = document.querySelector('meta[name=\"currency-symbol\"]').getAttribute('content');
+                                return context.dataset.label + ': ' + currencySymbol + context.raw.toLocaleString();
                             }
                         }
                     },
@@ -1035,7 +1048,8 @@ if (isset($chart_data['monthly_cash_flow']) && !empty($chart_data['monthly_cash_
                         },
                         ticks: {
                             callback: function(value) {
-                                return '$' + value.toLocaleString();
+                                const currencySymbol = document.querySelector('meta[name=\"currency-symbol\"]').getAttribute('content');
+                                return currencySymbol + value.toLocaleString();
                             },
                             font: {
                                 size: 11
@@ -1065,7 +1079,8 @@ if (isset($chart_data['monthly_cash_flow']) && !empty($chart_data['monthly_cash_
                         },
                         callbacks: {
                             label: function(context) {
-                                return context.dataset.label + ': $' + context.raw.toLocaleString();
+                                const currencySymbol = document.querySelector('meta[name=\"currency-symbol\"]').getAttribute('content');
+                                return context.dataset.label + ': ' + currencySymbol + context.raw.toLocaleString();
                             }
                         }
                     },
@@ -1154,11 +1169,12 @@ if (isset($chart_data['investment_by_type']) && !empty($chart_data['investment_b
                         },
                         callbacks: {
                             label: function(context) {
+                                const currencySymbol = document.querySelector('meta[name=\"currency-symbol\"]').getAttribute('content');
                                 var label = context.label || '';
                                 var value = context.raw || 0;
                                 var total = context.dataset.data.reduce((a, b) => a + b, 0);
                                 var percentage = Math.round((value / total) * 100);
-                                return label + ': $' + value.toLocaleString() + ' (' + percentage + '%)';
+                                return label + ': ' + currencySymbol + value.toLocaleString() + ' (' + percentage + '%)';
                             }
                         }
                     }
@@ -1224,11 +1240,12 @@ if (isset($chart_data['income_vs_expense']) && !empty($chart_data['income_vs_exp
                         },
                         callbacks: {
                             label: function(context) {
+                                const currencySymbol = document.querySelector('meta[name=\"currency-symbol\"]').getAttribute('content');
                                 var label = context.label || '';
                                 var value = context.raw || 0;
                                 var total = context.dataset.data.reduce((a, b) => a + b, 0);
                                 var percentage = Math.round((value / total) * 100);
-                                return label + ': $' + value.toLocaleString() + ' (' + percentage + '%)';
+                                return label + ': ' + currencySymbol + value.toLocaleString() + ' (' + percentage + '%)';
                             }
                         }
                     }
@@ -1310,7 +1327,8 @@ if (isset($chart_data['monthly_trends']) && !empty($chart_data['monthly_trends']
                         },
                         ticks: {
                             callback: function(value) {
-                                return '$' + value.toLocaleString();
+                                const currencySymbol = document.querySelector('meta[name=\"currency-symbol\"]').getAttribute('content');
+                                return currencySymbol + value.toLocaleString();
                             },
                             font: {
                                 size: 11
@@ -1340,7 +1358,8 @@ if (isset($chart_data['monthly_trends']) && !empty($chart_data['monthly_trends']
                         },
                         callbacks: {
                             label: function(context) {
-                                return context.dataset.label + ': $' + context.raw.toLocaleString();
+                                const currencySymbol = document.querySelector('meta[name=\"currency-symbol\"]').getAttribute('content');
+                                return context.dataset.label + ': ' + currencySymbol + context.raw.toLocaleString();
                             }
                         }
                     },
