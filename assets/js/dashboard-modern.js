@@ -24,6 +24,7 @@ function initializeChart() {
         const chartLabelsEl = document.querySelector('meta[name="chart-labels"]');
         const chartDataEl = document.querySelector('meta[name="chart-data"]');
         const chartColorsEl = document.querySelector('meta[name="chart-colors"]');
+        const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
         
         if (!chartLabelsEl || !chartDataEl || !chartColorsEl) {
             console.error('Chart data meta tags not found!');
@@ -34,6 +35,7 @@ function initializeChart() {
         const chartLabels = JSON.parse(chartLabelsEl.getAttribute('content') || '[]');
         const chartData = JSON.parse(chartDataEl.getAttribute('content') || '[]');
         const chartColors = JSON.parse(chartColorsEl.getAttribute('content') || '[]');
+        const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
         
         if (chartLabels.length === 0 || chartData.length === 0) {
             showNoDataMessage();
@@ -106,7 +108,7 @@ function initializeChart() {
                                 const value = context.parsed;
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                 const percentage = ((value / total) * 100).toFixed(1);
-                                return `${label}: $${value.toLocaleString()} (${percentage}%)`;
+                                return `${label}: ${currencySymbol}${value.toLocaleString()} (${percentage}%)`;
                             }
                         }
                     }
@@ -198,6 +200,8 @@ function initializeEventListeners() {
 
 function updateChartData(period) {
     const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
+    const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
+    const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
     
     // Show loading state
     const chartContainer = document.querySelector('.chart-container');
@@ -217,6 +221,16 @@ function updateChartData(period) {
             // Update chart with new data
             window.expenseCategoryChart.data.labels = data.labels;
             window.expenseCategoryChart.data.datasets[0].data = data.data;
+            
+            // Update tooltip to use currency symbol
+            window.expenseCategoryChart.options.plugins.tooltip.callbacks.label = function(context) {
+                const label = context.label || '';
+                const value = context.parsed;
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${label}: ${currencySymbol}${value.toLocaleString()} (${percentage}%)`;
+            };
+            
             window.expenseCategoryChart.update();
             
             // Update categories list (optional - requires additional implementation)
@@ -266,10 +280,33 @@ function updateChartData(period) {
 
 function updateCategoriesList(data) {
     // This function would update the categories list below the chart
-    // You can implement this if needed
+    // Get currency symbol
+    const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
+    const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
+    
+    const categoriesList = document.querySelector('.categories-list');
+    if (!categoriesList || !data.labels || !data.data) return;
+    
+    // You can implement more detailed update logic here if needed
+    // This is a basic implementation that updates amounts when data changes
+    const amountElements = categoriesList.querySelectorAll('.amount');
+    if (amountElements.length === data.data.length) {
+        amountElements.forEach((element, index) => {
+            if (data.data[index] !== undefined) {
+                element.textContent = `${currencySymbol}${Number(data.data[index]).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                })}`;
+            }
+        });
+    }
 }
 
 function initializeAnimations() {
+    // Get currency symbol
+    const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
+    const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
+    
     // Animate progress bars on load
     const progressBars = document.querySelectorAll('.category-bar-fill, .budget-bar-fill, .goal-bar-fill, .status-bar-fill');
     progressBars.forEach((bar, index) => {
@@ -282,17 +319,20 @@ function initializeAnimations() {
     // Animate value counters
     const valueElements = document.querySelectorAll('.card-value');
     valueElements.forEach(element => {
-        const finalValue = parseFloat(element.textContent.replace(/[$,]/g, ''));
-        animateValue(element, 0, finalValue, 1500);
+        const rawValue = element.textContent.replace(/[^\d.-]/g, '');
+        const finalValue = parseFloat(rawValue);
+        if (!isNaN(finalValue)) {
+            animateValue(element, 0, finalValue, 1500, currencySymbol);
+        }
     });
 }
 
-function animateValue(element, start, end, duration) {
+function animateValue(element, start, end, duration, currencySymbol = '$') {
     const startTimestamp = Date.now();
     const step = (timestamp) => {
         const progress = Math.min((Date.now() - startTimestamp) / duration, 1);
         const currentValue = progress * (end - start) + start;
-        element.textContent = '$' + currentValue.toLocaleString('en-US', {
+        element.textContent = currencySymbol + currentValue.toLocaleString('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });

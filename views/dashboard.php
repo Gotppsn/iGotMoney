@@ -7,6 +7,9 @@ $current_page = 'dashboard';
 $additional_css = ['/assets/css/dashboard-modern.css'];
 $additional_js = ['/assets/js/dashboard-modern.js'];
 
+// Include formatter for currency formatting
+require_once 'includes/currency_helper.php';
+
 // Include header
 require_once 'includes/header.php';
 ?>
@@ -42,7 +45,7 @@ require_once 'includes/header.php';
                 </div>
                 <div class="card-content">
                     <h3 class="card-label"><?php echo __('monthly_income'); ?></h3>
-                    <p class="card-value">$<?php echo number_format($monthly_income, 2); ?></p>
+                    <p class="card-value"><?php echo formatMoney($monthly_income); ?></p>
                     <?php 
                     $income_trend = 0;
                     if (isset($monthly_income) && isset($previous_monthly_income)) {
@@ -54,7 +57,7 @@ require_once 'includes/header.php';
                     ?>
                     <div class="card-trend <?php echo $income_trend >= 0 ? 'positive' : 'negative'; ?>">
                         <i class="fas fa-<?php echo $income_trend >= 0 ? 'arrow-up' : 'arrow-down'; ?>"></i>
-                        <span><?php echo abs($income_trend) > 0 ? '$' . number_format(abs($income_trend), 2) : '0.00'; ?> 
+                        <span><?php echo abs($income_trend) > 0 ? formatMoney(abs($income_trend)) : '0.00'; ?> 
                         <?php echo $income_trend >= 0 ? __('increase') : __('decrease'); ?> <?php echo __('this_month'); ?></span>
                     </div>
                 </div>
@@ -66,7 +69,7 @@ require_once 'includes/header.php';
                 </div>
                 <div class="card-content">
                     <h3 class="card-label"><?php echo __('monthly_expenses'); ?></h3>
-                    <p class="card-value">$<?php echo number_format($monthly_expenses, 2); ?></p>
+                    <p class="card-value"><?php echo formatMoney($monthly_expenses); ?></p>
                     <?php 
                     $expense_trend = 0;
                     if (isset($monthly_expenses) && isset($previous_monthly_expenses)) {
@@ -79,7 +82,7 @@ require_once 'includes/header.php';
                     ?>
                     <div class="card-trend <?php echo $expense_trend_positive ? 'positive' : 'negative'; ?>">
                         <i class="fas fa-<?php echo $expense_trend <= 0 ? 'arrow-down' : 'arrow-up'; ?>"></i>
-                        <span><?php echo abs($expense_trend) > 0 ? '$' . number_format(abs($expense_trend), 2) : '0.00'; ?> 
+                        <span><?php echo abs($expense_trend) > 0 ? formatMoney(abs($expense_trend)) : '0.00'; ?> 
                         <?php echo $expense_trend <= 0 ? __('decrease') : __('increase'); ?> <?php echo __('this_month'); ?></span>
                     </div>
                 </div>
@@ -91,7 +94,7 @@ require_once 'includes/header.php';
                 </div>
                 <div class="card-content">
                     <h3 class="card-label"><?php echo __('monthly_net'); ?></h3>
-                    <p class="card-value">$<?php echo number_format($monthly_net, 2); ?></p>
+                    <p class="card-value"><?php echo formatMoney($monthly_net); ?></p>
                     <?php 
                     $savings_rate = 0;
                     if (isset($monthly_income) && $monthly_income > 0) {
@@ -111,7 +114,7 @@ require_once 'includes/header.php';
                 </div>
                 <div class="card-content">
                     <h3 class="card-label"><?php echo __('yearly_projection'); ?></h3>
-                    <p class="card-value">$<?php echo number_format($yearly_net, 2); ?></p>
+                    <p class="card-value"><?php echo formatMoney($yearly_net); ?></p>
                     <div class="card-info">
                         <i class="fas fa-calendar-alt"></i>
                         <span><?php echo __('annual_forecast'); ?></span>
@@ -164,7 +167,7 @@ require_once 'includes/header.php';
                             </div>
                         </div>
                         <div class="category-amount">
-                            <span class="amount">$<?php echo number_format($expense['total'], 2); ?></span>
+                            <span class="amount"><?php echo formatMoney($expense['total']); ?></span>
                         </div>
                     </div>
                     <?php 
@@ -221,7 +224,7 @@ require_once 'includes/header.php';
                                             <?php echo number_format($budget['percentage'], 0); ?>%
                                         </div>
                                         <div class="budget-amounts">
-                                            $<?php echo number_format($budget['spent'], 2); ?> / $<?php echo number_format($budget['budget_amount'], 2); ?>
+                                            <?php echo formatMoney($budget['spent']); ?> / <?php echo formatMoney($budget['budget_amount']); ?>
                                         </div>
                                     </div>
                                 </div>
@@ -372,8 +375,8 @@ require_once 'includes/header.php';
                                 </div>
                                 
                                 <div class="goal-details">
-                                    <span>$<?php echo number_format($goal['current_amount'], 2); ?> <?php echo __('of'); ?> 
-                                    $<?php echo number_format($goal['target_amount'], 2); ?></span>
+                                    <span><?php echo formatMoney($goal['current_amount']); ?> <?php echo __('of'); ?> 
+                                    <?php echo formatMoney($goal['target_amount']); ?></span>
                                     
                                     <?php 
                                     $remaining = max(0, $goal['target_amount'] - $goal['current_amount']);
@@ -385,7 +388,7 @@ require_once 'includes/header.php';
                                     ?>
                                     
                                     <?php if ($progress < 100 && !$is_overdue && $contribution > 0): ?>
-                                    <span>$<?php echo number_format($contribution, 2); ?><?php echo __('per_month_to_reach_goal'); ?></span>
+                                    <span><?php echo formatMoney($contribution); ?><?php echo __('per_month_to_reach_goal'); ?></span>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -479,6 +482,7 @@ echo '<meta name="base-path" content="' . BASE_PATH . '">';
 echo '<meta name="chart-labels" content="' . htmlspecialchars(json_encode($chart_labels)) . '">';
 echo '<meta name="chart-data" content="' . htmlspecialchars(json_encode($chart_data)) . '">';
 echo '<meta name="chart-colors" content="' . htmlspecialchars(json_encode(array_slice($chart_colors, 0, count($chart_data)))) . '">';
+echo '<meta name="currency-symbol" content="' . getCurrencySymbol() . '">';
 
 // Include footer
 require_once 'includes/footer.php';
