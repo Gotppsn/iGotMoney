@@ -5,6 +5,9 @@ $current_page = 'expenses';
 $additional_css = ['/assets/css/expenses-modern.css'];
 $additional_js = ['/assets/js/expenses-modern.js', '/assets/js/direct-form-handler.js'];
 
+// Include currency helper for currency formatting
+require_once 'includes/currency_helper.php';
+
 require_once 'includes/header.php';
 
 $current_month = isset($_GET['month']) ? intval($_GET['month']) : date('n');
@@ -34,7 +37,7 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                 </div>
                 <div class="stat-content">
                     <h3 class="stat-label"><?php echo __('monthly_expenses'); ?></h3>
-                    <p class="stat-value">$<?php echo number_format($monthly_expenses, 2); ?></p>
+                    <p class="stat-value"><?php echo formatMoney($monthly_expenses); ?></p>
                     <?php 
                     $previous_month = isset($prev_monthly_expenses) ? $prev_monthly_expenses : $monthly_expenses * 1.05;
                     $is_decreased = $monthly_expenses <= $previous_month;
@@ -53,7 +56,7 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                 </div>
                 <div class="stat-content">
                     <h3 class="stat-label"><?php echo __('annual_expenses'); ?></h3>
-                    <p class="stat-value">$<?php echo number_format($yearly_expenses, 2); ?></p>
+                    <p class="stat-value"><?php echo formatMoney($yearly_expenses); ?></p>
                     <div class="stat-info">
                         <i class="fas fa-info-circle"></i>
                         <span><?php echo __('projected_for'); ?> <?php echo date('Y'); ?></span>
@@ -67,7 +70,7 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                 </div>
                 <div class="stat-content">
                     <h3 class="stat-label"><?php echo __('daily_average'); ?></h3>
-                    <p class="stat-value">$<?php echo number_format($monthly_expenses / 30, 2); ?></p>
+                    <p class="stat-value"><?php echo formatMoney($monthly_expenses / 30); ?></p>
                     <div class="stat-info">
                         <i class="fas fa-clock"></i>
                         <span><?php echo __('based_on_current_month'); ?></span>
@@ -136,7 +139,7 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                                         </div>
                                     </div>
                                     <div class="category-amount">
-                                        <span class="amount">$<?php echo number_format($category['total'], 2); ?></span>
+                                        <span class="amount"><?php echo formatMoney($category['total']); ?></span>
                                         <span class="percentage"><?php echo number_format($percentage, 1); ?>%</span>
                                     </div>
                                 </div>
@@ -256,7 +259,7 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                                         <td class="category-cell">
                                             <span class="category-badge"><?php echo htmlspecialchars($translated_category); ?></span>
                                         </td>
-                                        <td class="amount-cell">$<?php echo number_format($expense_item['amount'], 2); ?></td>
+                                        <td class="amount-cell"><?php echo formatMoney($expense_item['amount']); ?></td>
                                         <td class="date-cell"><?php echo date('M j, Y', strtotime($expense_item['expense_date'])); ?></td>
                                         <td class="type-cell">
                                             <?php if ($expense_item['is_recurring']): ?>
@@ -343,7 +346,7 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                         <div class="form-field">
                             <label for="amount"><?php echo __('amount'); ?></label>
                             <div class="amount-input">
-                                <span class="currency-symbol">$</span>
+                                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                 <input type="number" id="amount" name="amount" class="form-control" step="0.01" min="0.01" required>
                             </div>
                         </div>
@@ -433,7 +436,7 @@ $filter_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
                         <div class="form-field">
                             <label for="edit_amount"><?php echo __('amount'); ?></label>
                             <div class="amount-input">
-                                <span class="currency-symbol">$</span>
+                                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
                                 <input type="number" id="edit_amount" name="amount" class="form-control" step="0.01" min="0.01" required>
                             </div>
                         </div>
@@ -535,6 +538,8 @@ echo '<meta name="base-path" content="' . BASE_PATH . '">';
 echo '<meta name="chart-labels" content="' . htmlspecialchars(json_encode($chart_labels)) . '">';
 echo '<meta name="chart-data" content="' . htmlspecialchars(json_encode($chart_data)) . '">';
 echo '<meta name="chart-colors" content="' . htmlspecialchars(json_encode(array_slice($chart_colors, 0, count($chart_data)))) . '">';
+// Add currency symbol meta tag for JavaScript
+echo '<meta name="currency-symbol" content="' . htmlspecialchars(getCurrencySymbol()) . '">';
 
 require_once 'includes/footer.php';
 ?>

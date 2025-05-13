@@ -24,6 +24,7 @@ function initializeChart() {
         const chartLabelsEl = document.querySelector('meta[name="chart-labels"]');
         const chartDataEl = document.querySelector('meta[name="chart-data"]');
         const chartColorsEl = document.querySelector('meta[name="chart-colors"]');
+        const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
         
         if (!chartLabelsEl || !chartDataEl || !chartColorsEl) {
             console.error('Chart data meta tags not found!');
@@ -34,6 +35,7 @@ function initializeChart() {
         const chartLabels = JSON.parse(chartLabelsEl.getAttribute('content') || '[]');
         const chartData = JSON.parse(chartDataEl.getAttribute('content') || '[]');
         const chartColors = JSON.parse(chartColorsEl.getAttribute('content') || '[]');
+        const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
         
         if (chartLabels.length === 0 || chartData.length === 0) {
             showNoDataMessage();
@@ -105,7 +107,7 @@ function initializeChart() {
                                 const value = context.parsed;
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                 const percentage = ((value / total) * 100).toFixed(1);
-                                return `${label}: $${value.toLocaleString()} (${percentage}%)`;
+                                return `${label}: ${currencySymbol}${value.toLocaleString()} (${percentage}%)`;
                             }
                         }
                     }
@@ -282,6 +284,8 @@ function loadExpenseForEdit(expenseId) {
 
 function updateChartData(period) {
     const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
+    const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
+    const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
     
     const chartContainer = document.querySelector('.chart-container');
     if (chartContainer) {
@@ -314,10 +318,20 @@ function updateChartData(period) {
                 window.categoryChart.data.labels = labels;
                 window.categoryChart.data.datasets[0].data = values;
                 window.categoryChart.data.datasets[0].backgroundColor = colors.slice(0, values.length);
+                
+                // Update the tooltip to use the correct currency symbol
+                window.categoryChart.options.plugins.tooltip.callbacks.label = function(context) {
+                    const label = context.label || '';
+                    const value = context.parsed;
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return `${label}: ${currencySymbol}${value.toLocaleString()} (${percentage}%)`;
+                };
+                
                 window.categoryChart.update();
             }
             
-            updateCategoriesList(sortedCategories, data.analytics.total_amount);
+            updateCategoriesList(sortedCategories, data.analytics.total_amount, currencySymbol);
             
             const noDataMessage = document.getElementById('chartNoData');
             if (noDataMessage) {
@@ -343,7 +357,7 @@ function updateChartData(period) {
     });
 }
 
-function updateCategoriesList(categories, totalAmount) {
+function updateCategoriesList(categories, totalAmount, currencySymbol) {
     const listContainer = document.querySelector('.categories-list-content');
     
     if (!listContainer || categories.length === 0) return;
@@ -364,7 +378,7 @@ function updateCategoriesList(categories, totalAmount) {
                     </div>
                 </div>
                 <div class="category-amount">
-                    <span class="amount">$${amount.toLocaleString()}</span>
+                    <span class="amount">${currencySymbol}${amount.toLocaleString()}</span>
                     <span class="percentage">${percentage}%</span>
                 </div>
             </div>
