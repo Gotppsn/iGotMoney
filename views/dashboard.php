@@ -3,7 +3,7 @@
 $page_title = __('dashboard_title') . ' - ' . __('app_name');
 $current_page = 'dashboard';
 
-// Add dashboard-specific CSS
+// Add dashboard-specific CSS and JS
 $additional_css = ['/assets/css/dashboard-modern.css'];
 $additional_js = ['/assets/js/dashboard-modern.js'];
 
@@ -27,6 +27,10 @@ require_once 'includes/header.php';
                 <button type="button" class="btn-action btn-refresh" id="refreshDashboard">
                     <i class="fas fa-sync-alt"></i>
                     <span><?php echo __('refresh'); ?></span>
+                </button>
+                <button type="button" class="btn-action btn-print" id="printDashboard">
+                    <i class="fas fa-print"></i>
+                    <span><?php echo __('print'); ?></span>
                 </button>
             </div>
         </div>
@@ -96,8 +100,15 @@ require_once 'includes/header.php';
                     if (isset($monthly_income) && $monthly_income > 0) {
                         $savings_rate = ($monthly_net / $monthly_income) * 100;
                     }
+                    
+                    $savings_class = 'negative';
+                    if ($savings_rate >= 20) {
+                        $savings_class = 'positive';
+                    } else if ($savings_rate >= 10) {
+                        $savings_class = 'warning';
+                    }
                     ?>
-                    <div class="card-trend <?php echo $savings_rate >= 20 ? 'positive' : ($savings_rate >= 10 ? 'warning' : 'negative'); ?>">
+                    <div class="card-trend <?php echo $savings_class; ?>">
                         <i class="fas fa-chart-pie"></i>
                         <span><?php echo number_format($savings_rate, 1); ?>% <?php echo __('savings_rate'); ?></span>
                     </div>
@@ -145,7 +156,7 @@ require_once 'includes/header.php';
                 </div>
                 
                 <div class="categories-list">
-                    <h4 style="font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0 0 1rem 0;"><?php echo __('top_expenses'); ?></h4>
+                    <h4><?php echo __('top_expenses'); ?></h4>
                     
                     <?php 
                     if (isset($top_expenses) && $top_expenses->num_rows > 0):
@@ -156,14 +167,17 @@ require_once 'includes/header.php';
                             if ($translated_name === $category_key) {
                                 $translated_name = $expense['category_name'];
                             }
+                            
+                            // Calculate percentage for bar
+                            $percentage = min(100, ($expense['total'] / max(1, $monthly_expenses)) * 100);
                     ?>
                     <div class="category-item">
                         <div class="category-info">
                             <h4><?php echo htmlspecialchars($translated_name); ?></h4>
                             <div class="category-bar">
                                 <div class="category-bar-fill" 
-                                    style="width: <?php echo min(100, ($expense['total'] / max(1, $monthly_expenses)) * 100); ?>%" 
-                                    data-percentage="<?php echo ($expense['total'] / max(1, $monthly_expenses)) * 100; ?>">
+                                    style="width: 0%" 
+                                    data-percentage="<?php echo $percentage; ?>">
                                 </div>
                             </div>
                         </div>
@@ -223,6 +237,14 @@ require_once 'includes/header.php';
                             if ($translated_category === $category_key) {
                                 $translated_category = $budget['category_name'];
                             }
+                            
+                            // Set appropriate class based on percentage
+                            $bar_class = 'safe';
+                            if ($budget['percentage'] >= 90) {
+                                $bar_class = 'danger';
+                            } else if ($budget['percentage'] >= 75) {
+                                $bar_class = 'warning';
+                            }
                         ?>
                             <div class="budget-item">
                                 <div class="budget-info">
@@ -237,16 +259,9 @@ require_once 'includes/header.php';
                                     </div>
                                 </div>
                                 <div class="budget-bar">
-                                    <?php 
-                                    $bar_class = 'safe';
-                                    if ($budget['percentage'] >= 90) {
-                                        $bar_class = 'danger';
-                                    } else if ($budget['percentage'] >= 75) {
-                                        $bar_class = 'warning';
-                                    }
-                                    ?>
                                     <div class="budget-bar-fill <?php echo $bar_class; ?>" 
-                                        style="width: <?php echo min(100, $budget['percentage']); ?>%">
+                                        style="width: 0%"
+                                        data-percentage="<?php echo min(100, $budget['percentage']); ?>">
                                     </div>
                                 </div>
                             </div>
@@ -275,7 +290,8 @@ require_once 'includes/header.php';
                             ?>
                             <div class="status-bar">
                                 <div class="status-bar-fill <?php echo $bar_class; ?>" 
-                                    style="width: <?php echo min(100, $expense_percentage); ?>%">
+                                    style="width: 0%"
+                                    data-percentage="<?php echo min(100, $expense_percentage); ?>">
                                 </div>
                             </div>
                             <div class="status-info">
@@ -361,7 +377,8 @@ require_once 'includes/header.php';
                                 <div class="goal-progress">
                                     <div class="goal-bar">
                                         <div class="goal-bar-fill <?php echo $bar_class; ?>" 
-                                            style="width: <?php echo min(100, $progress); ?>%">
+                                            style="width: 0%"
+                                            data-percentage="<?php echo min(100, $progress); ?>">
                                         </div>
                                     </div>
                                     <?php if ($progress >= 25 || $progress >= 50 || $progress >= 75): ?>
@@ -435,6 +452,7 @@ require_once 'includes/header.php';
                     <?php else: ?>
                         <?php while ($advice = $financial_advice->fetch_assoc()): ?>
                             <?php 
+                            // Determine the appropriate class based on importance level
                             $advice_class = 'info';
                             $advice_icon = 'info-circle';
                             
@@ -445,6 +463,9 @@ require_once 'includes/header.php';
                                 $advice_class = 'warning';
                                 $advice_icon = 'exclamation-triangle';
                             }
+                            
+                            // Format the date
+                            $advice_date = date('M j', strtotime($advice['generated_at']));
                             ?>
                             <div class="advice-item <?php echo $advice_class; ?>">
                                 <div class="advice-icon">
@@ -453,7 +474,7 @@ require_once 'includes/header.php';
                                 <div class="advice-content">
                                     <div class="advice-header">
                                         <h4 class="advice-title"><?php echo htmlspecialchars($advice['title']); ?></h4>
-                                        <span class="advice-date"><?php echo date('M j', strtotime($advice['generated_at'])); ?></span>
+                                        <span class="advice-date"><?php echo $advice_date; ?></span>
                                     </div>
                                     <p class="advice-text">
                                         <?php echo htmlspecialchars($advice['content']); ?>
@@ -473,12 +494,15 @@ require_once 'includes/header.php';
 $chart_labels = [];
 $chart_data = [];
 $chart_colors = [
-    '#6366f1', '#8b5cf6', '#ec4899', '#ef4444', '#f59e0b',
-    '#10b981', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1'
+    '#4f46e5', '#8b5cf6', '#ec4899', '#ef4444', '#f59e0b',
+    '#10b981', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1',
+    '#8b5cf6', '#d946ef', '#f43f5e', '#fb7185', '#fbbf24',
+    '#a3e635', '#4ade80', '#2dd4bf', '#22d3ee', '#38bdf8'
 ];
 
 if (isset($top_expenses) && $top_expenses->num_rows > 0) {
     $top_expenses->data_seek(0);
+    $index = 0;
     while ($category = $top_expenses->fetch_assoc()) {
         // Translate category name
         $category_key = 'expense_category_' . $category['category_name'];
@@ -489,10 +513,11 @@ if (isset($top_expenses) && $top_expenses->num_rows > 0) {
         
         $chart_labels[] = $translated_name;
         $chart_data[] = floatval($category['total']);
+        $index++;
     }
 }
 
-// Add meta tags for passing data to JS
+// Create meta tags for chart data
 echo '<meta name="base-path" content="' . BASE_PATH . '">';
 echo '<meta name="chart-labels" content="' . htmlspecialchars(json_encode($chart_labels)) . '">';
 echo '<meta name="chart-data" content="' . htmlspecialchars(json_encode($chart_data)) . '">';

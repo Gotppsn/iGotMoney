@@ -1,12 +1,34 @@
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Modern Dashboard JS loaded');
+    console.log('Enhanced Dashboard JS loaded');
     
     // Initialize all components
     initializeChart();
     initializeEventListeners();
     initializeAnimations();
+    
+    // Show initial loading animation
+    showPageLoadAnimation();
 });
 
+/**
+ * Show a subtle page load animation
+ */
+function showPageLoadAnimation() {
+    // Add a class to trigger animations
+    document.body.classList.add('dashboard-loaded');
+    
+    // Animate summary cards with staggered delay
+    const summaryCards = document.querySelectorAll('.summary-card');
+    summaryCards.forEach((card, index) => {
+        setTimeout(() => {
+            card.classList.add('animated');
+        }, 100 + (index * 100));
+    });
+}
+
+/**
+ * Initialize the expense category chart
+ */
 function initializeChart() {
     if (typeof Chart === 'undefined') {
         console.error('Chart.js is not loaded!');
@@ -32,9 +54,18 @@ function initializeChart() {
             return;
         }
         
-        const chartLabels = JSON.parse(chartLabelsEl.getAttribute('content') || '[]');
-        const chartData = JSON.parse(chartDataEl.getAttribute('content') || '[]');
-        const chartColors = JSON.parse(chartColorsEl.getAttribute('content') || '[]');
+        // Parse the data from meta tags
+        let chartLabels, chartData, chartColors;
+        try {
+            chartLabels = JSON.parse(chartLabelsEl.getAttribute('content') || '[]');
+            chartData = JSON.parse(chartDataEl.getAttribute('content') || '[]');
+            chartColors = JSON.parse(chartColorsEl.getAttribute('content') || '[]');
+        } catch (e) {
+            console.error('Error parsing chart data:', e);
+            showNoDataMessage();
+            return;
+        }
+        
         const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
         
         if (chartLabels.length === 0 || chartData.length === 0) {
@@ -42,8 +73,13 @@ function initializeChart() {
             return;
         }
 
-        // Create chart with modern styling
+        // Create chart with enhanced styling
         const ctx = chartCanvas.getContext('2d');
+        
+        // Set Chart.js defaults for better appearance
+        Chart.defaults.font.family = "'Inter', 'Noto Sans Thai', system-ui, sans-serif";
+        Chart.defaults.color = '#64748b';
+        
         window.expenseCategoryChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -52,21 +88,22 @@ function initializeChart() {
                     data: chartData,
                     backgroundColor: chartColors,
                     borderColor: '#ffffff',
-                    borderWidth: 3,
-                    hoverBorderWidth: 3,
+                    borderWidth: 4,
+                    hoverBorderWidth: 5,
                     hoverBorderColor: '#ffffff',
-                    hoverOffset: 20
+                    hoverOffset: 15,
+                    borderRadius: 4
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '65%',
+                cutout: '70%',
                 animation: {
                     animateScale: true,
                     animateRotate: true,
-                    duration: 1500,
-                    easing: 'easeInOutQuart'
+                    duration: 2000,
+                    easing: 'easeOutQuart'
                 },
                 layout: {
                     padding: 20
@@ -78,7 +115,7 @@ function initializeChart() {
                         labels: {
                             boxWidth: 16,
                             boxHeight: 16,
-                            padding: 15,
+                            padding: 20,
                             font: {
                                 size: 14,
                                 weight: 500
@@ -88,7 +125,7 @@ function initializeChart() {
                         }
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        backgroundColor: 'rgba(15, 23, 42, 0.8)',
                         titleColor: '#ffffff',
                         bodyColor: '#ffffff',
                         padding: 16,
@@ -102,6 +139,7 @@ function initializeChart() {
                         },
                         displayColors: true,
                         usePointStyle: true,
+                        boxPadding: 6,
                         callbacks: {
                             label: function(context) {
                                 const label = context.label || '';
@@ -115,6 +153,9 @@ function initializeChart() {
                 }
             }
         });
+        
+        // Add center text plugin (optional)
+        appendChartCenterText(chartCanvas, calculateTotal(chartData), currencySymbol);
 
     } catch (error) {
         console.error('Error initializing chart:', error);
@@ -122,6 +163,47 @@ function initializeChart() {
     }
 }
 
+/**
+ * Calculate the total value of a data array
+ */
+function calculateTotal(dataArray) {
+    return dataArray.reduce((sum, value) => sum + value, 0);
+}
+
+/**
+ * Append center text to doughnut chart
+ */
+function appendChartCenterText(canvas, totalValue, currencySymbol) {
+    const centerContainer = document.createElement('div');
+    centerContainer.classList.add('chart-center-text');
+    centerContainer.innerHTML = `
+        <div class="chart-center-value">${currencySymbol}${totalValue.toLocaleString()}</div>
+        <div class="chart-center-label">Total Expenses</div>
+    `;
+    
+    // Position the element
+    centerContainer.style.position = 'absolute';
+    centerContainer.style.top = '50%';
+    centerContainer.style.left = '50%';
+    centerContainer.style.transform = 'translate(-50%, -50%)';
+    centerContainer.style.textAlign = 'center';
+    
+    // Style the content
+    centerContainer.style.pointerEvents = 'none';
+    centerContainer.querySelector('.chart-center-value').style.fontSize = '1.5rem';
+    centerContainer.querySelector('.chart-center-value').style.fontWeight = '700';
+    centerContainer.querySelector('.chart-center-value').style.color = '#1e293b';
+    centerContainer.querySelector('.chart-center-label').style.fontSize = '0.875rem';
+    centerContainer.querySelector('.chart-center-label').style.color = '#64748b';
+    
+    // Add to chart container
+    canvas.parentNode.style.position = 'relative';
+    canvas.parentNode.appendChild(centerContainer);
+}
+
+/**
+ * Show no data message for chart
+ */
 function showNoDataMessage() {
     const chartContainer = document.querySelector('.chart-container');
     if (chartContainer) {
@@ -132,11 +214,17 @@ function showNoDataMessage() {
                 </div>
                 <h4>No expense data available</h4>
                 <p>Start tracking your expenses to see insights</p>
+                <a href="expenses/add" class="btn-primary">
+                    <i class="fas fa-plus"></i> Add First Expense
+                </a>
             </div>
         `;
     }
 }
 
+/**
+ * Initialize all event listeners
+ */
 function initializeEventListeners() {
     // Refresh dashboard button
     const refreshButton = document.getElementById('refreshDashboard');
@@ -147,7 +235,7 @@ function initializeEventListeners() {
                 icon.classList.add('fa-spin');
             }
             
-            showLoadingOverlay();
+            showLoadingOverlay('Refreshing dashboard...');
             
             setTimeout(() => {
                 window.location.reload();
@@ -159,7 +247,10 @@ function initializeEventListeners() {
     const printButton = document.getElementById('printDashboard');
     if (printButton) {
         printButton.addEventListener('click', function() {
-            window.print();
+            showNotification('Preparing to print...', 'info');
+            setTimeout(() => {
+                window.print();
+            }, 300);
         });
     }
     
@@ -169,6 +260,8 @@ function initializeEventListeners() {
         generateAdviceBtn.addEventListener('click', function() {
             this.disabled = true;
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            
+            showNotification('Generating personalized advice...', 'info');
             
             setTimeout(() => {
                 window.location.href = '?generate_advice=true';
@@ -183,6 +276,8 @@ function initializeEventListeners() {
             this.disabled = true;
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
             
+            showNotification('Generating personalized advice...', 'info');
+            
             setTimeout(() => {
                 window.location.href = '?generate_advice=true';
             }, 1000);
@@ -196,8 +291,58 @@ function initializeEventListeners() {
             updateChartData(this.value);
         });
     }
+    
+    // Add hover effects to category items
+    const categoryItems = document.querySelectorAll('.category-item');
+    categoryItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            const categoryName = this.querySelector('.category-info h4').textContent.trim();
+            highlightChartSegment(categoryName);
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            resetChartHighlight();
+        });
+    });
 }
 
+/**
+ * Highlight a segment in the chart based on label
+ */
+function highlightChartSegment(labelToHighlight) {
+    if (!window.expenseCategoryChart) return;
+    
+    const chart = window.expenseCategoryChart;
+    const activeElements = [];
+    
+    // Find the index of the segment to highlight
+    chart.data.labels.forEach((label, index) => {
+        if (label === labelToHighlight) {
+            activeElements.push({
+                datasetIndex: 0,
+                index: index
+            });
+        }
+    });
+    
+    // Set active elements to highlight the segment
+    chart.setActiveElements(activeElements);
+    chart.update();
+}
+
+/**
+ * Reset chart highlighting
+ */
+function resetChartHighlight() {
+    if (!window.expenseCategoryChart) return;
+    
+    window.expenseCategoryChart.setActiveElements([]);
+    window.expenseCategoryChart.update();
+}
+
+/**
+ * Update chart data based on period selection
+ */
 function updateChartData(period) {
     const basePath = document.querySelector('meta[name="base-path"]').getAttribute('content');
     const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
@@ -209,64 +354,57 @@ function updateChartData(period) {
         chartContainer.style.opacity = '0.5';
     }
     
+    showNotification(`Loading ${period} data...`, 'info');
+    
     // Fetch new data from server
-    fetch(`${basePath}/dashboard?period=${period}`, {
+    fetch(`${basePath}/dashboard?period=${period}&ajax=true`, {
         headers: {
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
         if (window.expenseCategoryChart && data.labels && data.data) {
             // Update chart with new data
             window.expenseCategoryChart.data.labels = data.labels;
             window.expenseCategoryChart.data.datasets[0].data = data.data;
             
-            // Update tooltip to use currency symbol
-            window.expenseCategoryChart.options.plugins.tooltip.callbacks.label = function(context) {
-                const label = context.label || '';
-                const value = context.parsed;
-                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                const percentage = ((value / total) * 100).toFixed(1);
-                return `${label}: ${currencySymbol}${value.toLocaleString()} (${percentage}%)`;
-            };
+            // Update center text if it exists
+            const centerTextValue = document.querySelector('.chart-center-value');
+            if (centerTextValue) {
+                const total = calculateTotal(data.data);
+                centerTextValue.textContent = `${currencySymbol}${total.toLocaleString()}`;
+            }
             
-            window.expenseCategoryChart.update();
+            // Apply smooth transition
+            window.expenseCategoryChart.update('active');
             
-            // Update categories list (optional - requires additional implementation)
-            updateCategoriesList(data);
+            // Update categories list
+            if (data.categories) {
+                updateCategoriesList(data.categories);
+            }
         }
         
-        // Restore opacity
+        // Restore opacity with transition
         if (chartContainer) {
+            chartContainer.style.transition = 'opacity 0.5s ease';
             chartContainer.style.opacity = '1';
         }
         
-        showNotification(`Chart updated to show ${period} data`, 'info');
+        showNotification(`Chart updated to show ${getPeriodLabel(period)} data`, 'success');
     })
     .catch(error => {
         console.error('Error fetching chart data:', error);
         
-        // Fallback to client-side simulation
+        // Fallback to client-side simulation for demo purposes
         if (window.expenseCategoryChart) {
-            const currentData = window.expenseCategoryChart.data.datasets[0].data;
-            const newData = currentData.map(value => {
-                switch(period) {
-                    case 'last-month':
-                        return value * 0.8;
-                    case 'last-3-months':
-                        return value * 2.5;
-                    case 'current-year':
-                        return value * 10;
-                    case 'all-time':
-                        return value * 15;
-                    default:
-                        return value;
-                }
-            });
-            
-            window.expenseCategoryChart.data.datasets[0].data = newData;
-            window.expenseCategoryChart.update();
+            simulateChartUpdate(period);
         }
         
         // Restore opacity
@@ -274,34 +412,136 @@ function updateChartData(period) {
             chartContainer.style.opacity = '1';
         }
         
-        showNotification(`Chart updated to show ${period} data`, 'info');
+        showNotification(`Using simulated data for ${getPeriodLabel(period)}`, 'warning');
     });
 }
 
-function updateCategoriesList(data) {
-    // This function would update the categories list below the chart
-    // Get currency symbol
+/**
+ * Get readable period label
+ */
+function getPeriodLabel(period) {
+    const periodMap = {
+        'current-month': 'this month\'s',
+        'last-month': 'last month\'s',
+        'last-3-months': 'last 3 months\'',
+        'current-year': 'this year\'s',
+        'all-time': 'all-time'
+    };
+    
+    return periodMap[period] || period;
+}
+
+/**
+ * Simulate chart data update for demo purposes
+ */
+function simulateChartUpdate(period) {
+    const currentData = window.expenseCategoryChart.data.datasets[0].data;
+    let newData = [];
+    
+    switch(period) {
+        case 'last-month':
+            newData = currentData.map(value => value * (0.7 + Math.random() * 0.4));
+            break;
+        case 'last-3-months':
+            newData = currentData.map(value => value * (2.2 + Math.random() * 0.6));
+            break;
+        case 'current-year':
+            newData = currentData.map(value => value * (8 + Math.random() * 4));
+            break;
+        case 'all-time':
+            newData = currentData.map(value => value * (12 + Math.random() * 6));
+            break;
+        default:
+            newData = currentData;
+    }
+    
+    // Round numbers for more natural appearance
+    newData = newData.map(value => Math.round(value));
+    
+    window.expenseCategoryChart.data.datasets[0].data = newData;
+    window.expenseCategoryChart.update('active');
+    
+    // Update center text if it exists
+    const centerTextValue = document.querySelector('.chart-center-value');
     const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
     const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
     
-    const categoriesList = document.querySelector('.categories-list');
-    if (!categoriesList || !data.labels || !data.data) return;
+    if (centerTextValue) {
+        const total = calculateTotal(newData);
+        centerTextValue.textContent = `${currencySymbol}${total.toLocaleString()}`;
+    }
     
-    // You can implement more detailed update logic here if needed
-    // This is a basic implementation that updates amounts when data changes
-    const amountElements = categoriesList.querySelectorAll('.amount');
-    if (amountElements.length === data.data.length) {
-        amountElements.forEach((element, index) => {
-            if (data.data[index] !== undefined) {
-                element.textContent = `${currencySymbol}${Number(data.data[index]).toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                })}`;
+    // Also simulate updating the categories list
+    simulateUpdateCategoriesList(newData);
+}
+
+/**
+ * Update categories list with new data
+ */
+function updateCategoriesList(categories) {
+    const categoriesList = document.querySelector('.categories-list');
+    if (!categoriesList) return;
+    
+    // Get all existing category items
+    const categoryItems = categoriesList.querySelectorAll('.category-item');
+    
+    // If the number matches, just update values
+    if (categoryItems.length === categories.length) {
+        categories.forEach((category, index) => {
+            const item = categoryItems[index];
+            if (item) {
+                const amountElement = item.querySelector('.amount');
+                const barFill = item.querySelector('.category-bar-fill');
+                
+                if (amountElement) {
+                    amountElement.textContent = category.formatted_amount;
+                }
+                
+                if (barFill) {
+                    barFill.style.width = category.percentage + '%';
+                }
             }
         });
+    } else {
+        // Otherwise, rebuild the entire list (structure changed)
+        // This would require server to send full HTML or structured data
+        // For simplicity, we're not implementing this now
     }
 }
 
+/**
+ * Simulate updating categories list for demo purposes
+ */
+function simulateUpdateCategoriesList(newData) {
+    const categoriesList = document.querySelector('.categories-list');
+    if (!categoriesList) return;
+    
+    const categoryItems = categoriesList.querySelectorAll('.category-item');
+    const total = newData.reduce((sum, value) => sum + value, 0);
+    const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
+    const currencySymbol = currencySymbolEl ? currencySymbolEl.getAttribute('content') : '$';
+    
+    categoryItems.forEach((item, index) => {
+        if (index < newData.length) {
+            const value = newData[index];
+            const percentage = (value / total) * 100;
+            const amountElement = item.querySelector('.amount');
+            const barFill = item.querySelector('.category-bar-fill');
+            
+            if (amountElement) {
+                amountElement.textContent = currencySymbol + value.toLocaleString();
+            }
+            
+            if (barFill) {
+                barFill.style.width = percentage + '%';
+            }
+        }
+    });
+}
+
+/**
+ * Initialize animations
+ */
 function initializeAnimations() {
     // Get currency symbol
     const currencySymbolEl = document.querySelector('meta[name="currency-symbol"]');
@@ -318,81 +558,128 @@ function initializeAnimations() {
 
     // Animate value counters
     const valueElements = document.querySelectorAll('.card-value');
-    valueElements.forEach(element => {
-        const rawValue = element.textContent.replace(/[^\d.-]/g, '');
+    valueElements.forEach((element, index) => {
+        // Extract numeric value from text
+        const rawText = element.textContent;
+        const rawValue = rawText.replace(/[^\d.-]/g, '');
         const finalValue = parseFloat(rawValue);
+        
         if (!isNaN(finalValue)) {
-            animateValue(element, 0, finalValue, 1500, currencySymbol);
+            // Reset to zero initially
+            element.textContent = currencySymbol + '0.00';
+            
+            // Start animation with slight staggered delay
+            setTimeout(() => {
+                animateValue(element, 0, finalValue, 1500, currencySymbol);
+            }, 300 + (index * 150));
         }
     });
 }
 
+/**
+ * Animate a numeric value
+ */
 function animateValue(element, start, end, duration, currencySymbol = '$') {
     const startTimestamp = Date.now();
-    const step = (timestamp) => {
+    const formatter = new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    // Use cubic-bezier for more natural animation
+    const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
+    
+    const step = () => {
         const progress = Math.min((Date.now() - startTimestamp) / duration, 1);
-        const currentValue = progress * (end - start) + start;
-        element.textContent = currencySymbol + currentValue.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
+        const easedProgress = easeOutQuart(progress);
+        const currentValue = easedProgress * (end - start) + start;
+        
+        element.textContent = currencySymbol + formatter.format(currentValue);
         
         if (progress < 1) {
             window.requestAnimationFrame(step);
         }
     };
+    
     window.requestAnimationFrame(step);
 }
 
-function showLoadingOverlay() {
+/**
+ * Show loading overlay with message
+ */
+function showLoadingOverlay(message = 'Loading...') {
+    // Remove any existing overlay
+    const existingOverlay = document.querySelector('.loading-overlay');
+    if (existingOverlay) {
+        existingOverlay.remove();
+    }
+    
     const loadingOverlay = document.createElement('div');
     loadingOverlay.className = 'loading-overlay';
-    loadingOverlay.style.position = 'fixed';
-    loadingOverlay.style.top = '0';
-    loadingOverlay.style.left = '0';
-    loadingOverlay.style.width = '100%';
-    loadingOverlay.style.height = '100%';
-    loadingOverlay.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-    loadingOverlay.style.zIndex = '9999';
-    loadingOverlay.style.display = 'flex';
-    loadingOverlay.style.justifyContent = 'center';
-    loadingOverlay.style.alignItems = 'center';
     
     const spinner = document.createElement('div');
     spinner.className = 'spinner';
-    spinner.innerHTML = '<i class="fas fa-circle-notch fa-spin fa-3x" style="color: var(--primary-color);"></i>';
+    spinner.innerHTML = `
+        <i class="fas fa-circle-notch fa-spin fa-3x"></i>
+        <div class="spinner-text">${message}</div>
+    `;
     
     loadingOverlay.appendChild(spinner);
     document.body.appendChild(loadingOverlay);
     
-    // Remove after 1 second
+    // Show with animation
     setTimeout(() => {
-        if (document.body.contains(loadingOverlay)) {
-            document.body.removeChild(loadingOverlay);
-        }
-    }, 1000);
+        loadingOverlay.style.opacity = '1';
+    }, 10);
+    
+    // Remove after 1.5 seconds or call removeLoadingOverlay()
+    setTimeout(() => {
+        removeLoadingOverlay();
+    }, 1500);
+    
+    return loadingOverlay;
 }
 
+/**
+ * Remove loading overlay with animation
+ */
+function removeLoadingOverlay() {
+    const loadingOverlay = document.querySelector('.loading-overlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.opacity = '0';
+        
+        setTimeout(() => {
+            if (document.body.contains(loadingOverlay)) {
+                document.body.removeChild(loadingOverlay);
+            }
+        }, 300);
+    }
+}
+
+/**
+ * Show notification message
+ */
 function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existingNotifications = document.querySelectorAll('.dashboard-notification');
+    existingNotifications.forEach(notification => {
+        notification.classList.remove('visible');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    });
+    
+    // Create new notification
     const notification = document.createElement('div');
     notification.className = `dashboard-notification ${type}`;
-    notification.style.position = 'fixed';
-    notification.style.top = '20px';
-    notification.style.right = '20px';
-    notification.style.padding = '16px 24px';
-    notification.style.borderRadius = '12px';
-    notification.style.backgroundColor = type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#3b82f6';
-    notification.style.color = 'white';
-    notification.style.zIndex = '9999';
-    notification.style.opacity = '0';
-    notification.style.transition = 'opacity 0.3s ease';
-    notification.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
     
+    // Choose icon based on notification type
     let icon;
     switch(type) {
         case 'success':
             icon = 'check-circle';
-            notification.style.backgroundColor = '#10b981';
             break;
         case 'warning':
             icon = 'exclamation-triangle';
@@ -404,20 +691,25 @@ function showNotification(message, type = 'info') {
             icon = 'info-circle';
     }
     
-    notification.innerHTML = `<i class="fas fa-${icon}" style="margin-right: 12px;"></i> ${message}`;
+    notification.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
     
+    // Add to document
     document.body.appendChild(notification);
     
-    // Fade in
+    // Trigger animation after a small delay
     setTimeout(() => {
-        notification.style.opacity = '1';
+        notification.classList.add('visible');
     }, 10);
     
-    // Fade out and remove
+    // Remove notification after delay
     setTimeout(() => {
-        notification.style.opacity = '0';
+        notification.classList.remove('visible');
         setTimeout(() => {
-            notification.remove();
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
         }, 300);
-    }, 3000);
+    }, 3500);
+    
+    return notification;
 }
