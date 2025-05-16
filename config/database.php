@@ -9,7 +9,7 @@
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'gotppsnc_igotmoney');
 define('DB_USER', 'gotppsnc_Panupol'); // Use your actual MySQL username here
-define('DB_PASSWORD', '039464@Got');
+define('DB_PASSWORD', '');
 
 // Create connection with improved error handling
 function connectDB() {
