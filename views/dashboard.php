@@ -4,31 +4,33 @@ $page_title = __('dashboard_title') . ' - ' . __('app_name');
 $current_page = 'dashboard';
 
 // Add dashboard-specific CSS and JS
-$additional_css = ['/assets/css/dashboard-modern.css'];
-$additional_js = ['/assets/js/dashboard-modern.js'];
+$additional_css = ['/assets/css/dashboard.css'];
+$additional_js = ['/assets/js/dashboard.js'];
 
 // Include formatter for currency formatting
 require_once 'includes/currency_helper.php';
 
 // Include header
 require_once 'includes/header.php';
+
+// Get currency symbol for JS
+$currency_symbol = getCurrencySymbol();
 ?>
 
-<!-- Main Dashboard Container -->
-<div class="dashboard-page">
-    <!-- Page Header Section -->
-    <div class="page-header-section">
-        <div class="page-header-content">
-            <div class="page-title-group">
-                <h1 class="page-title"><?php echo __('dashboard_title'); ?></h1>
-                <p class="page-subtitle"><?php echo __('welcome_back', ['username' => htmlspecialchars($_SESSION['username'])]); ?></p>
+<div class="dashboard">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <div class="greeting">
+                <h1><?php echo __('dashboard_title'); ?></h1>
+                <p><?php echo __('welcome_back', ['username' => htmlspecialchars($_SESSION['username'])]); ?></p>
             </div>
             <div class="header-actions">
-                <button type="button" class="btn-action btn-refresh" id="refreshDashboard">
+                <button type="button" id="refreshDashboard" class="btn-action">
                     <i class="fas fa-sync-alt"></i>
                     <span><?php echo __('refresh'); ?></span>
                 </button>
-                <button type="button" class="btn-action btn-print" id="printDashboard">
+                <button type="button" id="printDashboard" class="btn-action outlined">
                     <i class="fas fa-print"></i>
                     <span><?php echo __('print'); ?></span>
                 </button>
@@ -37,64 +39,75 @@ require_once 'includes/header.php';
     </div>
 
     <!-- Financial Summary Cards -->
-    <div class="summary-cards-section">
+    <div class="summary-section">
         <div class="summary-grid">
-            <div class="summary-card income">
+            <!-- Income Card -->
+            <div class="summary-card income" data-aos="fade-up" data-aos-delay="100">
                 <div class="card-icon">
                     <i class="fas fa-wallet"></i>
                 </div>
                 <div class="card-content">
-                    <h3 class="card-label"><?php echo __('monthly_income'); ?></h3>
-                    <p class="card-value"><?php echo formatMoney($monthly_income); ?></p>
+                    <div class="card-label"><?php echo __('monthly_income'); ?></div>
+                    <div class="card-value" data-value="<?php echo $monthly_income; ?>">
+                        <?php echo formatMoney($monthly_income); ?>
+                    </div>
                     <?php 
                     $income_trend = 0;
                     if (isset($monthly_income) && isset($previous_monthly_income)) {
                         $income_trend = $monthly_income - $previous_monthly_income;
                     }
                     if (!isset($previous_monthly_income)) {
-                        $income_trend = 150;
+                        $income_trend = 150; // Sample value for demo
                     }
                     ?>
                     <div class="card-trend <?php echo $income_trend >= 0 ? 'positive' : 'negative'; ?>">
                         <i class="fas fa-<?php echo $income_trend >= 0 ? 'arrow-up' : 'arrow-down'; ?>"></i>
-                        <span><?php echo abs($income_trend) > 0 ? formatMoney(abs($income_trend)) : '0.00'; ?> 
-                        <?php echo $income_trend >= 0 ? __('increase') : __('decrease'); ?> <?php echo __('this_month'); ?></span>
+                        <span><?php echo formatMoney(abs($income_trend)); ?> 
+                        <?php echo $income_trend >= 0 ? __('increase') : __('decrease'); ?>
+                        <?php echo __('this_month'); ?></span>
                     </div>
                 </div>
             </div>
             
-            <div class="summary-card expenses">
+            <!-- Expenses Card -->
+            <div class="summary-card expenses" data-aos="fade-up" data-aos-delay="150">
                 <div class="card-icon">
                     <i class="fas fa-credit-card"></i>
                 </div>
                 <div class="card-content">
-                    <h3 class="card-label"><?php echo __('monthly_expenses'); ?></h3>
-                    <p class="card-value"><?php echo formatMoney($monthly_expenses); ?></p>
+                    <div class="card-label"><?php echo __('monthly_expenses'); ?></div>
+                    <div class="card-value" data-value="<?php echo $monthly_expenses; ?>">
+                        <?php echo formatMoney($monthly_expenses); ?>
+                    </div>
                     <?php 
                     $expense_trend = 0;
                     if (isset($monthly_expenses) && isset($previous_monthly_expenses)) {
                         $expense_trend = $monthly_expenses - $previous_monthly_expenses;
                     }
                     if (!isset($previous_monthly_expenses)) {
-                        $expense_trend = -50;
+                        $expense_trend = -50; // Sample value for demo
                     }
                     $expense_trend_positive = $expense_trend <= 0;
                     ?>
                     <div class="card-trend <?php echo $expense_trend_positive ? 'positive' : 'negative'; ?>">
                         <i class="fas fa-<?php echo $expense_trend <= 0 ? 'arrow-down' : 'arrow-up'; ?>"></i>
-                        <span><?php echo abs($expense_trend) > 0 ? formatMoney(abs($expense_trend)) : '0.00'; ?> 
-                        <?php echo $expense_trend <= 0 ? __('decrease') : __('increase'); ?> <?php echo __('this_month'); ?></span>
+                        <span><?php echo formatMoney(abs($expense_trend)); ?> 
+                        <?php echo $expense_trend <= 0 ? __('decrease') : __('increase'); ?>
+                        <?php echo __('this_month'); ?></span>
                     </div>
                 </div>
             </div>
             
-            <div class="summary-card savings">
+            <!-- Savings Card -->
+            <div class="summary-card savings" data-aos="fade-up" data-aos-delay="200">
                 <div class="card-icon">
                     <i class="fas fa-piggy-bank"></i>
                 </div>
                 <div class="card-content">
-                    <h3 class="card-label"><?php echo __('monthly_net'); ?></h3>
-                    <p class="card-value"><?php echo formatMoney($monthly_net); ?></p>
+                    <div class="card-label"><?php echo __('monthly_net'); ?></div>
+                    <div class="card-value" data-value="<?php echo $monthly_net; ?>">
+                        <?php echo formatMoney($monthly_net); ?>
+                    </div>
                     <?php 
                     $savings_rate = 0;
                     if (isset($monthly_income) && $monthly_income > 0) {
@@ -115,13 +128,16 @@ require_once 'includes/header.php';
                 </div>
             </div>
             
-            <div class="summary-card projection">
+            <!-- Projection Card -->
+            <div class="summary-card projection" data-aos="fade-up" data-aos-delay="250">
                 <div class="card-icon">
                     <i class="fas fa-chart-line"></i>
                 </div>
                 <div class="card-content">
-                    <h3 class="card-label"><?php echo __('yearly_projection'); ?></h3>
-                    <p class="card-value"><?php echo formatMoney($yearly_net); ?></p>
+                    <div class="card-label"><?php echo __('yearly_projection'); ?></div>
+                    <div class="card-value" data-value="<?php echo $yearly_net; ?>">
+                        <?php echo formatMoney($yearly_net); ?>
+                    </div>
                     <div class="card-info">
                         <i class="fas fa-calendar-alt"></i>
                         <span><?php echo __('annual_forecast'); ?></span>
@@ -131,17 +147,17 @@ require_once 'includes/header.php';
         </div>
     </div>
 
-    <!-- Main Content Grid -->
-    <div class="content-grid">
+    <!-- Main Dashboard Content -->
+    <div class="dashboard-content">
         <!-- Expense Categories Chart -->
-        <div class="dashboard-card">
+        <div class="dashboard-card expenses-chart" data-aos="fade-up">
             <div class="card-header">
                 <div class="card-title">
                     <i class="fas fa-chart-pie"></i>
-                    <h3><?php echo __('expenses_by_category'); ?></h3>
+                    <h2><?php echo __('expenses_by_category'); ?></h2>
                 </div>
                 <div class="card-actions">
-                    <select id="chartPeriodSelect" class="btn-card-action">
+                    <select id="chartPeriodSelect" class="select-minimal">
                         <option value="current-month"><?php echo __('this_month_option'); ?></option>
                         <option value="last-month"><?php echo __('last_month_option'); ?></option>
                         <option value="last-3-months"><?php echo __('last_3_months_option'); ?></option>
@@ -153,10 +169,11 @@ require_once 'includes/header.php';
             <div class="card-body">
                 <div class="chart-container">
                     <canvas id="expenseCategoryChart"></canvas>
+                    <div class="chart-legend" id="chartLegend"></div>
                 </div>
                 
                 <div class="categories-list">
-                    <h4><?php echo __('top_expenses'); ?></h4>
+                    <h3><?php echo __('top_expenses'); ?></h3>
                     
                     <?php 
                     if (isset($top_expenses) && $top_expenses->num_rows > 0):
@@ -174,11 +191,8 @@ require_once 'includes/header.php';
                     <div class="category-item">
                         <div class="category-info">
                             <h4><?php echo htmlspecialchars($translated_name); ?></h4>
-                            <div class="category-bar">
-                                <div class="category-bar-fill" 
-                                    style="width: 0%" 
-                                    data-percentage="<?php echo $percentage; ?>">
-                                </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" data-percentage="<?php echo $percentage; ?>"></div>
                             </div>
                         </div>
                         <div class="category-amount">
@@ -206,14 +220,14 @@ require_once 'includes/header.php';
         </div>
 
         <!-- Budget Status -->
-        <div class="dashboard-card">
+        <div class="dashboard-card budget-status" data-aos="fade-up">
             <div class="card-header">
                 <div class="card-title">
                     <i class="fas fa-tasks"></i>
-                    <h3><?php echo __('budget_status'); ?></h3>
+                    <h2><?php echo __('budget_status'); ?></h2>
                 </div>
                 <div class="card-actions">
-                    <a href="<?php echo BASE_PATH; ?>/budget" class="btn-card-action">
+                    <a href="<?php echo BASE_PATH; ?>/budget" class="btn-link">
                         <?php echo __('manage_budgets'); ?>
                     </a>
                 </div>
@@ -246,33 +260,32 @@ require_once 'includes/header.php';
                                 $bar_class = 'warning';
                             }
                         ?>
-                            <div class="budget-item">
-                                <div class="budget-info">
-                                    <span class="budget-category"><?php echo htmlspecialchars($translated_category); ?></span>
-                                    <div class="budget-values">
-                                        <div class="budget-percentage">
-                                            <?php echo number_format($budget['percentage'], 0); ?>%
-                                        </div>
-                                        <div class="budget-amounts">
-                                            <?php echo formatMoney($budget['spent']); ?> / <?php echo formatMoney($budget['budget_amount']); ?>
-                                        </div>
+                        <div class="budget-item">
+                            <div class="budget-info">
+                                <span class="budget-category"><?php echo htmlspecialchars($translated_category); ?></span>
+                                <div class="budget-values">
+                                    <div class="budget-percentage">
+                                        <?php echo number_format($budget['percentage'], 0); ?>%
                                     </div>
-                                </div>
-                                <div class="budget-bar">
-                                    <div class="budget-bar-fill <?php echo $bar_class; ?>" 
-                                        style="width: 0%"
-                                        data-percentage="<?php echo min(100, $budget['percentage']); ?>">
+                                    <div class="budget-amounts">
+                                        <?php echo formatMoney($budget['spent']); ?> / <?php echo formatMoney($budget['budget_amount']); ?>
                                     </div>
                                 </div>
                             </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill <?php echo $bar_class; ?>" 
+                                     data-percentage="<?php echo min(100, $budget['percentage']); ?>">
+                                </div>
+                            </div>
+                        </div>
                         <?php endforeach; ?>
                         
                         <div class="overall-status">
-                            <h4><?php echo __('income_vs_expenses'); ?></h4>
+                            <h3><?php echo __('income_vs_expenses'); ?></h3>
                             <?php 
                             $expense_percentage = 0;
                             if (isset($monthly_income) && $monthly_income > 0) {
-                                $expense_percentage = ($monthly_expenses / $monthly_income) * 100;
+                                $expense_percentage = min(100, ($monthly_expenses / $monthly_income) * 100);
                             }
                             $overall_class = 'positive';
                             $overall_message = __('budget_great');
@@ -288,10 +301,9 @@ require_once 'includes/header.php';
                                 $bar_class = 'warning';
                             }
                             ?>
-                            <div class="status-bar">
-                                <div class="status-bar-fill <?php echo $bar_class; ?>" 
-                                    style="width: 0%"
-                                    data-percentage="<?php echo min(100, $expense_percentage); ?>">
+                            <div class="progress-bar large">
+                                <div class="progress-bar-fill <?php echo $bar_class; ?>" 
+                                     data-percentage="<?php echo $expense_percentage; ?>">
                                 </div>
                             </div>
                             <div class="status-info">
@@ -309,17 +321,17 @@ require_once 'includes/header.php';
         </div>
     </div>
 
-    <!-- Goals and Advice Section -->
-    <div class="goals-advice-grid">
+    <!-- Bottom Section: Goals and Advice -->
+    <div class="dashboard-bottom">
         <!-- Financial Goals -->
-        <div class="dashboard-card">
+        <div class="dashboard-card goals" data-aos="fade-up">
             <div class="card-header">
                 <div class="card-title">
                     <i class="fas fa-bullseye"></i>
-                    <h3><?php echo __('financial_goals'); ?></h3>
+                    <h2><?php echo __('financial_goals'); ?></h2>
                 </div>
                 <div class="card-actions">
-                    <a href="<?php echo BASE_PATH; ?>/goals" class="btn-card-action">
+                    <a href="<?php echo BASE_PATH; ?>/goals" class="btn-link">
                         <?php echo __('view_all_goals'); ?>
                     </a>
                 </div>
@@ -361,7 +373,7 @@ require_once 'includes/header.php';
                             
                             <div class="goal-item">
                                 <div class="goal-header">
-                                    <div>
+                                    <div class="goal-title-wrapper">
                                         <h4 class="goal-title"><?php echo htmlspecialchars($goal['name']); ?></h4>
                                         <span class="goal-status <?php echo $status_class; ?>">
                                             <i class="fas fa-<?php echo $status_icon; ?>"></i>
@@ -375,32 +387,31 @@ require_once 'includes/header.php';
                                 </div>
                                 
                                 <div class="goal-progress">
-                                    <div class="goal-bar">
-                                        <div class="goal-bar-fill <?php echo $bar_class; ?>" 
-                                            style="width: 0%"
-                                            data-percentage="<?php echo min(100, $progress); ?>">
+                                    <div class="progress-bar">
+                                        <div class="progress-bar-fill <?php echo $bar_class; ?>" 
+                                             data-percentage="<?php echo min(100, $progress); ?>">
                                         </div>
+                                        <?php if ($progress >= 25 || $progress >= 50 || $progress >= 75): ?>
+                                        <div class="milestone-markers">
+                                            <?php if ($progress >= 25): ?>
+                                            <div class="milestone-marker <?php echo $progress >= 25 ? 'reached' : ''; ?>" 
+                                                 style="left: 25%;"></div>
+                                            <?php endif; ?>
+                                            <?php if ($progress >= 50): ?>
+                                            <div class="milestone-marker <?php echo $progress >= 50 ? 'reached' : ''; ?>" 
+                                                 style="left: 50%;"></div>
+                                            <?php endif; ?>
+                                            <?php if ($progress >= 75): ?>
+                                            <div class="milestone-marker <?php echo $progress >= 75 ? 'reached' : ''; ?>" 
+                                                 style="left: 75%;"></div>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php endif; ?>
                                     </div>
-                                    <?php if ($progress >= 25 || $progress >= 50 || $progress >= 75): ?>
-                                    <div class="milestone-markers">
-                                        <?php if ($progress >= 25): ?>
-                                        <div class="milestone-marker <?php echo $progress >= 25 ? 'reached' : ''; ?>" 
-                                             style="left: 25%;"></div>
-                                        <?php endif; ?>
-                                        <?php if ($progress >= 50): ?>
-                                        <div class="milestone-marker <?php echo $progress >= 50 ? 'reached' : ''; ?>" 
-                                             style="left: 50%;"></div>
-                                        <?php endif; ?>
-                                        <?php if ($progress >= 75): ?>
-                                        <div class="milestone-marker <?php echo $progress >= 75 ? 'reached' : ''; ?>" 
-                                             style="left: 75%;"></div>
-                                        <?php endif; ?>
-                                    </div>
-                                    <?php endif; ?>
                                 </div>
                                 
                                 <div class="goal-details">
-                                    <span><?php echo formatMoney($goal['current_amount']); ?> <?php echo __('of'); ?> 
+                                    <span class="goal-amount"><?php echo formatMoney($goal['current_amount']); ?> <?php echo __('of'); ?> 
                                     <?php echo formatMoney($goal['target_amount']); ?></span>
                                     
                                     <?php 
@@ -413,7 +424,7 @@ require_once 'includes/header.php';
                                     ?>
                                     
                                     <?php if ($progress < 100 && !$is_overdue && $contribution > 0): ?>
-                                    <span><?php echo formatMoney($contribution); ?><?php echo __('per_month_to_reach_goal'); ?></span>
+                                    <span class="goal-monthly"><?php echo formatMoney($contribution); ?>/<?php echo __('month'); ?></span>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -424,14 +435,14 @@ require_once 'includes/header.php';
         </div>
 
         <!-- Financial Advice -->
-        <div class="dashboard-card">
+        <div class="dashboard-card advice" data-aos="fade-up">
             <div class="card-header">
                 <div class="card-title">
                     <i class="fas fa-lightbulb"></i>
-                    <h3><?php echo __('financial_advice'); ?></h3>
+                    <h2><?php echo __('financial_advice'); ?></h2>
                 </div>
                 <div class="card-actions">
-                    <button type="button" class="btn-card-action" id="generateAdvice">
+                    <button type="button" id="generateAdvice" class="btn-link">
                         <i class="fas fa-sync"></i> <?php echo __('get_new_advice'); ?>
                     </button>
                 </div>
@@ -445,7 +456,7 @@ require_once 'includes/header.php';
                             </div>
                             <h4><?php echo __('no_financial_advice'); ?></h4>
                             <p><?php echo __('advice_description'); ?></p>
-                            <button type="button" class="btn-primary" id="generateAdviceEmpty">
+                            <button type="button" id="generateAdviceEmpty" class="btn-primary">
                                 <i class="fas fa-magic"></i> <?php echo __('generate_advice'); ?>
                             </button>
                         </div>
@@ -489,14 +500,25 @@ require_once 'includes/header.php';
     </div>
 </div>
 
+<!-- Toast Notification Container -->
+<div id="toast-container"></div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay hidden">
+    <div class="spinner">
+        <i class="fas fa-circle-notch fa-spin"></i>
+        <div class="spinner-text">Loading...</div>
+    </div>
+</div>
+
 <?php
 // Prepare chart data with translations
 $chart_labels = [];
 $chart_data = [];
 $chart_colors = [
-    '#4f46e5', '#8b5cf6', '#ec4899', '#ef4444', '#f59e0b',
-    '#10b981', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1',
-    '#8b5cf6', '#d946ef', '#f43f5e', '#fb7185', '#fbbf24',
+    '#6366f1', '#8b5cf6', '#ec4899', '#ef4444', '#f59e0b',
+    '#10b981', '#14b8a6', '#06b6d4', '#3b82f6', '#4f46e5',
+    '#a855f7', '#d946ef', '#f43f5e', '#fb7185', '#fbbf24',
     '#a3e635', '#4ade80', '#2dd4bf', '#22d3ee', '#38bdf8'
 ];
 
@@ -517,12 +539,14 @@ if (isset($top_expenses) && $top_expenses->num_rows > 0) {
     }
 }
 
-// Create meta tags for chart data
-echo '<meta name="base-path" content="' . BASE_PATH . '">';
-echo '<meta name="chart-labels" content="' . htmlspecialchars(json_encode($chart_labels)) . '">';
-echo '<meta name="chart-data" content="' . htmlspecialchars(json_encode($chart_data)) . '">';
-echo '<meta name="chart-colors" content="' . htmlspecialchars(json_encode(array_slice($chart_colors, 0, count($chart_data)))) . '">';
-echo '<meta name="currency-symbol" content="' . getCurrencySymbol() . '">';
+// Create JS variables for chart data
+echo '<script>';
+echo 'const chartLabels = ' . json_encode($chart_labels) . ';';
+echo 'const chartData = ' . json_encode($chart_data) . ';';
+echo 'const chartColors = ' . json_encode(array_slice($chart_colors, 0, count($chart_data))) . ';';
+echo 'const currencySymbol = "' . $currency_symbol . '";';
+echo 'const basePath = "' . BASE_PATH . '";';
+echo '</script>';
 
 // Include footer
 require_once 'includes/footer.php';
