@@ -5,7 +5,7 @@ $current_page = 'income';
 
 // Additional CSS and JS
 $additional_css = ['/assets/css/income-modern.css'];
-$additional_js = ['/assets/js/income-modern.js', '/assets/js/chart.income.js'];
+$additional_js = ['/assets/js/income-modern.js'];
 
 // Include currency helper for currency formatting
 require_once 'includes/currency_helper.php';
@@ -20,11 +20,11 @@ require_once 'includes/header.php';
     <div class="page-header-section">
         <div class="page-header-content">
             <div class="page-title-group">
-                <h1 class="page-title"><?php echo __('income_management'); ?></h1>
-                <p class="page-subtitle"><?php echo __('track_manage_income'); ?></p>
+                <h1><?php echo __('income_management'); ?></h1>
+                <p><?php echo __('track_manage_income'); ?></p>
             </div>
             <div class="header-actions">
-                <button type="button" id="refreshData" class="btn-refresh me-2" title="<?php echo __('refresh'); ?>">
+                <button type="button" id="refreshData" class="btn-refresh" title="<?php echo __('refresh'); ?>">
                     <i class="fas fa-sync-alt"></i>
                 </button>
                 <button type="button" class="btn-add-income" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
@@ -43,8 +43,10 @@ require_once 'includes/header.php';
                     <i class="fas fa-calendar-alt"></i>
                 </div>
                 <div class="stat-content">
-                    <h3 class="stat-label"><?php echo __('monthly_income'); ?></h3>
-                    <p class="stat-value"><?php echo formatMoney($monthly_income); ?></p>
+                    <div class="stat-label"><?php echo __('monthly_income'); ?></div>
+                    <div class="stat-value" data-value="<?php echo $monthly_income; ?>">
+                        <?php echo formatMoney($monthly_income); ?>
+                    </div>
                     <?php
                     $previous_month = isset($prev_monthly_income) ? $prev_monthly_income : $monthly_income * 0.95;
                     $is_increased = $monthly_income >= $previous_month;
@@ -62,8 +64,10 @@ require_once 'includes/header.php';
                     <i class="fas fa-chart-line"></i>
                 </div>
                 <div class="stat-content">
-                    <h3 class="stat-label"><?php echo __('annual_income'); ?></h3>
-                    <p class="stat-value"><?php echo formatMoney($yearly_income); ?></p>
+                    <div class="stat-label"><?php echo __('annual_income'); ?></div>
+                    <div class="stat-value" data-value="<?php echo $yearly_income; ?>">
+                        <?php echo formatMoney($yearly_income); ?>
+                    </div>
                     <div class="stat-info">
                         <i class="fas fa-info-circle"></i>
                         <span><?php echo __('projected_for'); ?> <?php echo date('Y'); ?></span>
@@ -76,7 +80,7 @@ require_once 'includes/header.php';
                     <i class="fas fa-wallet"></i>
                 </div>
                 <div class="stat-content">
-                    <h3 class="stat-label"><?php echo __('active_sources'); ?></h3>
+                    <div class="stat-label"><?php echo __('active_sources'); ?></div>
                     <?php
                     $active_count = 0;
                     $total_sources = 0;
@@ -91,7 +95,7 @@ require_once 'includes/header.php';
                         $income_sources->data_seek(0);
                     }
                     ?>
-                    <p class="stat-value"><?php echo $active_count; ?></p>
+                    <div class="stat-value"><?php echo $active_count; ?></div>
                     <div class="stat-info">
                         <i class="fas fa-<?php echo $active_count === $total_sources ? 'check-circle' : 'exclamation-circle'; ?>"></i>
                         <span><?php echo $active_count; ?> / <?php echo $total_sources; ?> <?php echo __('currently_active'); ?></span>
@@ -104,7 +108,7 @@ require_once 'includes/header.php';
                     <i class="fas fa-calendar-week"></i>
                 </div>
                 <div class="stat-content">
-                    <h3 class="stat-label"><?php echo __('next_income'); ?></h3>
+                    <div class="stat-label"><?php echo __('next_income'); ?></div>
                     <?php
                     $next_income_date = null;
                     $next_income_amount = 0;
@@ -177,7 +181,7 @@ require_once 'includes/header.php';
                     ?>
                     
                     <?php if ($next_income_date): ?>
-                        <p class="stat-value"><?php echo formatMoney($next_income_amount); ?></p>
+                        <div class="stat-value"><?php echo formatMoney($next_income_amount); ?></div>
                         <div class="stat-info" title="<?php echo htmlspecialchars($next_income_name); ?>">
                             <i class="fas fa-calendar-day"></i>
                             <span>
@@ -194,7 +198,7 @@ require_once 'includes/header.php';
                             </span>
                         </div>
                     <?php else: ?>
-                        <p class="stat-value">-</p>
+                        <div class="stat-value">-</div>
                         <div class="stat-info">
                             <i class="fas fa-calendar-times"></i>
                             <span><?php echo __('no_upcoming_income'); ?></span>
@@ -209,7 +213,7 @@ require_once 'includes/header.php';
     <div class="charts-section">
         <div class="charts-grid">
             <!-- Income Frequency Distribution Chart -->
-            <div class="chart-card frequency-chart">
+            <div class="chart-card">
                 <div class="chart-header">
                     <div class="chart-title">
                         <i class="fas fa-chart-pie"></i>
@@ -227,14 +231,17 @@ require_once 'includes/header.php';
                         <canvas id="frequencyChart"></canvas>
                     </div>
                     <div id="chartNoData" class="no-data-message" style="display: <?php echo ($active_count > 0) ? 'none' : 'block'; ?>">
-                        <i class="fas fa-chart-bar"></i>
-                        <p><?php echo __('no_active_income_sources'); ?></p>
+                        <div class="empty-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <h4><?php echo __('no_active_income_sources'); ?></h4>
+                        <p><?php echo __('add_income_source_to_see_chart'); ?></p>
                     </div>
                 </div>
             </div>
             
             <!-- Top Income Sources List -->
-            <div class="chart-card sources-list">
+            <div class="chart-card">
                 <div class="chart-header">
                     <div class="chart-title">
                         <i class="fas fa-list-ol"></i>
@@ -291,7 +298,6 @@ require_once 'includes/header.php';
                                         <span class="source-frequency"><?php echo __($source['frequency']); ?></span>
                                         <div class="source-bar">
                                             <div class="source-bar-fill" 
-                                                 style="width: <?php echo $percentage; ?>%"
                                                  data-percentage="<?php echo $percentage; ?>">
                                             </div>
                                         </div>
@@ -317,8 +323,11 @@ require_once 'includes/header.php';
                             <?php endif; ?>
                         <?php else: ?>
                             <div class="empty-sources">
-                                <i class="fas fa-folder-open"></i>
-                                <p><?php echo __('no_income_sources_recorded'); ?></p>
+                                <div class="empty-icon">
+                                    <i class="fas fa-folder-open"></i>
+                                </div>
+                                <h4><?php echo __('no_income_sources_recorded'); ?></h4>
+                                <p><?php echo __('add_income_source_to_see_here'); ?></p>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -326,7 +335,7 @@ require_once 'includes/header.php';
             </div>
             
             <!-- Income Trend Chart -->
-            <div class="chart-card trend-chart">
+            <div class="chart-card">
                 <div class="chart-header">
                     <div class="chart-title">
                         <i class="fas fa-chart-line"></i>
@@ -345,14 +354,17 @@ require_once 'includes/header.php';
                         <canvas id="trendChart"></canvas>
                     </div>
                     <div id="trendChartNoData" class="no-data-message" style="display: <?php echo ($active_count > 0) ? 'none' : 'block'; ?>">
-                        <i class="fas fa-chart-line"></i>
-                        <p><?php echo __('no_active_income_sources'); ?></p>
+                        <div class="empty-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h4><?php echo __('no_active_income_sources'); ?></h4>
+                        <p><?php echo __('add_income_source_to_see_projections'); ?></p>
                     </div>
                 </div>
             </div>
             
             <!-- Income Calendar Preview -->
-            <div class="chart-card calendar-preview">
+            <div class="chart-card">
                 <div class="chart-header">
                     <div class="chart-title">
                         <i class="fas fa-calendar-alt"></i>
@@ -554,12 +566,12 @@ require_once 'includes/header.php';
                 </div>
                 <div class="table-controls">
                     <div class="control-group">
-                        <select id="statusFilter" class="form-select form-select-sm me-2">
+                        <select id="statusFilter" class="form-select form-select-sm">
                             <option value="all"><?php echo __('all_statuses'); ?></option>
                             <option value="active"><?php echo __('active_only'); ?></option>
                             <option value="inactive"><?php echo __('inactive_only'); ?></option>
                         </select>
-                        <select id="frequencyFilter" class="form-select form-select-sm me-2">
+                        <select id="frequencyFilter" class="form-select form-select-sm">
                             <option value="all"><?php echo __('all_frequencies'); ?></option>
                             <option value="monthly"><?php echo __('monthly'); ?></option>
                             <option value="annually"><?php echo __('annually'); ?></option>
@@ -572,7 +584,7 @@ require_once 'includes/header.php';
                     </div>
                     <div class="search-box">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="incomeSearch" placeholder="<?php echo __('search_income_sources'); ?>" data-table-search="incomeTable">
+                        <input type="text" id="incomeSearch" placeholder="<?php echo __('search_income_sources'); ?>">
                     </div>
                 </div>
             </div>
@@ -677,7 +689,7 @@ require_once 'includes/header.php';
     </div>
 </div>
 
-<!-- Add Income Modal (Redesigned) -->
+<!-- Add Income Modal -->
 <div class="modal fade modern-modal" id="addIncomeModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -716,7 +728,7 @@ require_once 'includes/header.php';
                         
                         <div class="form-field">
                             <label for="frequency"><?php echo __('frequency'); ?></label>
-                            <select id="frequency" name="frequency" class="modern-select">
+                            <select id="frequency" name="frequency">
                                 <option value="one-time"><?php echo __('one-time'); ?></option>
                                 <option value="daily"><?php echo __('daily'); ?></option>
                                 <option value="weekly"><?php echo __('weekly'); ?></option>
@@ -763,7 +775,7 @@ require_once 'includes/header.php';
     </div>
 </div>
 
-<!-- Edit Income Modal (Similar structure) -->
+<!-- Edit Income Modal -->
 <div class="modal fade modern-modal" id="editIncomeModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -803,7 +815,7 @@ require_once 'includes/header.php';
                         
                         <div class="form-field">
                             <label for="edit_frequency"><?php echo __('frequency'); ?></label>
-                            <select id="edit_frequency" name="frequency" class="modern-select">
+                            <select id="edit_frequency" name="frequency">
                                 <option value="one-time"><?php echo __('one-time'); ?></option>
                                 <option value="daily"><?php echo __('daily'); ?></option>
                                 <option value="weekly"><?php echo __('weekly'); ?></option>
@@ -883,45 +895,6 @@ require_once 'includes/header.php';
     </div>
 </div>
 
-<!-- Quick Edit Popover Template -->
-<div id="quickEditTemplate" style="display: none;">
-    <div class="quick-edit-form">
-        <div class="form-group mb-2">
-            <label for="quick_edit_amount"><?php echo __('amount'); ?></label>
-            <div class="amount-input">
-                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
-                <input type="number" id="quick_edit_amount" class="form-control form-control-sm" step="0.01" min="0.01">
-            </div>
-        </div>
-        <div class="form-group mb-2">
-            <label for="quick_edit_frequency"><?php echo __('frequency'); ?></label>
-            <select id="quick_edit_frequency" class="form-select form-select-sm">
-                <option value="one-time"><?php echo __('one-time'); ?></option>
-                <option value="daily"><?php echo __('daily'); ?></option>
-                <option value="weekly"><?php echo __('weekly'); ?></option>
-                <option value="bi-weekly"><?php echo __('bi-weekly'); ?></option>
-                <option value="monthly"><?php echo __('monthly'); ?></option>
-                <option value="quarterly"><?php echo __('quarterly'); ?></option>
-                <option value="annually"><?php echo __('annually'); ?></option>
-            </select>
-        </div>
-        <div class="form-group mb-2">
-            <div class="form-check form-switch">
-                <input type="checkbox" id="quick_edit_active" class="form-check-input">
-                <label for="quick_edit_active" class="form-check-label"><?php echo __('active'); ?></label>
-            </div>
-        </div>
-        <div class="actions mt-3">
-            <button type="button" class="btn btn-sm btn-primary quick-edit-save">
-                <i class="fas fa-save"></i> <?php echo __('save'); ?>
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary quick-edit-cancel ms-2">
-                <?php echo __('cancel'); ?>
-            </button>
-        </div>
-    </div>
-</div>
-
 <!-- Duplicate Income Modal -->
 <div class="modal fade modern-modal" id="duplicateIncomeModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -961,7 +934,7 @@ require_once 'includes/header.php';
                         
                         <div class="form-field">
                             <label for="duplicate_frequency"><?php echo __('frequency'); ?></label>
-                            <select id="duplicate_frequency" name="frequency" class="modern-select">
+                            <select id="duplicate_frequency" name="frequency">
                                 <option value="one-time"><?php echo __('one-time'); ?></option>
                                 <option value="daily"><?php echo __('daily'); ?></option>
                                 <option value="weekly"><?php echo __('weekly'); ?></option>
@@ -1008,11 +981,50 @@ require_once 'includes/header.php';
     </div>
 </div>
 
+<!-- Quick Edit Template -->
+<div id="quickEditTemplate" style="display: none;">
+    <div class="quick-edit-form">
+        <div class="form-group mb-2">
+            <label for="quick_edit_amount"><?php echo __('amount'); ?></label>
+            <div class="amount-input">
+                <span class="currency-symbol"><?php echo getCurrencySymbol(); ?></span>
+                <input type="number" id="quick_edit_amount" class="form-control form-control-sm" step="0.01" min="0.01">
+            </div>
+        </div>
+        <div class="form-group mb-2">
+            <label for="quick_edit_frequency"><?php echo __('frequency'); ?></label>
+            <select id="quick_edit_frequency" class="form-select form-select-sm">
+                <option value="one-time"><?php echo __('one-time'); ?></option>
+                <option value="daily"><?php echo __('daily'); ?></option>
+                <option value="weekly"><?php echo __('weekly'); ?></option>
+                <option value="bi-weekly"><?php echo __('bi-weekly'); ?></option>
+                <option value="monthly"><?php echo __('monthly'); ?></option>
+                <option value="quarterly"><?php echo __('quarterly'); ?></option>
+                <option value="annually"><?php echo __('annually'); ?></option>
+            </select>
+        </div>
+        <div class="form-group mb-2">
+            <div class="form-check form-switch">
+                <input type="checkbox" id="quick_edit_active" class="form-check-input">
+                <label for="quick_edit_active" class="form-check-label"><?php echo __('active'); ?></label>
+            </div>
+        </div>
+        <div class="actions mt-3">
+            <button type="button" class="btn btn-sm btn-primary quick-edit-save">
+                <i class="fas fa-save"></i> <?php echo __('save'); ?>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary quick-edit-cancel ms-2">
+                <?php echo __('cancel'); ?>
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Toast Notification Container -->
-<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+<div class="toast-container"></div>
 
 <?php
-// Chart data
+// Chart data preparation
 $chart_labels = [];
 $chart_data = [];
 $chart_colors = [
@@ -1164,17 +1176,13 @@ if (isset($income_sources) && $income_sources->num_rows > 0) {
 $projection_values = array_values($projection_data);
 
 // Add meta tags for passing data to JS
-echo '<meta name="base-path" content="' . BASE_PATH . '">';
 echo '<meta name="chart-labels" content="' . htmlspecialchars(json_encode($chart_labels)) . '">';
 echo '<meta name="chart-data" content="' . htmlspecialchars(json_encode($chart_data)) . '">';
 echo '<meta name="chart-colors" content="' . htmlspecialchars(json_encode(array_slice($chart_colors, 0, count($chart_data)))) . '">';
-echo '<meta name="currency-symbol" content="' . htmlspecialchars(getCurrencySymbol()) . '">';
 echo '<meta name="projection-labels" content="' . htmlspecialchars(json_encode($projection_labels)) . '">';
 echo '<meta name="projection-data" content="' . htmlspecialchars(json_encode($projection_values)) . '">';
-// Add translation strings for JavaScript
-echo '<meta name="i18n-empty-results" content="' . htmlspecialchars(__('no_matching_income_sources')) . '">';
-echo '<meta name="i18n-try-adjusting" content="' . htmlspecialchars(__('try_adjusting_search')) . '">';
-echo '<meta name="i18n-data-updated" content="' . htmlspecialchars(__('data_updated_successfully')) . '">';
+
+// Add i18n strings for JavaScript
 echo '<meta name="i18n-saving" content="' . htmlspecialchars(__('saving')) . '">';
 echo '<meta name="i18n-save-success" content="' . htmlspecialchars(__('changes_saved_successfully')) . '">';
 echo '<meta name="i18n-save-error" content="' . htmlspecialchars(__('error_saving_changes')) . '">';
